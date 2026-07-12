@@ -1,0 +1,18 @@
+[Unit]
+Description=Feifan AI Assessment Web
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/feifan-ai-assessment
+Environment=NODE_ENV=production
+Environment=PORT=3000
+ExecStart=/usr/bin/node /opt/feifan-ai-assessment/server/web-server.mjs
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,14 @@
+.git
+.next
+.vinext
+.wrangler
+dist
+node_modules
+npm-debug.log
+.env*
+!.env.production.example
+tests
+examples
+work
+outputs
+

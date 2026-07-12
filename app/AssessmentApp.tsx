@@ -1,0 +1,260 @@
+"use client";
+
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { OPEN_PROMPT, questions, shuffledOptions } from "@/lib/assessment.mjs";
+import { apiRequest } from "@/lib/api.mjs";
+import { ReportView } from "./components/ReportView";
+import { TeacherDashboard } from "./components/TeacherDashboard";
+
+type SessionInfo = { id: string; code: string; title: string; cohort: string; status: string };
+type Profile = { name: string; role: string };
+
+const roles = ["教师", "课程顾问", "班主任", "管培生", "教学管理", "其他"];
+
+function makeIdempotencyKey() {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+export function AssessmentApp() {
+  const [mode, setMode] = useState<"landing" | "profile" | "assessment" | "generating" | "report" | "teacher">("landing");
+  const [sessionCode, setSessionCode] = useState("");
+  const [session, setSession] = useState<SessionInfo | null>(null);
+  const [profile, setProfile] = useState<Profile>({ name: "", role: "" });
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [openPrompt, setOpenPrompt] = useState("");
+  const [current, setCurrent] = useState(0);
+  const [report, setReport] = useState<any>(null);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [seed] = useState(() => Math.floor(Math.random() * 100000));
+  const [idempotencyKey, setIdempotencyKey] = useState(() => makeIdempotencyKey());
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("teacher") === "1") {
+      setMode("teacher");
+      return;
+    }
+    const reportToken = params.get("report");
+    if (reportToken) {
+      setMode("generating");
+      void loadReport(reportToken);
+      return;
+    }
+    const code = params.get("s");
+    if (code) {
+      setSessionCode(code.toUpperCase());
+      void loadSession(code.toUpperCase());
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!session?.code || mode !== "assessment") return;
+    const draft = { profile, answers, openPrompt, current, idempotencyKey };
+    localStorage.setItem(`ai-assessment-draft:${session.code}`, JSON.stringify(draft));
+  }, [answers, current, idempotencyKey, mode, openPrompt, profile, session?.code]);
+
+  const question = questions[current];
+  const displayedOptions = useMemo(
+    () => (question ? shuffledOptions(question, seed + current * 101) : []),
+    [current, question, seed],
+  );
+
+  async function loadSession(code: string) {
+    setLoading(true);
+    setMessage("");
+    try {
+      const data = await apiRequest(`/session/${encodeURIComponent(code)}`);
+      setSession(data.session);
+      const rawDraft = localStorage.getItem(`ai-assessment-draft:${code}`);
+      if (rawDraft) {
+        const draft = JSON.parse(rawDraft);
+        setProfile(draft.profile || { name: "", role: "" });
+        setAnswers(draft.answers || {});
+        setOpenPrompt(draft.openPrompt || "");
+        setCurrent(Number(draft.current) || 0);
+        setIdempotencyKey(draft.idempotencyKey || makeIdempotencyKey());
+      }
+      setMode("profile");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "场次读取失败");
+      setMode("landing");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadReport(token: string) {
+    setMessage("");
+    try {
+      const data = await apiRequest(`/report/${encodeURIComponent(token)}`);
+      setReport(data.report);
+      if (data.report.aiStatus === "pending" || data.report.aiStatus === "failed") {
+        try {
+          await apiRequest(`/report/${encodeURIComponent(token)}/analyze`, { method: "POST" });
+          const refreshed = await apiRequest(`/report/${encodeURIComponent(token)}`);
+          setReport(refreshed.report);
+        } catch (error) {
+          setMessage(error instanceof Error ? error.message : "AI点评暂未生成");
+        }
+      }
+      setMode("report");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "报告读取失败");
+      setMode("landing");
+    }
+  }
+
+  function enterSession(event: FormEvent) {
+    event.preventDefault();
+    const code = sessionCode.trim().toUpperCase();
+    if (!code) return setMessage("请输入场次码");
+    history.replaceState({}, "", `?s=${encodeURIComponent(code)}`);
+    void loadSession(code);
+  }
+
+  function beginAssessment(event: FormEvent) {
+    event.preventDefault();
+    if (!profile.name.trim()) return setMessage("请填写姓名");
+    if (!profile.role) return setMessage("请选择岗位");
+    setMessage("");
+    setMode("assessment");
+  }
+
+  function chooseAnswer(optionId: string) {
+    setAnswers((value) => ({ ...value, [question.id]: optionId }));
+  }
+
+  async function submitAssessment() {
+    if (openPrompt.trim().length < 30) return setMessage("请写出至少30字的完整提示词");
+    if (!session) return;
+    setMode("generating");
+    setMessage("");
+    try {
+      const response = await apiRequest("/submit", {
+        method: "POST",
+        body: JSON.stringify({
+          sessionCode: session.code,
+          participantName: profile.name.trim(),
+          participantRole: profile.role,
+          answers: questions.map((item) => answers[item.id]),
+          openPrompt: openPrompt.trim(),
+          idempotencyKey,
+        }),
+      });
+      localStorage.removeItem(`ai-assessment-draft:${session.code}`);
+      history.replaceState({}, "", `?report=${encodeURIComponent(response.reportToken)}`);
+      await loadReport(response.reportToken);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "提交失败，请稍后重试");
+      setMode("assessment");
+    }
+  }
+
+  if (mode === "teacher") return <TeacherDashboard onExit={() => { history.replaceState({}, "", "/"); setMode("landing"); }} />;
+  if (mode === "report" && report) return <ReportView report={report} message={message} />;
+  if (mode === "generating") {
+    return (
+      <main className="center-page">
+        <section className="generating-card">
+          <div className="pulse-mark">AI</div>
+          <p className="eyebrow">正在生成个人画像</p>
+          <h1>答卷已经安全保存</h1>
+          <p>DeepSeek 正按七项固定量表分析你的提示词，通常只需要十几秒。</p>
+          <div className="loading-line"><span /></div>
+        </section>
+      </main>
+    );
+  }
+
+  if (mode === "profile" && session) {
+    return (
+      <main className="center-page">
+        <section className="form-card">
+          <p className="eyebrow">{session.cohort || "现场测评"}</p>
+          <h1>{session.title}</h1>
+          <p className="muted">填写真实信息，个人结果仅教师后台可见；课堂投屏只展示匿名分布。</p>
+          <form onSubmit={beginAssessment} className="stack-form">
+            <label>姓名<input value={profile.name} maxLength={30} onChange={(e) => setProfile({ ...profile, name: e.target.value })} placeholder="请输入姓名" /></label>
+            <label>岗位<select value={profile.role} onChange={(e) => setProfile({ ...profile, role: e.target.value })}><option value="">请选择岗位</option>{roles.map((role) => <option key={role}>{role}</option>)}</select></label>
+            {message && <p className="error-text">{message}</p>}
+            <button className="primary-button" type="submit">开始测评</button>
+          </form>
+        </section>
+      </main>
+    );
+  }
+
+  if (mode === "assessment" && question) {
+    const selected = answers[question.id];
+    const progress = Math.round(((current + 1) / 17) * 100);
+    return (
+      <main className="assessment-page">
+        <header className="assessment-header">
+          <div><span className="brand-mark">AI</span><span>{session?.title}</span></div>
+          <span>{current + 1} / 17</span>
+        </header>
+        <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
+        <section className="question-card">
+          <p className="eyebrow">{question.kind === "ability" ? "能力情境题" : "使用偏好题 · 没有标准答案"}</p>
+          <h1>{question.prompt}</h1>
+          <div className="option-list">
+            {displayedOptions.map((option: any, index: number) => (
+              <button key={option.id} type="button" className={`option-button ${selected === option.id ? "selected" : ""}`} onClick={() => chooseAnswer(option.id)}>
+                <span>{String.fromCharCode(65 + index)}</span>{option.text}
+              </button>
+            ))}
+          </div>
+          <div className="question-actions">
+            <button type="button" className="text-button" disabled={current === 0} onClick={() => setCurrent((value) => value - 1)}>上一题</button>
+            <button type="button" className="primary-button" disabled={!selected} onClick={() => setCurrent((value) => value + 1)}>下一题</button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (mode === "assessment" && current === questions.length) {
+    return (
+      <main className="assessment-page">
+        <header className="assessment-header"><div><span className="brand-mark">AI</span><span>真实提示词任务</span></div><span>17 / 17</span></header>
+        <div className="progress-track"><span style={{ width: "100%" }} /></div>
+        <section className="question-card open-card">
+          <p className="eyebrow">开放题 · 按你真实会使用的方式作答</p>
+          <h1>请写出一段你会直接交给 AI 的完整提示词</h1>
+          <div className="scenario-box">{OPEN_PROMPT}</div>
+          <textarea value={openPrompt} onChange={(e) => setOpenPrompt(e.target.value)} maxLength={2000} placeholder="请在这里写下完整提示词……" />
+          <div className="textarea-meta"><span>至少30字</span><span>{openPrompt.length} / 2000</span></div>
+          {message && <p className="error-text">{message}</p>}
+          <div className="question-actions"><button className="text-button" onClick={() => setCurrent(questions.length - 1)}>上一题</button><button className="primary-button" onClick={() => void submitAssessment()}>提交并生成画像</button></div>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="landing-page">
+      <nav className="top-nav"><div><span className="brand-mark">AI</span><strong>非凡 · AI学习实验室</strong></div><button className="text-button" onClick={() => { history.replaceState({}, "", "?teacher=1"); setMode("teacher"); }}>教师后台</button></nav>
+      <section className="hero-grid">
+        <div className="hero-copy">
+          <p className="eyebrow">AI能力与风格测评 · ASSESSMENT V1</p>
+          <h1>看见你的<br /><em>AI 工作方式</em></h1>
+          <p className="hero-description">16 道选择题，加上一段真实提示词任务。约10分钟，获得六维能力、成长等级与AI使用风格画像。</p>
+          <div className="feature-row"><span>六维能力雷达</span><span>三轴8型风格</span><span>提示词升级建议</span></div>
+        </div>
+        <form className="join-card" onSubmit={enterSession}>
+          <div className="join-number">01</div>
+          <p className="eyebrow">加入课堂测评</p>
+          <h2>输入场次码</h2>
+          <input value={sessionCode} onChange={(e) => setSessionCode(e.target.value.toUpperCase())} placeholder="例如 A7K9Q2" maxLength={8} autoCapitalize="characters" />
+          {message && <p className="error-text">{message}</p>}
+          <button className="primary-button" type="submit" disabled={loading}>{loading ? "正在连接…" : "进入测评"}</button>
+          <p className="privacy-note">姓名仅用于教师课后指导，不参与公开排名。</p>
+        </form>
+      </section>
+      <footer className="landing-footer"><span>课程起点画像，不是标准化心理测验</span><span>约 10–12 分钟</span></footer>
+    </main>
+  );
+}

@@ -1,0 +1,19 @@
+[Unit]
+Description=Feifan AI Assessment API
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/feifan-ai-assessment
+EnvironmentFile=/opt/feifan-ai-assessment/.env.production
+Environment=PORT=3001
+ExecStart=/usr/bin/node /opt/feifan-ai-assessment/server/index.mjs
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+
