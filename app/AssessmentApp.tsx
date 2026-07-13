@@ -15,6 +15,13 @@ import { TeacherDashboard } from "./components/TeacherDashboard";
 type SessionInfo = { id: string; code: string; title: string; cohort: string; status: string };
 type Profile = { name: string; role: string; roleKey: string };
 
+const sectionLabels = {
+  foundation: "基础AI能力探究",
+  application: "AI实际应用",
+  style: "AI使用风格",
+  business: "岗位业务场景",
+};
+
 function makeIdempotencyKey() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -223,10 +230,10 @@ export function AssessmentApp() {
             <label>岗位<select value={profile.role} onChange={(e) => {
               const label = e.target.value;
               setProfile({ ...profile, role: label, roleKey: findRoleKey(label) });
-            }}><option value="">请选择岗位（不同岗位会出不同题）</option>{roleOptions.map((r) => <option key={r.id} value={r.label}>{r.label}</option>)}</select></label>
+            }}><option value="">请选择岗位（不同岗位会出不同题）</option>{roleOptions.map((r) => <option key={r.id} value={r.label}>{r.label}｜{r.description}</option>)}</select></label>
             {profile.role && (
               <div className="role-hint">
-                你将看到针对【{profile.role}】的 {totalQuestions} 道题
+                你将看到针对【{profile.role}】的 {totalQuestions} 道选择题和 1 道真实提示词任务
                 ，AI 点评将由 DeepSeek 分析，服务异常时自动回退
               </div>
             )}
@@ -251,7 +258,7 @@ export function AssessmentApp() {
         </header>
         <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
         <section className="question-card">
-          <p className="eyebrow">{question.kind === "style" ? "使用偏好题 · 没有标准答案" : "AI能力探究"}</p>
+          <p className="eyebrow">{sectionLabels[question.section]}{question.kind === "style" ? " · 没有标准答案" : ""}</p>
           <h1>{question.prompt}</h1>
           {question.kind === "multi" && <p className="multi-hint">可多选，请按真实使用情况选择</p>}
           <div className="option-list">
@@ -293,9 +300,9 @@ export function AssessmentApp() {
       <nav className="top-nav"><div><span className="brand-mark">AI</span><strong>非凡 · AI学习实验室</strong></div><button className="text-button" onClick={() => { history.replaceState({}, "", "?teacher=1"); setMode("teacher"); }}>教师后台</button></nav>
       <section className="hero-grid">
         <div className="hero-copy">
-          <p className="eyebrow">AI能力与风格测评 · ASSESSMENT V2</p>
+          <p className="eyebrow">AI能力与风格测评 · ASSESSMENT V3</p>
           <h1>看见你的<br /><em>AI 工作方式</em></h1>
-          <p className="hero-description">根据你的岗位（教师 / 顾问 / 班主任 / 管培生 / 教学管理）出 22 道针对性题，加上一段真实提示词任务。约10分钟，获得六维能力、成长等级与AI使用风格画像。</p>
+          <p className="hero-description">四类岗位 · 18道选择题 · 1道真实提示词任务。面向顾问、教练、教师与通用测评，约8–10分钟，获得六维能力、成长等级与AI使用风格画像。</p>
           <div className="feature-row"><span>按岗位出题</span><span>六维能力雷达</span><span>三轴8型风格</span><span>提示词升级建议</span></div>
         </div>
         <form className="join-card" onSubmit={enterSession}>
@@ -308,7 +315,7 @@ export function AssessmentApp() {
           <p className="privacy-note">姓名仅用于教师课后指导，不参与公开排名。</p>
         </form>
       </section>
-      <footer className="landing-footer"><span>课程起点画像，不是标准化心理测验</span><span>约 10–12 分钟</span></footer>
+      <footer className="landing-footer"><span>课程起点画像，不是标准化心理测验</span><span>约8–10分钟</span></footer>
     </main>
   );
 }
