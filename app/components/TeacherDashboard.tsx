@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import { apiRequest, adminHeaders, downloadCsv } from "@/lib/api.mjs";
 import { dimensions } from "@/lib/assessment.mjs";
+import { StyleAtlas } from "./StyleAtlas";
 
 function QrImage({ url }: { url: string }) {
   const [src, setSrc] = useState("");
@@ -21,6 +22,7 @@ export function TeacherDashboard({ onExit }: { onExit: () => void }) {
   const [cohort, setCohort] = useState("");
   const [filter, setFilter] = useState({ level: "", style: "", role: "" });
   const [message, setMessage] = useState("");
+  const [showAtlas, setShowAtlas] = useState(false);
 
   useEffect(() => { if (token) void loadSessions(); }, [token]);
   useEffect(() => {
@@ -102,6 +104,7 @@ export function TeacherDashboard({ onExit }: { onExit: () => void }) {
           </div>
           <p className="ai-engine-meta">测评完成后自动生成七项提示词分析<br />服务异常时自动回退到本地启发式分析</p>
         </div>
+        <button className="atlas-sidebar-button" onClick={() => setShowAtlas(true)}>查看8型风格大全</button>
         <div className="sidebar-footer"><button onClick={onExit}>测评首页</button><button onClick={logout}>退出登录</button></div>
       </aside>
       <section className="admin-content">
@@ -115,6 +118,7 @@ export function TeacherDashboard({ onExit }: { onExit: () => void }) {
         </> : <div className="empty-admin"><h2>选择一场测评</h2><p>查看实时班级画像，或创建新的课堂场次。</p></div>}
         {message && <p className="admin-message">{message}</p>}
       </section>
+      <StyleAtlas open={showAtlas} onClose={() => setShowAtlas(false)} />
     </main>
   );
 }

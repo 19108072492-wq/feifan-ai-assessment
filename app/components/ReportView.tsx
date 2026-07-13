@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { dimensions } from "@/lib/assessment.mjs";
+import { StyleAtlas } from "./StyleAtlas";
 
 const rubricLabels: Record<string, string> = {
   audience: "对象",
@@ -24,6 +25,7 @@ const rubricLabels: Record<string, string> = {
 export function ReportView({ report, message = "" }: { report: any; message?: string }) {
   const reportRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const [showAtlas, setShowAtlas] = useState(false);
   const radarData = dimensions.map((dimension) => ({
     subject: dimension.label.replace("力", ""),
     value: report.scores?.dimensions?.[dimension.id] || 0,
@@ -51,11 +53,14 @@ export function ReportView({ report, message = "" }: { report: any; message?: st
   }
 
   const analysis = report.analysis;
+  const style = report.scores?.style || {};
+  const projectBonus = report.scores?.projectBonus || 0;
+  const projectUpgrade = report.scores?.projectUpgrade || {};
   return (
     <main className="report-page">
       <div className="report-toolbar">
         <div><span className="brand-mark">AI</span><strong>个人成长画像</strong></div>
-        <button className="primary-button small" onClick={() => void downloadReport()} disabled={downloading}>{downloading ? "正在生成…" : "下载报告长图"}</button>
+        <div className="report-toolbar-actions"><button className="text-button" onClick={() => setShowAtlas(true)}>查看8型风格大全</button><button className="primary-button small" onClick={() => void downloadReport()} disabled={downloading}>{downloading ? "正在生成…" : "下载报告长图"}</button></div>
       </div>
       <div className="report-sheet" ref={reportRef}>
         <header className="report-hero">
@@ -76,15 +81,34 @@ export function ReportView({ report, message = "" }: { report: any; message?: st
           </article>
           <article className="style-panel">
             <p className="panel-label">AI 使用风格</p>
-            <span className="style-code">{report.scores?.style?.code}</span>
-            <h2>{report.scores?.style?.name}</h2>
-            <p>{report.scores?.style?.strength}</p>
+            <span className="style-code">{style.code}</span>
+            <h2>{style.name}</h2>
+            <p>{style.tagline || style.strength}</p>
             <div className="style-axes">
-              {Object.entries(report.scores?.style?.confidence || {}).map(([axis, value]) => (
-                <span key={axis}>{String(value)}倾向</span>
+              {(style.axisDetails || []).map((item: any) => (
+                <span key={item.axis}>{item.tendency} · {item.strength}</span>
               ))}
             </div>
           </article>
+        </section>
+
+        {(projectBonus > 0 || projectUpgrade.eligible) && <section className="report-section score-notes">
+          {projectBonus > 0 && <article><span>＋{projectBonus}</span><div><strong>项目实践加分</strong><p>真实完成个人网站、知识库或自动化工作流，已计入综合分。</p></div></article>}
+          {projectUpgrade.eligible && <article><span>↑1</span><div><strong>小程序实战升级</strong><p>{projectUpgrade.applied ? "核心参与开发且成功运行，最终等级提升一级。" : "已满足实战条件；当前等级已达最高级。"}</p></div></article>}
+        </section>}
+
+        <section className="report-section personal-style-section">
+          <p className="panel-label">个人风格深度分析</p>
+          <h2>{style.code} · {style.name}，你更自然的 AI 协作方式</h2>
+          <div className="style-analysis-grid">
+            <article><span>01</span><h3>你如何启动任务</h3><p>{style.startMode}</p></article>
+            <article><span>02</span><h3>你如何与AI分工</h3><p>{style.divisionMode}</p></article>
+            <article><span>03</span><h3>你如何处理速度与质量</h3><p>{style.speedQuality}</p></article>
+            <article><span>04</span><h3>你的三项优势</h3><ul>{style.strengths?.map((item: string) => <li key={item}>{item}</li>)}</ul></article>
+            <article><span>05</span><h3>需要留意的两项风险</h3><ul>{style.risks?.map((item: string) => <li key={item}>{item}</li>)}</ul></article>
+            <article><span>06</span><h3>推荐的AI工作流程</h3><ol>{style.recommendedWorkflow?.map((item: string) => <li key={item}>{item}</li>)}</ol></article>
+            <article><span>07</span><h3>下一步适合尝试</h3><p>{style.nextProjects?.join("、")}</p><small>{style.upgrade}</small></article>
+          </div>
         </section>
 
         <section className="report-section radar-section">
@@ -139,6 +163,7 @@ export function ReportView({ report, message = "" }: { report: any; message?: st
 
         <footer className="report-footer"><span>AI能力与风格测评</span><span>课程起点画像，不是标准化心理测验</span></footer>
       </div>
+      <StyleAtlas open={showAtlas} onClose={() => setShowAtlas(false)} activeCode={style.code} />
     </main>
   );
 }

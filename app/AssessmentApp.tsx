@@ -10,6 +10,7 @@ import {
 } from "@/lib/assessment.mjs";
 import { apiRequest } from "@/lib/api.mjs";
 import { ReportView } from "./components/ReportView";
+import { StyleAtlas } from "./components/StyleAtlas";
 import { TeacherDashboard } from "./components/TeacherDashboard";
 
 type SessionInfo = { id: string; code: string; title: string; cohort: string; status: string };
@@ -44,6 +45,7 @@ export function AssessmentApp() {
   const [report, setReport] = useState<any>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showAtlas, setShowAtlas] = useState(false);
   const [seed] = useState(() => Math.floor(Math.random() * 100000));
   const [idempotencyKey, setIdempotencyKey] = useState(() => makeIdempotencyKey());
 
@@ -303,7 +305,7 @@ export function AssessmentApp() {
           <p className="eyebrow">AI能力与风格测评 · ASSESSMENT V3</p>
           <h1>看见你的<br /><em>AI 工作方式</em></h1>
           <p className="hero-description">四类岗位 · 18道选择题 · 1道真实提示词任务。面向顾问、教练、教师与通用测评，约8–10分钟，获得六维能力、成长等级与AI使用风格画像。</p>
-          <div className="feature-row"><span>按岗位出题</span><span>六维能力雷达</span><span>三轴8型风格</span><span>提示词升级建议</span></div>
+          <div className="feature-row"><span>按岗位出题</span><span>六维能力雷达</span><button type="button" onClick={() => setShowAtlas(true)}>查看8型风格大全</button><span>提示词升级建议</span></div>
         </div>
         <form className="join-card" onSubmit={enterSession}>
           <div className="join-number">01</div>
@@ -316,6 +318,7 @@ export function AssessmentApp() {
         </form>
       </section>
       <footer className="landing-footer"><span>课程起点画像，不是标准化心理测验</span><span>约8–10分钟</span></footer>
+      <StyleAtlas open={showAtlas} onClose={() => setShowAtlas(false)} />
     </main>
   );
 }
