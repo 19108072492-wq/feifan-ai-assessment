@@ -2,13 +2,6 @@
 
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
-import {
-  PolarAngleAxis,
-  PolarGrid,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-} from "recharts";
 import { dimensions } from "@/lib/assessment.mjs";
 import { StyleAtlas } from "./StyleAtlas";
 
@@ -21,6 +14,39 @@ const rubricLabels: Record<string, string> = {
   constraints: "限制边界",
   acceptance: "验收标准",
 };
+
+type RadarItem = { subject: string; value: number; fullMark: number };
+
+function radarPoint(index: number, total: number, scale: number) {
+  const angle = -Math.PI / 2 + (index * Math.PI * 2) / total;
+  const radius = 94 * scale;
+  return { x: 130 + Math.cos(angle) * radius, y: 130 + Math.sin(angle) * radius };
+}
+
+function radarPolygon(data: RadarItem[], scale: number | ((item: RadarItem) => number)) {
+  return data.map((item, index) => {
+    const value = typeof scale === "function" ? scale(item) : scale;
+    const point = radarPoint(index, data.length, Math.max(0, Math.min(1, value)));
+    return `${point.x.toFixed(1)},${point.y.toFixed(1)}`;
+  }).join(" ");
+}
+
+function CapabilityRadar({ data }: { data: RadarItem[] }) {
+  return (
+    <svg className="capability-radar" viewBox="0 0 260 260" role="img" aria-label="六维能力雷达图">
+      {[0.25, 0.5, 0.75, 1].map((level) => <polygon key={level} points={radarPolygon(data, level)} fill="none" stroke="#c9c2b2" strokeWidth="1" />)}
+      {data.map((item, index) => {
+        const end = radarPoint(index, data.length, 1);
+        return <line key={item.subject} x1="130" y1="130" x2={end.x} y2={end.y} stroke="#d8d1c1" strokeWidth="1" />;
+      })}
+      <polygon points={radarPolygon(data, (item) => item.value / item.fullMark)} fill="#f2c94c" fillOpacity="0.54" stroke="#d7a900" strokeWidth="2.5" />
+      {data.map((item, index) => {
+        const point = radarPoint(index, data.length, item.value / item.fullMark);
+        return <circle key={item.subject} cx={point.x} cy={point.y} r="3.5" fill="#181814" />;
+      })}
+    </svg>
+  );
+}
 
 export function ReportView({ report, message = "" }: { report: any; message?: string }) {
   const reportRef = useRef<HTMLDivElement>(null);
@@ -114,13 +140,7 @@ export function ReportView({ report, message = "" }: { report: any; message?: st
         <section className="report-section radar-section">
           <div><p className="panel-label">六维能力雷达</p><h2>你已经会什么，下一步该补什么</h2></div>
           <div className="radar-wrap">
-            <ResponsiveContainer width="100%" height={330}>
-              <RadarChart data={radarData} outerRadius="72%">
-                <PolarGrid stroke="#c9c2b2" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: "#201f1b", fontSize: 13 }} />
-                <Radar dataKey="value" stroke="#d7a900" fill="#f2c94c" fillOpacity={0.54} strokeWidth={2} />
-              </RadarChart>
-            </ResponsiveContainer>
+            <CapabilityRadar data={radarData} />
           </div>
           <div className="dimension-grid">{radarData.map((item) => <div key={item.subject}><span>{item.subject}</span><strong>{item.value}</strong></div>)}</div>
         </section>

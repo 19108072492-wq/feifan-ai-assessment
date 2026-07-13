@@ -1,6 +1,6 @@
 /* ============================================================
  * AI 能力与风格测评 — app-bundle.js
- * 自动构建于 2026-07-13T07:53:07.213Z
+ * 自动构建于 2026-07-13T07:57:22.146Z
  * ============================================================ */
 
 /* React 18.3.1 UMD */
@@ -1875,13 +1875,6 @@ async function downloadCsv(path, filename) {
 // app/components/ReportView.tsx
 const { useRef, useState } = window.React;
 const { toPng } = window.htmlToImage || { toPng: function(n) { return Promise.resolve("data:,"); } };
-const {
-  PolarAngleAxis,
-  PolarGrid,
-  Radar,
-  RadarChart,
-  ResponsiveContainer
-} = {};
 // app/components/StyleAtlas.tsx
 const { jsx, jsxs } = { jsx: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, jsxs: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, Fragment: React.Fragment };
 function StyleAtlas({ open, onClose, activeCode = "" }) {
@@ -1941,6 +1934,32 @@ var rubricLabels = {
   constraints: "\u9650\u5236\u8FB9\u754C",
   acceptance: "\u9A8C\u6536\u6807\u51C6"
 };
+function radarPoint(index, total, scale) {
+  const angle = -Math.PI / 2 + index * Math.PI * 2 / total;
+  const radius = 94 * scale;
+  return { x: 130 + Math.cos(angle) * radius, y: 130 + Math.sin(angle) * radius };
+}
+function radarPolygon(data, scale) {
+  return data.map((item, index) => {
+    const value = typeof scale === "function" ? scale(item) : scale;
+    const point = radarPoint(index, data.length, Math.max(0, Math.min(1, value)));
+    return `${point.x.toFixed(1)},${point.y.toFixed(1)}`;
+  }).join(" ");
+}
+function CapabilityRadar({ data }) {
+  return /* @__PURE__ */ jsxs2("svg", { className: "capability-radar", viewBox: "0 0 260 260", role: "img", "aria-label": "\u516D\u7EF4\u80FD\u529B\u96F7\u8FBE\u56FE", children: [
+    [0.25, 0.5, 0.75, 1].map((level) => /* @__PURE__ */ jsx2("polygon", { points: radarPolygon(data, level), fill: "none", stroke: "#c9c2b2", strokeWidth: "1" }, level)),
+    data.map((item, index) => {
+      const end = radarPoint(index, data.length, 1);
+      return /* @__PURE__ */ jsx2("line", { x1: "130", y1: "130", x2: end.x, y2: end.y, stroke: "#d8d1c1", strokeWidth: "1" }, item.subject);
+    }),
+    /* @__PURE__ */ jsx2("polygon", { points: radarPolygon(data, (item) => item.value / item.fullMark), fill: "#f2c94c", fillOpacity: "0.54", stroke: "#d7a900", strokeWidth: "2.5" }),
+    data.map((item, index) => {
+      const point = radarPoint(index, data.length, item.value / item.fullMark);
+      return /* @__PURE__ */ jsx2("circle", { cx: point.x, cy: point.y, r: "3.5", fill: "#181814" }, item.subject);
+    })
+  ] });
+}
 function ReportView({ report, message = "" }) {
   const reportRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
@@ -2096,11 +2115,7 @@ function ReportView({ report, message = "" }) {
           /* @__PURE__ */ jsx2("p", { className: "panel-label", children: "\u516D\u7EF4\u80FD\u529B\u96F7\u8FBE" }),
           /* @__PURE__ */ jsx2("h2", { children: "\u4F60\u5DF2\u7ECF\u4F1A\u4EC0\u4E48\uFF0C\u4E0B\u4E00\u6B65\u8BE5\u8865\u4EC0\u4E48" })
         ] }),
-        /* @__PURE__ */ jsx2("div", { className: "radar-wrap", children: /* @__PURE__ */ jsx2(ResponsiveContainer, { width: "100%", height: 330, children: /* @__PURE__ */ jsxs2(RadarChart, { data: radarData, outerRadius: "72%", children: [
-          /* @__PURE__ */ jsx2(PolarGrid, { stroke: "#c9c2b2" }),
-          /* @__PURE__ */ jsx2(PolarAngleAxis, { dataKey: "subject", tick: { fill: "#201f1b", fontSize: 13 } }),
-          /* @__PURE__ */ jsx2(Radar, { dataKey: "value", stroke: "#d7a900", fill: "#f2c94c", fillOpacity: 0.54, strokeWidth: 2 })
-        ] }) }) }),
+        /* @__PURE__ */ jsx2("div", { className: "radar-wrap", children: /* @__PURE__ */ jsx2(CapabilityRadar, { data: radarData }) }),
         /* @__PURE__ */ jsx2("div", { className: "dimension-grid", children: radarData.map((item) => /* @__PURE__ */ jsxs2("div", { children: [
           /* @__PURE__ */ jsx2("span", { children: item.subject }),
           /* @__PURE__ */ jsx2("strong", { children: item.value })
