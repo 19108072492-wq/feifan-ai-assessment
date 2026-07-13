@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const dashboardPath = new URL("../app/components/TeacherDashboard.tsx", import.meta.url);
+const assessmentAppPath = new URL("../app/AssessmentApp.tsx", import.meta.url);
 const localApiPath = new URL("../lib/local-api.mjs", import.meta.url);
 
 test("teacher dashboard exposes backend status but no API key controls", async () => {
@@ -35,3 +36,9 @@ test("browser API layer never stores or accepts a model credential", async () =>
   }
 });
 
+test("student app never reads legacy browser AI credentials", async () => {
+  const source = await readFile(assessmentAppPath, "utf8");
+  assert.doesNotMatch(source, /ai-assessment:ai-config/);
+  assert.doesNotMatch(source, /cfg\.apiKey/);
+  assert.match(source, /服务异常时自动回退/);
+});

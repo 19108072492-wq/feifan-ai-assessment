@@ -8,14 +8,19 @@ import {
   scoreStyle,
   levelForScore,
   shuffledOptions,
+  getQuestionsForRole,
+  roles,
 } from "../lib/assessment.mjs";
 
-test("ships the locked assessment-v1 question bank", () => {
-  assert.equal(ASSESSMENT_VERSION, "assessment-v1");
-  assert.equal(questions.length, 16);
-  assert.equal(questions.filter((question) => question.kind === "ability").length, 10);
-  assert.equal(questions.filter((question) => question.kind === "style").length, 6);
-  assert.ok(questions.every((question) => question.options.length >= 2));
+test("ships the locked assessment-v2 role question banks", () => {
+  assert.equal(ASSESSMENT_VERSION, "assessment-v2");
+  for (const role of roles) {
+    const roleQuestions = getQuestionsForRole(role.id);
+    assert.equal(roleQuestions.length, 22);
+    assert.equal(roleQuestions.filter((question) => question.kind === "ability").length, 16);
+    assert.equal(roleQuestions.filter((question) => question.kind === "style").length, 6);
+    assert.ok(roleQuestions.every((question) => question.options.length >= 2));
+  }
 });
 
 test("maps exact score boundaries to the four growth levels", () => {
@@ -30,31 +35,25 @@ test("maps exact score boundaries to the four growth levels", () => {
 });
 
 test("computes the eight deterministic style codes without ties", () => {
-  const cases = [
-    ["EAF", ["q11-e", "q12-e", "q13-a", "q14-a", "q15-f", "q16-f"]],
-    ["EAV", ["q11-e", "q12-e", "q13-a", "q14-a", "q15-v", "q16-v"]],
-    ["ECF", ["q11-e", "q12-e", "q13-c", "q14-c", "q15-f", "q16-f"]],
-    ["ECV", ["q11-e", "q12-e", "q13-c", "q14-c", "q15-v", "q16-v"]],
-    ["DAF", ["q11-d", "q12-d", "q13-a", "q14-a", "q15-f", "q16-f"]],
-    ["DAV", ["q11-d", "q12-d", "q13-a", "q14-a", "q15-v", "q16-v"]],
-    ["DCF", ["q11-d", "q12-d", "q13-c", "q14-c", "q15-f", "q16-f"]],
-    ["DCV", ["q11-d", "q12-d", "q13-c", "q14-c", "q15-v", "q16-v"]],
-  ];
-
-  for (const [expected, selected] of cases) {
-    assert.equal(scoreStyle(selected).code, expected);
+  const styleQuestions = questions.filter((question) => question.kind === "style");
+  for (const expected of ["EAF", "EAV", "ECF", "ECV", "DAF", "DAV", "DCF", "DCV"]) {
+    const selected = styleQuestions.map((question) => {
+      const pole = expected[{ explorationExecution: 0, assignCocreate: 1, fastVerify: 2 }[question.axis]];
+      return question.options.find((option) => option.pole === pole).id;
+    });
+    assert.equal(scoreStyle(selected, questions).code, expected);
   }
 });
 
 test("uses 2:1 style weights to resolve split preferences", () => {
-  const result = scoreStyle([
-    "q11-e",
-    "q12-d",
-    "q13-a",
-    "q14-c",
-    "q15-f",
-    "q16-v",
-  ]);
+  const preferred = { explorationExecution: "E", assignCocreate: "A", fastVerify: "F" };
+  const selected = questions.filter((question) => question.kind === "style").map((question) => {
+    const pole = question.weight === 2
+      ? preferred[question.axis]
+      : question.options.find((option) => option.pole !== preferred[question.axis]).pole;
+    return question.options.find((option) => option.pole === pole).id;
+  });
+  const result = scoreStyle(selected, questions);
 
   assert.equal(result.code, "EAF");
   assert.deepEqual(result.confidence, {
@@ -65,7 +64,7 @@ test("uses 2:1 style weights to resolve split preferences", () => {
 });
 
 test("keeps scoring stable when displayed options are shuffled", () => {
-  const question = questions.find((item) => item.id === "q1");
+  const question = questions.find((item) => item.id === "t-q1");
   const first = shuffledOptions(question, 17);
   const second = shuffledOptions(question, 82);
 

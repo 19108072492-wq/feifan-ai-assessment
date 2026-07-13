@@ -21,7 +21,7 @@ test("server-renders the AI assessment landing experience", async () => {
   const html = await response.text();
   assert.match(html, /<title>AI能力与风格测评/);
   assert.match(html, /看见你的 AI 工作方式/);
-  assert.match(html, /16 道选择题/);
+  assert.match(html, /22 道针对性题/);
   assert.match(html, /课程起点画像，不是标准化心理测验/);
   assert.match(html, /输入场次码/);
   assert.doesNotMatch(html, /Codex is working|Your site is taking shape|react-loading-skeleton/);
@@ -39,4 +39,3 @@ test("removes every starter-only marker and dependency", async () => {
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));
 });
-

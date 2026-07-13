@@ -1,6 +1,6 @@
 /* ============================================================
  * AI 能力与风格测评 — app-bundle.js
- * 自动构建于 2026-07-13T05:54:30.461Z
+ * 自动构建于 2026-07-13T07:05:28.793Z
  * ============================================================ */
 
 /* React 18.3.1 UMD */
@@ -1301,55 +1301,6 @@ var RUBRIC_KEYS2 = [
   "constraints",
   "acceptance"
 ];
-var SYSTEM_PROMPT = `\u4F60\u662F\u201CAI\u80FD\u529B\u4E0E\u98CE\u683C\u6D4B\u8BC4\u201D\u7684\u5F00\u653E\u9898\u8BC4\u5206\u5458\u3002\u4F60\u53EA\u8BC4\u4F30\u5B66\u5458\u5199\u51FA\u7684\u63D0\u793A\u8BCD\uFF0C\u4E0D\u8BC4\u4F30\u5B66\u5458\u8EAB\u4EFD\uFF0C\u4E5F\u4E0D\u80FD\u76F4\u63A5\u7ED9\u51FA\u80FD\u529B\u7B49\u7EA7\u3002
-
-\u8BF7\u6309\u4EE5\u4E0B\u4E03\u9879\u56FA\u5B9A\u91CF\u8868\u5206\u522B\u7ED90\u52303\u5206\uFF0C\u5E76\u4ECE\u5B66\u5458\u539F\u6587\u4E2D\u7ED9\u51FA\u7B80\u77ED\u8BC1\u636E\uFF1A
-1. audience\uFF1A\u5BF9\u8C61\u662F\u5426\u5177\u4F53\uFF1B
-2. purpose\uFF1A\u573A\u666F\u3001\u4EFB\u52A1\u548C\u76EE\u6807\u662F\u5426\u6E05\u695A\uFF1B
-3. inputs\uFF1A\u8F93\u5165\u8D44\u6599\u3001\u6765\u6E90\u548C\u4F7F\u7528\u987A\u5E8F\u662F\u5426\u6E05\u695A\uFF1B
-4. process\uFF1A\u662F\u5426\u8BF4\u660E\u6267\u884C\u6B65\u9AA4\u3001\u68C0\u67E5\u70B9\u6216\u534F\u4F5C\u65B9\u5F0F\uFF1B
-5. output\uFF1A\u4EA4\u4ED8\u683C\u5F0F\u3001\u7ED3\u6784\u548C\u7EC6\u8282\u662F\u5426\u660E\u786E\uFF1B
-6. constraints\uFF1A\u4E8B\u5B9E\u8FB9\u754C\u3001\u8BED\u8A00\u98CE\u683C\u3001\u65F6\u957F\u6216\u7981\u6B62\u4E8B\u9879\u662F\u5426\u660E\u786E\uFF1B
-7. acceptance\uFF1A\u662F\u5426\u7ED9\u51FA\u6838\u5BF9\u3001\u9A8C\u6536\u6216\u6210\u529F\u6807\u51C6\u3002
-
-\u8BC4\u5206\u6807\u51C6\uFF1A0=\u5B8C\u5168\u7F3A\u5931\uFF1B1=\u7B3C\u7EDF\u63D0\u53CA\uFF1B2=\u6E05\u695A\u4F46\u4E0D\u5B8C\u6574\uFF1B3=\u5177\u4F53\u4E14\u53EF\u76F4\u63A5\u6267\u884C\u3002\u4E0D\u5F97\u56E0\u4E3A\u63D0\u793A\u8BCD\u957F\u800C\u81EA\u52A8\u7ED9\u9AD8\u5206\u3002\u4E0D\u5F97\u8865\u5199\u5B66\u5458\u6CA1\u6709\u8868\u8FBE\u7684\u5185\u5BB9\u3002
-
-\u53EA\u8F93\u51FA\u4E25\u683C JSON\uFF1A
-{
-  "rubric": {
-    "audience": {"score": 0, "evidence": ""},
-    "purpose": {"score": 0, "evidence": ""},
-    "inputs": {"score": 0, "evidence": ""},
-    "process": {"score": 0, "evidence": ""},
-    "output": {"score": 0, "evidence": ""},
-    "constraints": {"score": 0, "evidence": ""},
-    "acceptance": {"score": 0, "evidence": ""}
-  },
-  "summary": "80\u5B57\u4EE5\u5185\u7684\u603B\u4F53\u70B9\u8BC4",
-  "strengths": ["\u4F18\u52BF1", "\u4F18\u52BF2"],
-  "risks": ["\u6539\u8FDB\u70B91", "\u6539\u8FDB\u70B92"],
-  "upgradedPrompt": "\u4FDD\u6301\u5B66\u5458\u539F\u610F\u3001\u4F46\u66F4\u5B8C\u6574\u53EF\u6267\u884C\u7684\u5347\u7EA7\u7248\u63D0\u793A\u8BCD",
-  "nextActions": ["\u8BAD\u7EC3\u5EFA\u8BAE1", "\u8BAD\u7EC3\u5EFA\u8BAE2", "\u8BAD\u7EC3\u5EFA\u8BAE3"]
-}`;
-function buildDeepSeekRequest({ promptText, model = "deepseek-v4-flash" }) {
-  return {
-    model,
-    temperature: 0.1,
-    thinking: { type: "disabled" },
-    response_format: { type: "json_object" },
-    max_tokens: 1800,
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: `\u8BF7\u6309\u4E0A\u8FF0\u91CF\u8868\u5206\u6790\u4EE5\u4E0B\u63D0\u793A\u8BCD\uFF0C\u5E76\u8F93\u51FA JSON\u3002
-
-\u5B66\u5458\u63D0\u793A\u8BCD\uFF1A
-${String(promptText || "").slice(0, 4e3)}`
-      }
-    ]
-  };
-}
 function extractJson(text) {
   if (!text) throw new Error("empty model output");
   try {
@@ -1392,40 +1343,60 @@ function parseDeepSeekAnalysis(text) {
     nextActions
   };
 }
-async function analyzePromptWithRetry({
+
+// lib/remote-analysis.mjs
+var ANALYSIS_ENDPOINT = "https://eyzcleghbczxxptdwlkq.supabase.co/functions/v1/ai-assessment-analyze";
+var CLIENT_ID_KEY = "ai-assessment:analysis-client-id";
+function randomClientId() {
+  return globalThis.crypto.randomUUID().replaceAll("-", "");
+}
+function getOrCreateAnalysisClientId(storage, createId = randomClientId) {
+  const current = String(storage?.getItem?.(CLIENT_ID_KEY) || "");
+  if (/^[a-z0-9_-]{16,80}$/i.test(current)) return current;
+  const created = String(createId());
+  if (!/^[a-z0-9_-]{16,80}$/i.test(created)) {
+    throw new Error("invalid analysis client identifier");
+  }
+  storage?.setItem?.(CLIENT_ID_KEY, created);
+  return created;
+}
+async function analyzePromptRemotely({
   promptText,
-  apiKey,
-  model = "deepseek-v4-flash",
-  baseUrl = "https://api.deepseek.com",
+  clientId,
+  endpoint = ANALYSIS_ENDPOINT,
   fetcher = fetch
 }) {
-  let lastError = "unknown error";
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
-    try {
-      const response = await fetcher(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${apiKey}`,
-          "content-type": "application/json"
-        },
-        body: JSON.stringify(buildDeepSeekRequest({ promptText, model }))
-      });
-      if (!response.ok) {
-        const detail = await response.text();
-        throw new Error(`DeepSeek ${response.status}: ${detail.slice(0, 160)}`);
-      }
-      const payload = await response.json();
-      const content = payload?.choices?.[0]?.message?.content || "";
-      return {
-        status: "complete",
-        attempts: attempt,
-        analysis: parseDeepSeekAnalysis(content)
-      };
-    } catch (error2) {
-      lastError = error2 instanceof Error ? error2.message : String(error2);
+  try {
+    const normalizedPrompt = String(promptText || "").trim();
+    if (normalizedPrompt.length < 30 || normalizedPrompt.length > 2e3) {
+      throw new Error("invalid prompt length");
     }
+    if (!/^[a-z0-9_-]{16,80}$/i.test(String(clientId || ""))) {
+      throw new Error("invalid client identifier");
+    }
+    const response = await fetcher(endpoint, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-assessment-client": clientId
+      },
+      body: JSON.stringify({ promptText: normalizedPrompt })
+    });
+    if (!response.ok) throw new Error(`analysis endpoint ${response.status}`);
+    const payload = await response.json();
+    if (!payload?.ok || !payload?.analysis) throw new Error("invalid analysis response");
+    return {
+      status: "complete",
+      attempts: Number(payload.attempts) || 1,
+      analysis: parseDeepSeekAnalysis(JSON.stringify(payload.analysis))
+    };
+  } catch {
+    return {
+      status: "failed",
+      attempts: 1,
+      error: "AI analysis is temporarily unavailable"
+    };
   }
-  return { status: "failed", attempts: 2, error: lastError };
 }
 
 // lib/local-store.mjs
@@ -1685,40 +1656,22 @@ function verifyToken(token) {
   }
   return true;
 }
-function getEngineConfig() {
-  if (typeof window === "undefined") return { engine: "heuristic", apiKey: "", model: "deepseek-chat" };
-  try {
-    const raw = window.localStorage.getItem("ai-assessment:ai-config");
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return {
-        engine: parsed.engine === "deepseek" ? "deepseek" : "heuristic",
-        apiKey: String(parsed.apiKey || "").trim(),
-        model: String(parsed.model || "deepseek-chat")
-      };
-    }
-  } catch {
-  }
-  return { engine: "heuristic", apiKey: "", model: "deepseek-chat" };
-}
 async function runAnalysis(submission) {
   const questionList = getQuestionsForRole(submission.roleKey || "teacher");
-  const config = getEngineConfig();
   let analysisResult = null;
   let engine = "heuristic";
-  if (config.engine === "deepseek" && config.apiKey) {
+  if (typeof window !== "undefined") {
     try {
-      const ds = await analyzePromptWithRetry({
+      const ds = await analyzePromptRemotely({
         promptText: submission.openPrompt,
-        apiKey: config.apiKey,
-        model: config.model
+        clientId: getOrCreateAnalysisClientId(window.localStorage)
       });
       if (ds.status === "complete") {
         analysisResult = ds.analysis;
         engine = "deepseek";
         submission.aiAttempts = ds.attempts;
       } else {
-        submission.aiError = `DeepSeek: ${ds.error}`;
+        submission.aiError = ds.error;
       }
     } catch (error2) {
       submission.aiError = error2 instanceof Error ? error2.message : String(error2);
@@ -1756,12 +1709,12 @@ function error(message, status = 400) {
 }
 async function handleLocalApi(method, path, body = {}, headers = {}) {
   if (method === "GET" && path === "/health") {
-    const config = getEngineConfig();
     return ok({
       ok: true,
       version: ASSESSMENT_VERSION,
-      aiEngine: config.engine,
-      aiConfigured: config.engine === "deepseek" ? Boolean(config.apiKey) : true
+      aiEngine: "deepseek",
+      aiConfigured: true,
+      fallbackEngine: "heuristic"
     });
   }
   if (method === "GET" && path.startsWith("/session/")) {
@@ -1978,30 +1931,6 @@ async function handleLocalApi(method, path, body = {}, headers = {}) {
       submitted_at: r.submittedAt
     }));
     return ok({ csv: buildCsv(mappedRows), isCsv: true });
-  }
-  if (method === "GET" && path === "/admin/ai-config") {
-    const config = getEngineConfig();
-    return ok({
-      engine: config.engine,
-      apiKeyMasked: config.apiKey ? `${config.apiKey.slice(0, 6)}\u2026${config.apiKey.slice(-4)}` : "",
-      apiKeyConfigured: Boolean(config.apiKey),
-      model: config.model
-    });
-  }
-  if (method === "POST" && path === "/admin/ai-config") {
-    const engine = body?.engine === "deepseek" ? "deepseek" : "heuristic";
-    const apiKey = String(body?.apiKey || "").trim();
-    const model = String(body?.model || "deepseek-chat").trim();
-    if (engine === "deepseek" && !apiKey) {
-      return error("\u9009\u62E9 DeepSeek \u5F15\u64CE\u65F6\u5FC5\u987B\u63D0\u4F9B API key", 400);
-    }
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(
-        "ai-assessment:ai-config",
-        JSON.stringify({ engine, apiKey, model })
-      );
-    }
-    return ok({ engine, apiKeyConfigured: Boolean(apiKey), model });
   }
   return error("\u63A5\u53E3\u4E0D\u5B58\u5728", 404);
 }
@@ -2234,16 +2163,8 @@ function TeacherDashboard({ onExit }) {
   const [cohort, setCohort] = useState2("");
   const [filter, setFilter] = useState2({ level: "", style: "", role: "" });
   const [message, setMessage] = useState2("");
-  const [aiConfig, setAiConfig] = useState2({ engine: "heuristic", apiKeyMasked: "", apiKeyConfigured: false, model: "deepseek-chat" });
-  const [editingAi, setEditingAi] = useState2(false);
-  const [engineDraft, setEngineDraft] = useState2("heuristic");
-  const [apiKeyDraft, setApiKeyDraft] = useState2("");
-  const [modelDraft, setModelDraft] = useState2("deepseek-chat");
   useEffect(() => {
     if (token) void loadSessions();
-  }, [token]);
-  useEffect(() => {
-    if (token) void loadAiConfig();
   }, [token]);
   useEffect(() => {
     if (!selectedId || !token) return;
@@ -2269,30 +2190,6 @@ function TeacherDashboard({ onExit }) {
       setDashboard(data.dashboard);
     } catch (error2) {
       if (!quiet) setMessage(error2 instanceof Error ? error2.message : "\u770B\u677F\u8BFB\u53D6\u5931\u8D25");
-    }
-  }
-  async function loadAiConfig() {
-    try {
-      const data = await adminRequest("/admin/ai-config");
-      setAiConfig(data);
-      setEngineDraft(data.engine);
-      setModelDraft(data.model);
-    } catch (error2) {
-    }
-  }
-  async function saveAiConfig(event) {
-    event.preventDefault();
-    setMessage("");
-    try {
-      const body = { engine: engineDraft, model: modelDraft };
-      if (apiKeyDraft.trim()) body.apiKey = apiKeyDraft.trim();
-      const data = await adminRequest("/admin/ai-config", { method: "POST", body: JSON.stringify(body) });
-      setAiConfig((prev) => ({ ...prev, engine: data.engine, apiKeyConfigured: data.apiKeyConfigured, model: data.model }));
-      setApiKeyDraft("");
-      setEditingAi(false);
-      setMessage(`\u5DF2\u5207\u6362\u5230 ${data.engine === "deepseek" ? "DeepSeek \u5F15\u64CE" : "\u672C\u5730\u542F\u53D1\u5F0F\u5F15\u64CE"}`);
-    } catch (error2) {
-      setMessage(error2 instanceof Error ? error2.message : "\u4FDD\u5B58\u5931\u8D25");
     }
   }
   async function login(event) {
@@ -2381,48 +2278,15 @@ function TeacherDashboard({ onExit }) {
         ] })
       ] }, item.id)) }),
       /* @__PURE__ */ jsx2("p", { className: "side-label", children: "AI \u70B9\u8BC4\u5F15\u64CE" }),
-      !editingAi ? /* @__PURE__ */ jsxs2("div", { className: "ai-engine-card", children: [
+      /* @__PURE__ */ jsxs2("div", { className: "ai-engine-card", children: [
         /* @__PURE__ */ jsxs2("div", { className: "ai-engine-status", children: [
-          /* @__PURE__ */ jsx2("span", { className: `ai-dot ${aiConfig.engine}` }),
-          /* @__PURE__ */ jsx2("strong", { children: aiConfig.engine === "deepseek" ? "DeepSeek" : "\u672C\u5730\u542F\u53D1\u5F0F" })
+          /* @__PURE__ */ jsx2("span", { className: "ai-dot deepseek" }),
+          /* @__PURE__ */ jsx2("strong", { children: "DeepSeek \xB7 \u670D\u52A1\u7AEF\u6258\u7BA1" })
         ] }),
-        aiConfig.engine === "deepseek" && /* @__PURE__ */ jsxs2("p", { className: "ai-engine-meta", children: [
-          "\u6A21\u578B\uFF1A",
-          aiConfig.model,
+        /* @__PURE__ */ jsxs2("p", { className: "ai-engine-meta", children: [
+          "\u6D4B\u8BC4\u5B8C\u6210\u540E\u81EA\u52A8\u751F\u6210\u4E03\u9879\u63D0\u793A\u8BCD\u5206\u6790",
           /* @__PURE__ */ jsx2("br", {}),
-          "Key\uFF1A",
-          aiConfig.apiKeyMasked || "\u672A\u914D\u7F6E"
-        ] }),
-        aiConfig.engine === "heuristic" && /* @__PURE__ */ jsx2("p", { className: "ai-engine-meta", children: "\u79BB\u7EBF\u53EF\u7528 \xB7 \u4E0D\u6D88\u8017 API \u989D\u5EA6" }),
-        /* @__PURE__ */ jsx2("button", { className: "text-button", onClick: () => {
-          setEditingAi(true);
-          setEngineDraft(aiConfig.engine);
-          setModelDraft(aiConfig.model);
-        }, children: "\u5207\u6362\u5F15\u64CE" })
-      ] }) : /* @__PURE__ */ jsxs2("form", { className: "ai-engine-form", onSubmit: saveAiConfig, children: [
-        /* @__PURE__ */ jsxs2("label", { children: [
-          "\u5F15\u64CE",
-          /* @__PURE__ */ jsxs2("select", { value: engineDraft, onChange: (e) => setEngineDraft(e.target.value), children: [
-            /* @__PURE__ */ jsx2("option", { value: "heuristic", children: "\u672C\u5730\u542F\u53D1\u5F0F" }),
-            /* @__PURE__ */ jsx2("option", { value: "deepseek", children: "DeepSeek" })
-          ] })
-        ] }),
-        engineDraft === "deepseek" && /* @__PURE__ */ jsxs2(Fragment2, { children: [
-          /* @__PURE__ */ jsxs2("label", { children: [
-            "\u6A21\u578B",
-            /* @__PURE__ */ jsx2("input", { value: modelDraft, onChange: (e) => setModelDraft(e.target.value), placeholder: "deepseek-chat" })
-          ] }),
-          /* @__PURE__ */ jsxs2("label", { children: [
-            "API Key",
-            /* @__PURE__ */ jsx2("input", { type: "password", value: apiKeyDraft, onChange: (e) => setApiKeyDraft(e.target.value), placeholder: aiConfig.apiKeyConfigured ? "\u7559\u7A7A\u4FDD\u7559\u539F key\uFF0C\u8F93\u5165\u5219\u66FF\u6362" : "sk-..." })
-          ] })
-        ] }),
-        /* @__PURE__ */ jsxs2("div", { className: "row-buttons", children: [
-          /* @__PURE__ */ jsx2("button", { type: "button", className: "text-button", onClick: () => {
-            setEditingAi(false);
-            setApiKeyDraft("");
-          }, children: "\u53D6\u6D88" }),
-          /* @__PURE__ */ jsx2("button", { type: "submit", className: "primary-button small", children: "\u4FDD\u5B58" })
+          "\u670D\u52A1\u5F02\u5E38\u65F6\u81EA\u52A8\u56DE\u9000\u5230\u672C\u5730\u542F\u53D1\u5F0F\u5206\u6790"
         ] })
       ] }),
       /* @__PURE__ */ jsxs2("div", { className: "sidebar-footer", children: [
@@ -2631,7 +2495,6 @@ function AssessmentApp() {
   const [loading, setLoading] = useState3(false);
   const [seed] = useState3(() => Math.floor(Math.random() * 1e5));
   const [idempotencyKey, setIdempotencyKey] = useState3(() => makeIdempotencyKey());
-  const [aiEngine, setAiEngine] = useState3("heuristic");
   useEffect2(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("teacher") === "1") {
@@ -2648,14 +2511,6 @@ function AssessmentApp() {
     if (code) {
       setSessionCode(code.toUpperCase());
       void loadSession(code.toUpperCase());
-    }
-    try {
-      const raw = window.localStorage.getItem("ai-assessment:ai-config");
-      if (raw) {
-        const cfg = JSON.parse(raw);
-        if (cfg.engine === "deepseek" && cfg.apiKey) setAiEngine("deepseek");
-      }
-    } catch {
     }
   }, []);
   useEffect2(() => {
@@ -2774,12 +2629,11 @@ function AssessmentApp() {
   } });
   if (mode === "report" && report) return /* @__PURE__ */ jsx3(ReportView, { report, message });
   if (mode === "generating") {
-    const engineHint = report?.aiEngine || (aiEngine === "deepseek" ? "deepseek" : "\u672C\u5730\u542F\u53D1\u5F0F\u8BC4\u5206");
     return /* @__PURE__ */ jsx3("main", { className: "center-page", children: /* @__PURE__ */ jsxs3("section", { className: "generating-card", children: [
       /* @__PURE__ */ jsx3("div", { className: "pulse-mark", children: "AI" }),
-      /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: aiEngine === "deepseek" ? "DeepSeek \u6B63\u5728\u751F\u6210" : "AI \u6B63\u5728\u6309\u4E03\u9879\u91CF\u8868\u5206\u6790" }),
+      /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "DeepSeek \u6B63\u5728\u751F\u6210" }),
       /* @__PURE__ */ jsx3("h1", { children: "\u7B54\u5377\u5DF2\u7ECF\u5B89\u5168\u4FDD\u5B58" }),
-      /* @__PURE__ */ jsx3("p", { children: aiEngine === "deepseek" ? "DeepSeek \u6B63\u5728\u6309\u4E03\u9879\u56FA\u5B9A\u91CF\u8868\u5206\u6790\u4F60\u7684\u63D0\u793A\u8BCD\uFF0C\u901A\u5E38\u53EA\u9700\u8981\u5341\u51E0\u79D2\u3002" : "\u672C\u5730\u542F\u53D1\u5F0F\u8BC4\u5206\u5F15\u64CE\u6B63\u5728\u5206\u6790\u4F60\u7684\u63D0\u793A\u8BCD\uFF0C\u901A\u5E38\u53EA\u9700\u8981 1-2 \u79D2\u3002" }),
+      /* @__PURE__ */ jsx3("p", { children: "DeepSeek \u6B63\u5728\u6309\u4E03\u9879\u56FA\u5B9A\u91CF\u8868\u5206\u6790\u4F60\u7684\u63D0\u793A\u8BCD\uFF1B\u670D\u52A1\u5F02\u5E38\u65F6\u81EA\u52A8\u56DE\u9000\u5230\u672C\u5730\u542F\u53D1\u5F0F\u5206\u6790\u3002" }),
       /* @__PURE__ */ jsx3("div", { className: "loading-line", children: /* @__PURE__ */ jsx3("span", {}) })
     ] }) });
   }
@@ -2808,9 +2662,7 @@ function AssessmentApp() {
           profile.role,
           "\u3011\u7684 ",
           totalQuestions,
-          " \u9053\u9898",
-          aiEngine === "deepseek" && "\uFF0CAI \u70B9\u8BC4\u5C06\u4F7F\u7528 DeepSeek \u5F15\u64CE",
-          aiEngine === "heuristic" && "\uFF0CAI \u70B9\u8BC4\u5C06\u4F7F\u7528\u672C\u5730\u542F\u53D1\u5F0F\u8BC4\u5206"
+          " \u9053\u9898 \uFF0CAI \u70B9\u8BC4\u5C06\u7531 DeepSeek \u5206\u6790\uFF0C\u670D\u52A1\u5F02\u5E38\u65F6\u81EA\u52A8\u56DE\u9000"
         ] }),
         message && /* @__PURE__ */ jsx3("p", { className: "error-text", children: message }),
         /* @__PURE__ */ jsx3("button", { className: "primary-button", type: "submit", children: "\u5F00\u59CB\u6D4B\u8BC4" })

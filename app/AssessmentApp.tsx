@@ -39,7 +39,6 @@ export function AssessmentApp() {
   const [loading, setLoading] = useState(false);
   const [seed] = useState(() => Math.floor(Math.random() * 100000));
   const [idempotencyKey, setIdempotencyKey] = useState(() => makeIdempotencyKey());
-  const [aiEngine, setAiEngine] = useState("heuristic");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -58,14 +57,6 @@ export function AssessmentApp() {
       setSessionCode(code.toUpperCase());
       void loadSession(code.toUpperCase());
     }
-    // 读取 AI 引擎显示
-    try {
-      const raw = window.localStorage.getItem("ai-assessment:ai-config");
-      if (raw) {
-        const cfg = JSON.parse(raw);
-        if (cfg.engine === "deepseek" && cfg.apiKey) setAiEngine("deepseek");
-      }
-    } catch {}
   }, []);
 
   // 当 profile.roleKey 改变时，重置 current 到 0（避免越界）
@@ -191,14 +182,13 @@ export function AssessmentApp() {
   if (mode === "teacher") return <TeacherDashboard onExit={() => { history.replaceState({}, "", "/"); setMode("landing"); }} />;
   if (mode === "report" && report) return <ReportView report={report} message={message} />;
   if (mode === "generating") {
-    const engineHint = report?.aiEngine || (aiEngine === "deepseek" ? "deepseek" : "本地启发式评分");
     return (
       <main className="center-page">
         <section className="generating-card">
           <div className="pulse-mark">AI</div>
-          <p className="eyebrow">{aiEngine === "deepseek" ? "DeepSeek 正在生成" : "AI 正在按七项量表分析"}</p>
+          <p className="eyebrow">DeepSeek 正在生成</p>
           <h1>答卷已经安全保存</h1>
-          <p>{aiEngine === "deepseek" ? "DeepSeek 正在按七项固定量表分析你的提示词，通常只需要十几秒。" : "本地启发式评分引擎正在分析你的提示词，通常只需要 1-2 秒。"}</p>
+          <p>DeepSeek 正在按七项固定量表分析你的提示词；服务异常时自动回退到本地启发式分析。</p>
           <div className="loading-line"><span /></div>
         </section>
       </main>
@@ -221,8 +211,7 @@ export function AssessmentApp() {
             {profile.role && (
               <div className="role-hint">
                 你将看到针对【{profile.role}】的 {totalQuestions} 道题
-                {aiEngine === "deepseek" && "，AI 点评将使用 DeepSeek 引擎"}
-                {aiEngine === "heuristic" && "，AI 点评将使用本地启发式评分"}
+                ，AI 点评将由 DeepSeek 分析，服务异常时自动回退
               </div>
             )}
             {message && <p className="error-text">{message}</p>}
