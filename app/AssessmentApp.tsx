@@ -1,15 +1,19 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { OPEN_PROMPT, questions, shuffledOptions } from "@/lib/assessment.mjs";
+import {
+  getQuestionsForRole,
+  getOpenPromptForRole,
+  roles as roleOptions,
+  shuffledOptions,
+  dimensions,
+} from "@/lib/assessment.mjs";
 import { apiRequest } from "@/lib/api.mjs";
 import { ReportView } from "./components/ReportView";
 import { TeacherDashboard } from "./components/TeacherDashboard";
 
 type SessionInfo = { id: string; code: string; title: string; cohort: string; status: string };
-type Profile = { name: string; role: string };
-
-const roles = ["教师", "课程顾问", "班主任", "管培生", "教学管理", "其他"];
+type Profile = { name: string; role: string; roleKey: string };
 
 function makeIdempotencyKey() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -17,11 +21,16 @@ function makeIdempotencyKey() {
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+function findRoleKey(label) {
+  const match = roleOptions.find((r) => r.label === label);
+  return match ? match.id : "teacher";
+}
+
 export function AssessmentApp() {
   const [mode, setMode] = useState<"landing" | "profile" | "assessment" | "generating" | "report" | "teacher">("landing");
   const [sessionCode, setSessionCode] = useState("");
   const [session, setSession] = useState<SessionInfo | null>(null);
-  const [profile, setProfile] = useState<Profile>({ name: "", role: "" });
+  const [profile, setProfile] = useState<Profile>({ name: "", role: "", roleKey: "teacher" });
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [openPrompt, setOpenPrompt] = useState("");
   const [current, setCurrent] = useState(0);
@@ -30,6 +39,7 @@ export function AssessmentApp() {
   const [loading, setLoading] = useState(false);
   const [seed] = useState(() => Math.floor(Math.random() * 100000));
   const [idempotencyKey, setIdempotencyKey] = useState(() => makeIdempotencyKey());
+  const [aiEngine, setAiEngine] = useState("heuristic");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -48,7 +58,22 @@ export function AssessmentApp() {
       setSessionCode(code.toUpperCase());
       void loadSession(code.toUpperCase());
     }
+    // 读取 AI 引擎显示
+    try {
+      const raw = window.localStorage.getItem("ai-assessment:ai-config");
+      if (raw) {
+        const cfg = JSON.parse(raw);
+        if (cfg.engine === "deepseek" && cfg.apiKey) setAiEngine("deepseek");
+      }
+    } catch {}
   }, []);
+
+  // 当 profile.roleKey 改变时，重置 current 到 0（避免越界）
+  useEffect(() => {
+    if (mode === "assessment" || mode === "profile") {
+      setCurrent(0);
+    }
+  }, [profile.roleKey, mode]);
 
   useEffect(() => {
     if (!session?.code || mode !== "assessment") return;
@@ -56,7 +81,9 @@ export function AssessmentApp() {
     localStorage.setItem(`ai-assessment-draft:${session.code}`, JSON.stringify(draft));
   }, [answers, current, idempotencyKey, mode, openPrompt, profile, session?.code]);
 
-  const question = questions[current];
+  const questionList = useMemo(() => getQuestionsForRole(profile.roleKey), [profile.roleKey]);
+  const totalQuestions = questionList.length;
+  const question = current < totalQuestions ? questionList[current] : null;
   const displayedOptions = useMemo(
     () => (question ? shuffledOptions(question, seed + current * 101) : []),
     [current, question, seed],
@@ -71,7 +98,13 @@ export function AssessmentApp() {
       const rawDraft = localStorage.getItem(`ai-assessment-draft:${code}`);
       if (rawDraft) {
         const draft = JSON.parse(rawDraft);
-        setProfile(draft.profile || { name: "", role: "" });
+        if (draft.profile) {
+          setProfile({
+            name: draft.profile.name || "",
+            role: draft.profile.role || "",
+            roleKey: draft.profile.roleKey || findRoleKey(draft.profile.role),
+          });
+        }
         setAnswers(draft.answers || {});
         setOpenPrompt(draft.openPrompt || "");
         setCurrent(Number(draft.current) || 0);
@@ -124,6 +157,7 @@ export function AssessmentApp() {
   }
 
   function chooseAnswer(optionId: string) {
+    if (!question) return;
     setAnswers((value) => ({ ...value, [question.id]: optionId }));
   }
 
@@ -139,7 +173,8 @@ export function AssessmentApp() {
           sessionCode: session.code,
           participantName: profile.name.trim(),
           participantRole: profile.role,
-          answers: questions.map((item) => answers[item.id]),
+          participantRoleKey: profile.roleKey,
+          answers: questionList.map((item) => answers[item.id] || ""),
           openPrompt: openPrompt.trim(),
           idempotencyKey,
         }),
@@ -156,13 +191,14 @@ export function AssessmentApp() {
   if (mode === "teacher") return <TeacherDashboard onExit={() => { history.replaceState({}, "", "/"); setMode("landing"); }} />;
   if (mode === "report" && report) return <ReportView report={report} message={message} />;
   if (mode === "generating") {
+    const engineHint = report?.aiEngine || (aiEngine === "deepseek" ? "deepseek" : "本地启发式评分");
     return (
       <main className="center-page">
         <section className="generating-card">
           <div className="pulse-mark">AI</div>
-          <p className="eyebrow">正在生成个人画像</p>
+          <p className="eyebrow">{aiEngine === "deepseek" ? "DeepSeek 正在生成" : "AI 正在按七项量表分析"}</p>
           <h1>答卷已经安全保存</h1>
-          <p>DeepSeek 正按七项固定量表分析你的提示词，通常只需要十几秒。</p>
+          <p>{aiEngine === "deepseek" ? "DeepSeek 正在按七项固定量表分析你的提示词，通常只需要十几秒。" : "本地启发式评分引擎正在分析你的提示词，通常只需要 1-2 秒。"}</p>
           <div className="loading-line"><span /></div>
         </section>
       </main>
@@ -175,10 +211,20 @@ export function AssessmentApp() {
         <section className="form-card">
           <p className="eyebrow">{session.cohort || "现场测评"}</p>
           <h1>{session.title}</h1>
-          <p className="muted">填写真实信息，个人结果仅教师后台可见；课堂投屏只展示匿名分布。</p>
+          <p className="muted">填写真实信息。我们会根据你的岗位出针对性题目，个人结果仅教师后台可见；课堂投屏只展示匿名分布。</p>
           <form onSubmit={beginAssessment} className="stack-form">
             <label>姓名<input value={profile.name} maxLength={30} onChange={(e) => setProfile({ ...profile, name: e.target.value })} placeholder="请输入姓名" /></label>
-            <label>岗位<select value={profile.role} onChange={(e) => setProfile({ ...profile, role: e.target.value })}><option value="">请选择岗位</option>{roles.map((role) => <option key={role}>{role}</option>)}</select></label>
+            <label>岗位<select value={profile.role} onChange={(e) => {
+              const label = e.target.value;
+              setProfile({ ...profile, role: label, roleKey: findRoleKey(label) });
+            }}><option value="">请选择岗位（不同岗位会出不同题）</option>{roleOptions.map((r) => <option key={r.id} value={r.label}>{r.label}</option>)}</select></label>
+            {profile.role && (
+              <div className="role-hint">
+                你将看到针对【{profile.role}】的 {totalQuestions} 道题
+                {aiEngine === "deepseek" && "，AI 点评将使用 DeepSeek 引擎"}
+                {aiEngine === "heuristic" && "，AI 点评将使用本地启发式评分"}
+              </div>
+            )}
             {message && <p className="error-text">{message}</p>}
             <button className="primary-button" type="submit">开始测评</button>
           </form>
@@ -189,19 +235,19 @@ export function AssessmentApp() {
 
   if (mode === "assessment" && question) {
     const selected = answers[question.id];
-    const progress = Math.round(((current + 1) / 17) * 100);
+    const progress = Math.round(((current + 1) / totalQuestions) * 100);
     return (
       <main className="assessment-page">
         <header className="assessment-header">
-          <div><span className="brand-mark">AI</span><span>{session?.title}</span></div>
-          <span>{current + 1} / 17</span>
+          <div><span className="brand-mark">AI</span><span>{session?.title} · {profile.role}</span></div>
+          <span>{current + 1} / {totalQuestions}</span>
         </header>
         <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
         <section className="question-card">
           <p className="eyebrow">{question.kind === "ability" ? "能力情境题" : "使用偏好题 · 没有标准答案"}</p>
           <h1>{question.prompt}</h1>
           <div className="option-list">
-            {displayedOptions.map((option: any, index: number) => (
+            {displayedOptions.map((option, index) => (
               <button key={option.id} type="button" className={`option-button ${selected === option.id ? "selected" : ""}`} onClick={() => chooseAnswer(option.id)}>
                 <span>{String.fromCharCode(65 + index)}</span>{option.text}
               </button>
@@ -216,19 +262,19 @@ export function AssessmentApp() {
     );
   }
 
-  if (mode === "assessment" && current === questions.length) {
+  if (mode === "assessment" && current === totalQuestions) {
     return (
       <main className="assessment-page">
-        <header className="assessment-header"><div><span className="brand-mark">AI</span><span>真实提示词任务</span></div><span>17 / 17</span></header>
+        <header className="assessment-header"><div><span className="brand-mark">AI</span><span>真实提示词任务</span></div><span>{totalQuestions} / {totalQuestions}</span></header>
         <div className="progress-track"><span style={{ width: "100%" }} /></div>
         <section className="question-card open-card">
           <p className="eyebrow">开放题 · 按你真实会使用的方式作答</p>
           <h1>请写出一段你会直接交给 AI 的完整提示词</h1>
-          <div className="scenario-box">{OPEN_PROMPT}</div>
+          <div className="scenario-box">{getOpenPromptForRole(profile.roleKey)}</div>
           <textarea value={openPrompt} onChange={(e) => setOpenPrompt(e.target.value)} maxLength={2000} placeholder="请在这里写下完整提示词……" />
           <div className="textarea-meta"><span>至少30字</span><span>{openPrompt.length} / 2000</span></div>
           {message && <p className="error-text">{message}</p>}
-          <div className="question-actions"><button className="text-button" onClick={() => setCurrent(questions.length - 1)}>上一题</button><button className="primary-button" onClick={() => void submitAssessment()}>提交并生成画像</button></div>
+          <div className="question-actions"><button className="text-button" onClick={() => setCurrent(totalQuestions - 1)}>上一题</button><button className="primary-button" onClick={() => void submitAssessment()}>提交并生成画像</button></div>
         </section>
       </main>
     );
@@ -239,10 +285,10 @@ export function AssessmentApp() {
       <nav className="top-nav"><div><span className="brand-mark">AI</span><strong>非凡 · AI学习实验室</strong></div><button className="text-button" onClick={() => { history.replaceState({}, "", "?teacher=1"); setMode("teacher"); }}>教师后台</button></nav>
       <section className="hero-grid">
         <div className="hero-copy">
-          <p className="eyebrow">AI能力与风格测评 · ASSESSMENT V1</p>
+          <p className="eyebrow">AI能力与风格测评 · ASSESSMENT V2</p>
           <h1>看见你的<br /><em>AI 工作方式</em></h1>
-          <p className="hero-description">16 道选择题，加上一段真实提示词任务。约10分钟，获得六维能力、成长等级与AI使用风格画像。</p>
-          <div className="feature-row"><span>六维能力雷达</span><span>三轴8型风格</span><span>提示词升级建议</span></div>
+          <p className="hero-description">根据你的岗位（教师 / 顾问 / 班主任 / 管培生 / 教学管理）出 22 道针对性题，加上一段真实提示词任务。约10分钟，获得六维能力、成长等级与AI使用风格画像。</p>
+          <div className="feature-row"><span>按岗位出题</span><span>六维能力雷达</span><span>三轴8型风格</span><span>提示词升级建议</span></div>
         </div>
         <form className="join-card" onSubmit={enterSession}>
           <div className="join-number">01</div>

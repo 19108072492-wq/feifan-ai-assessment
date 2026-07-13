@@ -21,8 +21,14 @@ export function TeacherDashboard({ onExit }: { onExit: () => void }) {
   const [cohort, setCohort] = useState("");
   const [filter, setFilter] = useState({ level: "", style: "", role: "" });
   const [message, setMessage] = useState("");
+  const [aiConfig, setAiConfig] = useState<{ engine: string; apiKeyMasked: string; apiKeyConfigured: boolean; model: string }>({ engine: "heuristic", apiKeyMasked: "", apiKeyConfigured: false, model: "deepseek-chat" });
+  const [editingAi, setEditingAi] = useState(false);
+  const [engineDraft, setEngineDraft] = useState("heuristic");
+  const [apiKeyDraft, setApiKeyDraft] = useState("");
+  const [modelDraft, setModelDraft] = useState("deepseek-chat");
 
   useEffect(() => { if (token) void loadSessions(); }, [token]);
+  useEffect(() => { if (token) void loadAiConfig(); }, [token]);
   useEffect(() => {
     if (!selectedId || !token) return;
     void loadDashboard(selectedId);
@@ -43,6 +49,30 @@ export function TeacherDashboard({ onExit }: { onExit: () => void }) {
   async function loadDashboard(id: string, quiet = false) {
     try { const data = await adminRequest(`/admin/sessions/${id}/dashboard`); setDashboard(data.dashboard); }
     catch (error) { if (!quiet) setMessage(error instanceof Error ? error.message : "看板读取失败"); }
+  }
+  async function loadAiConfig() {
+    try {
+      const data = await adminRequest("/admin/ai-config");
+      setAiConfig(data);
+      setEngineDraft(data.engine);
+      setModelDraft(data.model);
+    } catch (error) { /* 静默 */ }
+  }
+  async function saveAiConfig(event: FormEvent) {
+    event.preventDefault();
+    setMessage("");
+    try {
+      const body: any = { engine: engineDraft, model: modelDraft };
+      // 只有用户输入了新 key 才发送
+      if (apiKeyDraft.trim()) body.apiKey = apiKeyDraft.trim();
+      const data = await adminRequest("/admin/ai-config", { method: "POST", body: JSON.stringify(body) });
+      setAiConfig((prev) => ({ ...prev, engine: data.engine, apiKeyConfigured: data.apiKeyConfigured, model: data.model }));
+      setApiKeyDraft("");
+      setEditingAi(false);
+      setMessage(`已切换到 ${data.engine === "deepseek" ? "DeepSeek 引擎" : "本地启发式引擎"}`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "保存失败");
+    }
   }
   async function login(event: FormEvent) {
     event.preventDefault(); setMessage("");
@@ -94,6 +124,34 @@ export function TeacherDashboard({ onExit }: { onExit: () => void }) {
         <button className="new-session-button" onClick={() => setSelectedId("new")}>＋ 创建新场次</button>
         <p className="side-label">测评场次</p>
         <div className="session-list">{sessions.map((item) => <button key={item.id} className={selectedId === item.id ? "active" : ""} onClick={() => setSelectedId(item.id)}><span>{item.title}</span><small>{item.cohort || item.code} · {item.submissionCount || 0}人</small></button>)}</div>
+        <p className="side-label">AI 点评引擎</p>
+        {!editingAi ? (
+          <div className="ai-engine-card">
+            <div className="ai-engine-status">
+              <span className={`ai-dot ${aiConfig.engine}`} />
+              <strong>{aiConfig.engine === "deepseek" ? "DeepSeek" : "本地启发式"}</strong>
+            </div>
+            {aiConfig.engine === "deepseek" && (
+              <p className="ai-engine-meta">模型：{aiConfig.model}<br />Key：{aiConfig.apiKeyMasked || "未配置"}</p>
+            )}
+            {aiConfig.engine === "heuristic" && <p className="ai-engine-meta">离线可用 · 不消耗 API 额度</p>}
+            <button className="text-button" onClick={() => { setEditingAi(true); setEngineDraft(aiConfig.engine); setModelDraft(aiConfig.model); }}>切换引擎</button>
+          </div>
+        ) : (
+          <form className="ai-engine-form" onSubmit={saveAiConfig}>
+            <label>引擎<select value={engineDraft} onChange={(e) => setEngineDraft(e.target.value)}><option value="heuristic">本地启发式</option><option value="deepseek">DeepSeek</option></select></label>
+            {engineDraft === "deepseek" && (
+              <>
+                <label>模型<input value={modelDraft} onChange={(e) => setModelDraft(e.target.value)} placeholder="deepseek-chat" /></label>
+                <label>API Key<input type="password" value={apiKeyDraft} onChange={(e) => setApiKeyDraft(e.target.value)} placeholder={aiConfig.apiKeyConfigured ? "留空保留原 key，输入则替换" : "sk-..."} /></label>
+              </>
+            )}
+            <div className="row-buttons">
+              <button type="button" className="text-button" onClick={() => { setEditingAi(false); setApiKeyDraft(""); }}>取消</button>
+              <button type="submit" className="primary-button small">保存</button>
+            </div>
+          </form>
+        )}
         <div className="sidebar-footer"><button onClick={onExit}>测评首页</button><button onClick={logout}>退出登录</button></div>
       </aside>
       <section className="admin-content">
@@ -103,7 +161,7 @@ export function TeacherDashboard({ onExit }: { onExit: () => void }) {
           <div className="dashboard-grid"><article className="chart-card"><div className="card-heading"><div><p className="eyebrow">匿名班级画像</p><h2>六维能力均值</h2></div></div><div className="bar-chart">{dimensions.map((dimension) => <div key={dimension.id}><span>{dimension.label}</span><div><i style={{ width: `${dashboard.summary.dimensionAverages?.[dimension.id] || 0}%` }} /></div><strong>{dashboard.summary.dimensionAverages?.[dimension.id] || 0}</strong></div>)}</div></article><article className="qr-card"><p className="eyebrow">学员入口</p><h2>扫码开始测评</h2><QrImage url={publicUrl} /><strong>{dashboard.session.code}</strong><p>投屏时只展示本二维码和匿名统计</p></article></div>
           <div className="distribution-grid"><article className="chart-card"><p className="eyebrow">成长等级</p><h2>四级分布</h2><div className="distribution-list">{Object.entries(dashboard.summary.levelDistribution || {}).map(([key, value]) => <div key={key}><span>{key}</span><strong>{String(value)}人</strong></div>)}</div></article><article className="chart-card"><p className="eyebrow">AI使用风格</p><h2>8型分布</h2><div className="distribution-list compact">{Object.entries(dashboard.summary.styleDistribution || {}).map(([key, value]) => <div key={key}><span>{key}</span><strong>{String(value)}人</strong></div>)}</div></article></div>
           {dashboard.summary.scoredTotal > 0 && <div className="distribution-grid"><article className="chart-card"><p className="eyebrow">共同优势</p><h2>班级当前较强维度</h2><div className="distribution-list">{dashboard.summary.commonStrengths?.map((item: any) => <div key={item.label}><span>{item.label}</span><strong>{item.score}</strong></div>)}</div></article><article className="chart-card"><p className="eyebrow">共同短板</p><h2>课堂优先训练维度</h2><div className="distribution-list">{dashboard.summary.commonGaps?.map((item: any) => <div key={item.label}><span>{item.label}</span><strong>{item.score}</strong></div>)}</div></article></div>}
-          <article className="submission-card"><div className="card-heading"><div><p className="eyebrow">仅教师可见</p><h2>个人报告</h2></div><div className="filters"><select value={filter.level} onChange={(e) => setFilter({ ...filter, level: e.target.value })}><option value="">全部等级</option><option>L1</option><option>L2</option><option>L3</option><option>L4</option></select><select value={filter.style} onChange={(e) => setFilter({ ...filter, style: e.target.value })}><option value="">全部风格</option>{["EAF","EAV","ECF","ECV","DAF","DAV","DCF","DCV"].map((code) => <option key={code}>{code}</option>)}</select><select value={filter.role} onChange={(e) => setFilter({ ...filter, role: e.target.value })}><option value="">全部岗位</option>{[...new Set((dashboard.submissions || []).map((item: any) => item.participantRole))].map((role: any) => <option key={role}>{role}</option>)}</select></div></div><div className="table-wrap"><table><thead><tr><th>学员</th><th>岗位</th><th>等级</th><th>风格</th><th>AI点评</th><th>提交时间</th><th /></tr></thead><tbody>{submissions.map((item: any) => <tr key={item.id}><td><strong>{item.participantName}</strong></td><td>{item.participantRole}</td><td>{item.levelCode ? `${item.levelCode} · ${item.levelName}` : "生成中"}</td><td>{item.styleCode} · {item.styleName}</td><td><span className={`status ${item.aiStatus}`}>{item.aiStatus === "complete" ? "已生成" : item.aiStatus === "processing" ? "生成中" : "待重试"}</span></td><td>{new Date(item.submittedAt).toLocaleString("zh-CN")}</td><td>{item.aiStatus === "failed" ? <button className="text-button" onClick={() => void retrySubmission(item.id)}>重新生成</button> : <a href={`/?report=${item.reportToken}`} target="_blank">查看报告</a>}</td></tr>)}</tbody></table></div></article>
+          <article className="submission-card"><div className="card-heading"><div><p className="eyebrow">仅教师可见</p><h2>个人报告</h2></div><div className="filters"><select value={filter.level} onChange={(e) => setFilter({ ...filter, level: e.target.value })}><option value="">全部等级</option><option>L1</option><option>L2</option><option>L3</option><option>L4</option></select><select value={filter.style} onChange={(e) => setFilter({ ...filter, style: e.target.value })}><option value="">全部风格</option>{["EAF","EAV","ECF","ECV","DAF","DAV","DCF","DCV"].map((code) => <option key={code}>{code}</option>)}</select><select value={filter.role} onChange={(e) => setFilter({ ...filter, role: e.target.value })}><option value="">全部岗位</option>{[...new Set((dashboard.submissions || []).map((item: any) => item.participantRole))].map((role: any) => <option key={role}>{role}</option>)}</select></div></div><div className="table-wrap"><table><thead><tr><th>学员</th><th>岗位</th><th>等级</th><th>风格</th><th>AI点评</th><th>提交时间</th><th /></tr></thead><tbody>{submissions.map((item: any) => <tr key={item.id}><td><strong>{item.participantName}</strong></td><td>{item.participantRole}</td><td>{item.levelCode ? `${item.levelCode} · ${item.levelName}` : "生成中"}</td><td>{item.styleCode} · {item.styleName}</td><td><span className={`status ${item.aiStatus}`}>{item.aiStatus === "complete" ? "已生成" : item.aiStatus === "processing" ? "生成中" : "待重试"}</span>{item.aiStatus === "complete" && item.aiEngine && <small className="engine-tag">{item.aiEngine === "deepseek" ? "DS" : "本地"}</small>}</td><td>{new Date(item.submittedAt).toLocaleString("zh-CN")}</td><td>{item.aiStatus === "failed" ? <button className="text-button" onClick={() => void retrySubmission(item.id)}>重新生成</button> : <a href={`/?report=${item.reportToken}`} target="_blank">查看报告</a>}</td></tr>)}</tbody></table></div></article>
         </> : <div className="empty-admin"><h2>选择一场测评</h2><p>查看实时班级画像，或创建新的课堂场次。</p></div>}
         {message && <p className="admin-message">{message}</p>}
       </section>

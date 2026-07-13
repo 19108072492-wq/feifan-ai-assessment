@@ -119,8 +119,15 @@ export function ReportView({ report, message = "" }: { report: any; message?: st
             <article><p className="panel-label">你的优势</p><ul>{analysis.strengths?.map((item: string) => <li key={item}>{item}</li>)}</ul></article>
             <article><p className="panel-label">容易忽略</p><ul>{analysis.risks?.map((item: string) => <li key={item}>{item}</li>)}</ul></article>
           </section>
+          {analysis.improvements && analysis.improvements.length > 0 && (
+            <section className="report-section">
+              <p className="panel-label">具体改进点</p>
+              <h2>逐项给你提示，哪里再加一点</h2>
+              <ul className="improvement-list">{analysis.improvements.map((item: string, index: number) => <li key={index}>{item}</li>)}</ul>
+            </section>
+          )}
           <section className="report-section upgraded-prompt">
-            <p className="panel-label">DeepSeek升级版提示词</p>
+            <p className="panel-label">{report.aiEngine === "deepseek" ? "DeepSeek 升级版提示词" : "AI 升级版提示词"}</p>
             <h2>保留你的原意，补齐可执行信息</h2>
             <pre>{analysis.upgradedPrompt}</pre>
           </section>

@@ -1,0 +1,9 @@
+name = "ai-assessment-proxy"
+main = "worker.js"
+compatibility_date = "2024-12-01"
+
+# 部署后 Worker URL 类似：
+# https://ai-assessment-proxy.<your-subdomain>.workers.dev
+
+# 设置 API key（不要写在这里！用命令行设置）：
+# npx wrangler secret put DEEPSEEK_API_KEY
