@@ -12,12 +12,12 @@ import {
   roles,
 } from "../lib/assessment.mjs";
 
-test("ships the locked assessment-v2 role question banks", () => {
-  assert.equal(ASSESSMENT_VERSION, "assessment-v2");
+test("ships the locked assessment-v3 role question banks", () => {
+  assert.equal(ASSESSMENT_VERSION, "assessment-v3");
   for (const role of roles) {
     const roleQuestions = getQuestionsForRole(role.id);
-    assert.equal(roleQuestions.length, 22);
-    assert.equal(roleQuestions.filter((question) => question.kind === "ability").length, 16);
+    assert.equal(roleQuestions.length, 18);
+    assert.equal(roleQuestions.filter((question) => question.section !== "style").length, 12);
     assert.equal(roleQuestions.filter((question) => question.kind === "style").length, 6);
     assert.ok(roleQuestions.every((question) => question.options.length >= 2));
   }
@@ -77,6 +77,11 @@ test("keeps scoring stable when displayed options are shuffled", () => {
 
 test("combines fixed dimension weights into a 60/40 final score", () => {
   const strongestAnswers = questions.map((question) => {
+    if (question.id === "f-q3") return question.options.map((option) => option.id);
+    if (question.id === "f-q5") return ["f-q5-mini-core"];
+    if (question.kind === "multi") {
+      return [question.options.find((option) => option.score === 3).id];
+    }
     if (question.kind === "ability") {
       return question.options.find((option) => option.score === 3).id;
     }
@@ -98,7 +103,13 @@ test("combines fixed dimension weights into a 60/40 final score", () => {
 });
 
 test("applies the fixed 60/40 weighting when the two parts differ", () => {
-  const strongestAnswers = questions.map((question) => question.options.at(-1).id);
+  const strongestAnswers = questions.map((question) => {
+    if (question.id === "f-q3") return question.options.map((option) => option.id);
+    if (question.id === "f-q5") return ["f-q5-mini-core"];
+    if (question.kind === "multi") return [question.options.find((option) => option.score === 3).id];
+    if (question.kind === "ability") return question.options.find((option) => option.score === 3).id;
+    return question.options[0].id;
+  });
   const rubric = Object.fromEntries(
     ["audience", "purpose", "inputs", "process", "output", "constraints", "acceptance"].map(
       (key) => [key, 0],
@@ -108,5 +119,6 @@ test("applies the fixed 60/40 weighting when the two parts differ", () => {
   const result = scoreAssessment(strongestAnswers, rubric);
   assert.equal(result.choiceScore, 100);
   assert.equal(result.openScore, 0);
+  assert.equal(result.rawTotalScore, 60);
   assert.equal(result.totalScore, 60);
 });
