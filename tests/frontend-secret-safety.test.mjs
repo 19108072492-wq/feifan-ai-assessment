@@ -20,6 +20,9 @@ test("teacher dashboard exposes backend status but no API key controls", async (
   }
   assert.match(source, /服务端托管/);
   assert.match(source, /自动回退/);
+  assert.match(source, /window\.location\.pathname/);
+  assert.doesNotMatch(source, /origin\}\/\?s=/);
+  assert.doesNotMatch(source, /href=\{`\/\?report=/);
 });
 
 test("browser API layer never stores or accepts a model credential", async () => {

@@ -1,6 +1,6 @@
 /* ============================================================
  * AI 能力与风格测评 — app-bundle.js
- * 自动构建于 2026-07-13T07:05:28.793Z
+ * 自动构建于 2026-07-13T07:07:38.686Z
  * ============================================================ */
 
 /* React 18.3.1 UMD */
@@ -2242,7 +2242,7 @@ function TeacherDashboard({ onExit }) {
     setDashboard(null);
   }
   const submissions = useMemo(() => (dashboard?.submissions || []).filter((item) => (!filter.level || item.levelCode === filter.level) && (!filter.style || item.styleCode === filter.style) && (!filter.role || item.participantRole === filter.role)), [dashboard, filter]);
-  const publicUrl = dashboard ? `${window.location.origin}/?s=${dashboard.session.code}` : "";
+  const publicUrl = dashboard ? `${window.location.origin}${window.location.pathname}?s=${dashboard.session.code}` : "";
   if (!token) return /* @__PURE__ */ jsx2("main", { className: "center-page admin-login", children: /* @__PURE__ */ jsxs2("section", { className: "form-card", children: [
     /* @__PURE__ */ jsx2("button", { className: "text-button back-link", onClick: onExit, children: "\u2190 \u8FD4\u56DE\u6D4B\u8BC4\u9996\u9875" }),
     /* @__PURE__ */ jsx2("p", { className: "eyebrow", children: "\u6559\u5E08\u4E13\u5C5E\u5165\u53E3" }),
@@ -2460,7 +2460,7 @@ function TeacherDashboard({ onExit }) {
                 item.aiStatus === "complete" && item.aiEngine && /* @__PURE__ */ jsx2("small", { className: "engine-tag", children: item.aiEngine === "deepseek" ? "DS" : "\u672C\u5730" })
               ] }),
               /* @__PURE__ */ jsx2("td", { children: new Date(item.submittedAt).toLocaleString("zh-CN") }),
-              /* @__PURE__ */ jsx2("td", { children: item.aiStatus === "failed" ? /* @__PURE__ */ jsx2("button", { className: "text-button", onClick: () => void retrySubmission(item.id), children: "\u91CD\u65B0\u751F\u6210" }) : /* @__PURE__ */ jsx2("a", { href: `/?report=${item.reportToken}`, target: "_blank", children: "\u67E5\u770B\u62A5\u544A" }) })
+              /* @__PURE__ */ jsx2("td", { children: item.aiStatus === "failed" ? /* @__PURE__ */ jsx2("button", { className: "text-button", onClick: () => void retrySubmission(item.id), children: "\u91CD\u65B0\u751F\u6210" }) : /* @__PURE__ */ jsx2("a", { href: `?report=${item.reportToken}`, target: "_blank", children: "\u67E5\u770B\u62A5\u544A" }) })
             ] }, item.id)) })
           ] }) })
         ] })
@@ -2624,7 +2624,7 @@ function AssessmentApp() {
     }
   }
   if (mode === "teacher") return /* @__PURE__ */ jsx3(TeacherDashboard, { onExit: () => {
-    history.replaceState({}, "", "/");
+    history.replaceState({}, "", window.location.pathname);
     setMode("landing");
   } });
   if (mode === "report" && report) return /* @__PURE__ */ jsx3(ReportView, { report, message });

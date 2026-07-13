@@ -179,7 +179,7 @@ export function AssessmentApp() {
     }
   }
 
-  if (mode === "teacher") return <TeacherDashboard onExit={() => { history.replaceState({}, "", "/"); setMode("landing"); }} />;
+  if (mode === "teacher") return <TeacherDashboard onExit={() => { history.replaceState({}, "", window.location.pathname); setMode("landing"); }} />;
   if (mode === "report" && report) return <ReportView report={report} message={message} />;
   if (mode === "generating") {
     return (
