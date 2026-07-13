@@ -1,6 +1,6 @@
 /* ============================================================
  * AI 能力与风格测评 — app-bundle.js
- * 自动构建于 2026-07-13T07:07:38.686Z
+ * 自动构建于 2026-07-13T07:53:07.213Z
  * ============================================================ */
 
 /* React 18.3.1 UMD */
@@ -319,8 +319,8 @@ if (!window.recharts) { window.recharts = {}; }
 
 // app/AssessmentApp.tsx
 const { useEffect: useEffect2, useMemo: useMemo2, useState: useState3 } = window.React;
-// lib/assessment.mjs
-var ASSESSMENT_VERSION = "assessment-v2";
+// lib/assessment-v3.mjs
+var ASSESSMENT_VERSION = "assessment-v3";
 var dimensions = [
   { id: "scene", label: "\u573A\u666F\u5E94\u7528\u529B", weight: 15 },
   { id: "task", label: "\u4EFB\u52A1\u5B9A\u4E49\u529B", weight: 20 },
@@ -330,23 +330,34 @@ var dimensions = [
   { id: "agent", label: "Agent\u8BA4\u77E5\u529B", weight: 15 }
 ];
 var roles = [
-  { id: "teacher", label: "\u6559\u5E08" },
-  { id: "consultant", label: "\u8BFE\u7A0B\u987E\u95EE" },
-  { id: "headteacher", label: "\u73ED\u4E3B\u4EFB" },
-  { id: "trainee", label: "\u7BA1\u57F9\u751F" },
-  { id: "admin", label: "\u6559\u5B66\u7BA1\u7406" }
+  { id: "consultant", label: "\u987E\u95EE", description: "\u8D1F\u8D23\u9500\u552E\u3001\u62DB\u751F\u3001\u54A8\u8BE2" },
+  { id: "coach", label: "\u6559\u7EC3", description: "\u8D1F\u8D23\u5B66\u751F\u670D\u52A1\u3001\u8DDF\u76EF\u3001\u5B66\u4E60\u7763\u67E5\u3001\u4F5C\u4E1A\u8DDF\u8FDB\u3001\u5B66\u4E60\u7BA1\u7406\u7B49" },
+  { id: "teacher", label: "\u6559\u5E08", description: "\u8D1F\u8D23\u6388\u8BFE\u3001\u6559\u5B66\u3001\u6559\u7814\u3001\u8BFE\u7A0B\u8BBE\u8BA1" },
+  { id: "general", label: "\u901A\u7528\u6D4B\u8BC4", description: "\u9002\u7528\u4E8E\u5176\u4ED6\u5C97\u4F4D\u53CA\u65E5\u5E38\u529E\u516C\u573A\u666F" }
 ];
-var abilityQuestion = (id, dimension, prompt, options, scenarioTag) => ({
+var abilityQuestion = (id, section, dimension, prompt, options, scenarioTag) => ({
   id,
   kind: "ability",
+  section,
   dimension,
   prompt,
   scenarioTag,
-  options: options.map((text, score) => ({ id: `${id}-${score}`, text, score }))
+  options: options.map(({ text, score }, index) => ({ id: `${id}-${index}`, text, score }))
+});
+var multiQuestion = (id, section, dimension, prompt, options, strategy, scenarioTag) => ({
+  id,
+  kind: "multi",
+  section,
+  dimension,
+  prompt,
+  strategy,
+  scenarioTag,
+  options
 });
 var styleQuestion = (id, prompt, axis, weight, left, right, scenarioTag) => ({
   id,
   kind: "style",
+  section: "style",
   axis,
   weight,
   prompt,
@@ -356,556 +367,359 @@ var styleQuestion = (id, prompt, axis, weight, left, right, scenarioTag) => ({
     { id: `${id}-${right.pole.toLowerCase()}`, text: right.text, pole: right.pole }
   ]
 });
-var teacherQuestions = [
-  abilityQuestion("t-q1", "scene", "\u7528 AI \u51C6\u5907\u4E00\u8282\u300A\u8272\u5F69\u6784\u6210\u300B\u65B0\u8BFE\u65F6\uFF0C\u4F60\u6700\u81EA\u7136\u7684\u8D77\u70B9\u662F\uFF1F", [
-    "\u5148\u8BA9 AI \u5217\u51FA\u8FD1\u4E09\u5E74\u8BFE\u6807\u5BF9\u672C\u8BFE\u7684\u8981\u6C42\uFF0C\u518D\u5BF9\u7167\u6559\u6750\u9009\u5B9A\u91CD\u96BE\u70B9",
-    "\u76F4\u63A5\u8BA9 AI \u5199\u4E00\u4EFD\u5B8C\u6574\u6559\u6848\uFF0C\u62FF\u5230\u8BFE\u5802\u4E0A\u518D\u8FB9\u7528\u8FB9\u6539",
-    "\u628A\u5F80\u5C4A\u5B66\u751F\u4F5C\u4E1A\u3001\u8BFE\u4EF6\u622A\u56FE\u3001\u672C\u5C4A\u5B66\u60C5\u4E22\u7ED9 AI\uFF0C\u8BA9\u5B83\u7ED9\u4E09\u7248\u98CE\u683C\u4E0D\u540C\u7684\u5F15\u5165",
-    "\u5148\u5728\u5907\u8BFE\u672C\u4E0A\u5199\u672C\u8BFE 3 \u4E2A\u6838\u5FC3\u95EE\u9898\uFF0C\u518D\u8BA9 AI \u56F4\u7ED5\u8FD9 3 \u4E2A\u95EE\u9898\u627E\u6848\u4F8B\u548C\u7EC3\u4E60"
-  ], "lesson-prep"),
-  abilityQuestion("t-q2", "scene", "\u6279\u6539\u5168\u73ED 48 \u4EFD\u8BFE\u540E\u4F5C\u4E1A\u65F6\uFF0CAI \u600E\u4E48\u7528\u6700\u987A\u624B\uFF1F", [
-    "\u8BA9 AI \u6309\u6211\u7ED9\u7684\u8BC4\u5206\u6807\u51C6\u5148\u6253\u4E00\u4E2A\u521D\u7A3F\uFF0C\u6211\u53EA\u770B\u6807\u6CE8\u7684\u6263\u5206\u70B9",
-    "\u53EA\u628A\u660E\u663E\u6709\u4EE3\u8868\u6027\u7684 5-6 \u4EFD\u4EA4\u7ED9 AI \u770B\uFF0C\u8BA9\u5B83\u603B\u7ED3\u5171\u6027\u9519\u9898",
-    "\u5148\u7528 AI \u5206\u7C7B\u6574\u7406\u5168\u90E8\u4F5C\u4E1A\u7684\u5E38\u89C1\u9519\u9898\uFF0C\u6211\u518D\u9488\u5BF9\u9519\u9898\u5199\u8BB2\u8BC4",
-    "AI \u5E2E\u6211\u505A\u9519\u9898\u7EDF\u8BA1\u548C\u5206\u6863\uFF0C\u6211\u4EB2\u81EA\u5199\u6BCF\u4E2A\u5B66\u751F\u7684\u4E2A\u6027\u5316\u8BC4\u8BED"
-  ], "grading"),
-  abilityQuestion("t-q3", "task", "\u5B66\u6821\u8BA9\u4F60\u9762\u5411\u9AD8\u4E00\u5F00\u4E00\u95E8\u65B0\u9009\u4FEE\u8BFE\uFF0C\u4F60\u6253\u7B97\u600E\u6837\u7528 AI \u89C4\u5212\uFF1F", [
-    "\u5148\u8BA9 AI \u51FA\u4E00\u4EFD\u5B8C\u6574\u7684\u8BFE\u7A0B\u7EB2\u8981\uFF0C\u6211\u518D\u6311\u80FD\u843D\u5730\u7684\u90E8\u5206",
-    "\u628A\u5B66\u6821\u7684\u57F9\u517B\u76EE\u6807\u3001\u53EF\u6392\u8BFE\u65F6\u6570\u3001\u5BF9\u63A5\u7684\u5927\u5B66\u4E13\u4E1A\u53D1\u7ED9 AI\uFF0C\u8BA9\u5B83\u7ED9\u4E00\u7248\u5B8C\u6574\u65B9\u6848",
-    "\u6211\u548C AI \u53CD\u590D\u8BA8\u8BBA\u8BFE\u7A0B\u76EE\u6807\u3001\u5B66\u751F\u57FA\u7840\u3001\u8BC4\u4EF7\u65B9\u5F0F\uFF0C\u4E09\u56DB\u8F6E\u540E\u5B9A\u4E0B\u7248\u672C",
-    "\u6574\u7406\u5B66\u6821\u6587\u4EF6\u3001\u672C\u5C4A\u5B66\u751F\u753B\u50CF\u3001\u5BB6\u957F\u671F\u5F85\u6E05\u5355\uFF0C\u6807\u6CE8\u6765\u6E90\u540E\u518D\u8BA9 AI \u8BBE\u8BA1"
-  ], "course-design"),
-  abilityQuestion("t-q4", "task", "\u5B66\u751F\u5411\u4F60\u6C42\u52A9\uFF1AAI \u5E2E\u4ED6\u5199\u7684\u4F5C\u6587\u88AB\u8001\u5E08\u8D28\u7591\u4E0D\u50CF\u4ED6\u5199\u7684\u3002\u4F60\u5EFA\u8BAE\u4ED6\uFF1F", [
-    "\u628A AI \u5F53\u8349\u7A3F\uFF0C\u81EA\u5DF1\u91CD\u5199\u4E00\u904D\u540E\u4EA4\u4E0A\u53BB",
-    "\u8BA9 AI \u6539\u5230\u4ED6\u770B\u4E0D\u51FA AI \u75D5\u8FF9\u4E3A\u6B62\uFF0C\u4ED6\u518D\u80CC\u4E0B\u6765",
-    "\u548C AI \u4E00\u8D77\u5934\u8111\u98CE\u66B4\u627E\u89D2\u5EA6\uFF0C\u7531\u4ED6\u4EB2\u81EA\u5199\u6BCF\u4E00\u6BB5\uFF0CAI \u53EA\u5E2E\u4ED6\u68C0\u67E5\u8BED\u6CD5\u548C\u903B\u8F91",
-    "\u8BA9\u4ED6\u628A\u4F5C\u6587\u8BC4\u5224\u6807\u51C6\u3001\u81EA\u5DF1\u7684\u5199\u4F5C\u4E60\u60EF\u3001\u5BF9\u9898\u76EE\u7684\u7406\u89E3\u6574\u7406\u597D\u518D\u8BA9 AI \u534F\u52A9\uFF0CAI \u8F93\u51FA\u7684\u6BCF\u6BB5\u90FD\u6CE8\u660E\u662F\u53C2\u8003\u8FD8\u662F\u5F15\u7528"
-  ], "academic-honesty"),
-  abilityQuestion("t-q5", "data", "\u5B66\u6821\u6536\u96C6\u4E86 5 \u5E74\u5B66\u751F\u6210\u7EE9\u548C\u5347\u5B66\u7ED3\u679C\u6570\u636E\uFF0C\u4F60\u60F3\u7528 AI \u5206\u6790\u5B66\u60C5\u3002\u4F60\u4F1A\uFF1F", [
-    "\u628A\u5168\u8868\u4E22\u7ED9 AI\uFF0C\u8BA9\u5B83\u81EA\u5DF1\u627E\u89C4\u5F8B",
-    "\u53EA\u6311\u6211\u8FD9\u5B66\u671F\u4EFB\u6559\u73ED\u7EA7\u7684\u6570\u636E\u8BF7 AI \u5206\u6790",
-    "\u5148\u8131\u654F\u3001\u6807\u6CE8\u6570\u636E\u6765\u6E90\u548C\u91C7\u96C6\u5E74\u4EFD\uFF0C\u518D\u5206\u6279\u7ED9 AI \u627E\u6559\u5B66\u76F8\u5173\u89C4\u5F8B",
-    "\u6309\u5B66\u5E74\u5EA6\u3001\u73ED\u7EA7\u3001\u5B66\u79D1\u62C6\u5206\u6574\u7406\u6210\u591A\u4EFD\u5E26\u8BF4\u660E\u7684\u5B50\u8868\uFF0CAI \u6BCF\u4EFD\u8F93\u51FA\u90FD\u5FC5\u987B\u6807\u6CE8\u5F15\u7528\u4E86\u54EA\u51E0\u884C"
-  ], "data-governance"),
-  abilityQuestion("t-q6", "data", 'AI \u603B\u7ED3\u8BF4"\u8FD1\u4E09\u5E74\u7F8E\u672F\u73ED\u5347\u5B66\u7387\u660E\u663E\u63D0\u5347"\uFF0C\u4F46\u4F60\u8BB0\u5F97\u4E2D\u95F4\u6709\u653F\u7B56\u53D8\u5316\u3002\u4F60\u4F1A\uFF1F', [
-    "AI \u5E94\u8BE5\u6CA1\u9519\uFF0C\u53EF\u80FD\u662F\u6211\u8BB0\u6DF7\u4E86",
-    "\u7528 AI \u603B\u7ED3\u7684\u90A3\u53E5\u8BDD\u4F5C\u4E3A\u53C2\u8003\u8D44\u6599",
-    "\u8BA9 AI \u6307\u51FA\u5177\u4F53\u662F\u54EA\u4E09\u5E74\u3001\u54EA\u4E9B\u73ED\u7EA7\u3001\u63D0\u5347\u4E86\u51E0\u4E2A\u767E\u5206\u70B9",
-    "\u56DE\u5230\u539F\u59CB\u6570\u636E\uFF0C\u6309\u653F\u7B56\u53D8\u5316\u524D\u540E\u5206\u6BB5\u91CD\u7B97\uFF0C\u5E76\u6807\u6CE8\u4E0D\u540C\u5E74\u4EFD\u7684\u53EF\u6BD4\u6027"
-  ], "fact-check"),
-  abilityQuestion("t-q7", "collaboration", "AI \u5199\u51FA\u7684\u6559\u6848\u548C\u5B66\u751F\u5B9E\u9645\u6C34\u5E73\u5DEE\u8DDD\u5F88\u5927\uFF0C\u4F60\u901A\u5E38\u4F1A\uFF1F", [
-    "\u6E05\u7A7A\u5BF9\u8BDD\uFF0C\u91CD\u5199\u63D0\u793A\u8BCD\u8BA9 AI \u518D\u6765\u4E00\u6B21",
-    '\u76F4\u63A5\u544A\u8BC9 AI "\u4E0D\u7B26\u5408\u5B66\u60C5\uFF0C\u91CD\u65B0\u5199"\uFF0C\u76F4\u5230\u5B83\u5199\u5BF9',
-    "\u5217\u51FA 3-5 \u6761\u5177\u4F53\u95EE\u9898\uFF08\u54EA\u4E9B\u73AF\u8282\u8D85\u7EB2\u3001\u54EA\u7C7B\u5B66\u751F\u8DDF\u4E0D\u4E0A\uFF09\uFF0C\u8BA9 AI \u6309\u6761\u4FEE\u6539",
-    "\u5BF9\u7167\u5B66\u60C5\u8868\u3001\u8BFE\u7A0B\u6807\u51C6\u3001\u6559\u5B66\u76EE\u6807\u9010\u9879\u6253\u5206\u7ED9 AI \u770B\uFF0C\u5206\u8F6E\u6539\u5E76\u4FDD\u7559\u7248\u672C\u5BF9\u6BD4"
-  ], "iterative-edit"),
-  abilityQuestion("t-q8", "verification", "AI \u5E2E\u4F60\u8BBE\u8BA1\u4E86\u4E00\u4EFD\u5355\u5143\u6D4B\u8BD5\u5377\uFF0C\u4F60\u4F1A\u5982\u4F55\u9A8C\u6536\uFF1F", [
-    "\u770B\u4E00\u904D\u9898\u76EE\u987A\u4E0D\u987A\uFF0C\u80FD\u7528\u5C31\u53D1",
-    "\u53EA\u68C0\u67E5\u7B54\u6848\u5BF9\u4E0D\u5BF9",
-    "\u6311\u51E0\u9053\u91CD\u70B9\u9898\u548C\u540C\u4E8B\u8BA8\u8BBA\u4E00\u4E0B",
-    "\u5BF9\u7167\u8BFE\u6807\u8003\u70B9\u3001\u9898\u91CF\u3001\u96BE\u5EA6\u68AF\u5EA6\u3001\u8FD1\u4E09\u5E74\u771F\u9898\u51FA\u9898\u65B9\u5411\u505A\u6838\u5BF9\uFF0C\u5BF9\u4E89\u8BAE\u9898\u6807\u6CE8\u7406\u7531"
-  ], "review-test"),
-  abilityQuestion("t-q9", "verification", '\u4F60\u5728\u5B66\u751F\u4F5C\u4E1A\u91CC\u53D1\u73B0 AI \u5199\u4E86"\u8FBE\xB7\u82AC\u5947\u662F\u6587\u827A\u590D\u5174\u540E\u671F\u4EE3\u8868\u4EBA\u7269"\uFF0C\u5176\u5B9E\u5E94\u8BE5\u662F\u76DB\u671F\u3002\u4F60\u4F1A\uFF1F', [
-    "\u6539\u6389\u8FD9\u4E00\u53E5\u5C31\u884C",
-    "\u628A\u8FD9\u4E00\u6BB5\u91CD\u5199",
-    "\u8BA9 AI \u7ED9\u51FA\u8FD9\u53E5\u8BDD\u7684\u51FA\u5904",
-    "\u6807\u8BB0\u8FD9\u662F\u4E8B\u5B9E\u6027\u9519\u8BEF\uFF0C\u9650\u5B9A AI \u5FC5\u987B\u4F9D\u636E\u6307\u5B9A\u8D44\u6599\u4F5C\u7B54\uFF0C\u4FEE\u6B63\u540E\u8BA9 AI \u5217\u51FA\u8FD8\u6709\u6CA1\u6709\u540C\u7C7B\u95EE\u9898"
-  ], "fact-discipline"),
-  abilityQuestion("t-q10", "agent", "\u5B66\u6821\u5E0C\u671B\u5F15\u5165 AI \u52A9\u6559\u5E2E\u4F60\u5907\u8BFE\u3001\u6539\u4F5C\u4E1A\u3002\u4F60\u8BA4\u4E3A AI \u52A9\u6559\u6700\u5408\u7406\u7684\u89D2\u8272\u662F\uFF1F", [
-    "\u6BD4\u641C\u7D22\u5F15\u64CE\u806A\u660E\u7684\u5DE5\u5177\uFF0C\u53EF\u4EE5\u76F4\u63A5\u7528\u5B83\u751F\u6210\u6700\u7EC8\u6750\u6599",
-    "\u80FD\u81EA\u52A8\u51FA\u9898\u6539\u5377\uFF0C\u6211\u8D1F\u8D23\u6700\u540E\u770B\u4E00\u773C",
-    "\u80FD\u8BFB\u6211\u7684\u8BFE\u4EF6\u548C\u8D44\u6599\u3001\u8C03\u7528\u5DE5\u5177\uFF0C\u6309\u6211\u7684\u6307\u4EE4\u51FA\u8349\u7A3F",
-    "\u5728\u6211\u660E\u786E\u4EFB\u52A1\u3001\u4E0A\u4E0B\u6587\u3001\u53EF\u7528\u8D44\u6599\u3001\u7981\u533A\u3001\u4EA4\u4ED8\u6807\u51C6\u540E\u5206\u6B65\u63A8\u8FDB\uFF0CAI \u7ED9\u7684\u6BCF\u4E00\u6B65\u6211\u90FD\u80FD\u62D2\u7EDD\u548C\u4FEE\u8BA2"
-  ], "agent-understanding"),
-  abilityQuestion("t-q11", "scene", "\u5B66\u751F\u8BF7\u4F60\u63A8\u8350\u4E00\u4E2A AI \u5DE5\u5177\u505A\u65E5\u5E38\u4F5C\u4E1A\u8F85\u52A9\uFF0C\u4F60\u901A\u5E38\uFF1F", [
-    "\u628A\u5E02\u9762\u4E0A 3-4 \u4E2A\u4E3B\u6D41\u5DE5\u5177\u90FD\u4ECB\u7ECD\u7ED9\u4ED6\uFF0C\u8BA9\u4ED6\u81EA\u5DF1\u9009",
-    "\u63A8\u8350\u6211\u7528\u8FC7\u89C9\u5F97\u9760\u8C31\u7684\u90A3\u4E00\u4E2A",
-    "\u548C\u4ED6\u804A\u804A\u4ED6\u5E38\u7528\u4EC0\u4E48\u5DE5\u5177\u3001\u505A\u4EC0\u4E48\u4F5C\u4E1A\u3001\u5BB6\u957F\u600E\u4E48\u7BA1\uFF0C\u518D\u7ED9\u5EFA\u8BAE",
-    "\u6574\u7406\u4E00\u4EFD\u5BF9\u7167\u8868\uFF1A\u6BCF\u4E2A\u5DE5\u5177\u7684\u80FD\u529B\u3001\u9690\u79C1\u653F\u7B56\u3001\u662F\u5426\u7559\u75D5\u3001\u5BB6\u957F\u80FD\u5426\u770B\u5230\uFF0C\u6309\u4ED6\u60C5\u51B5\u7ED9\u63A8\u8350"
-  ], "tool-recommend"),
-  abilityQuestion("t-q12", "data", '\u6559\u7814\u7EC4\u8981\u505A\u4E00\u4EFD"AI \u5728\u8BFE\u5802\u7684\u4F7F\u7528\u89C4\u8303"\uFF0C\u4F60\u8D21\u732E\u7684\u90E8\u5206\u4F1A\uFF1F', [
-    "\u4ECE\u6211\u81EA\u5DF1\u73ED\u7684\u5C1D\u8BD5\u91CC\u603B\u7ED3",
-    "\u5728\u7F51\u4E0A\u627E\u51E0\u7BC7\u522B\u4EBA\u7684\u89C4\u8303\u6539\u4E00\u6539",
-    "\u548C\u7EC4\u91CC\u8001\u5E08\u5F00\u4E00\u6B21\u8BA8\u8BBA\u4F1A\uFF0C\u518D\u8BA9 AI \u5E2E\u6574\u7406",
-    "\u6536\u96C6\u7EC4\u91CC\u5404\u73ED\u7684\u771F\u5B9E\u4F7F\u7528\u6848\u4F8B\u3001\u5BB6\u957F\u53CD\u9988\u3001\u5B66\u751F\u95EE\u9898\uFF0C\u6309\u5B66\u6BB5\u5206\u7C7B\u540E\u8BA9 AI \u6574\u7406\u89C4\u8303\u521D\u7A3F"
-  ], "policy-coauthor"),
-  abilityQuestion("t-q13", "task", '\u5BB6\u957F\u4F1A\u8981\u8BB2 30 \u5206\u949F"AI \u65F6\u4EE3\u5B69\u5B50\u7684\u80FD\u529B\u57F9\u517B"\uFF0C\u4F60\u51C6\u5907\u600E\u4E48\u5199\u8BB2\u7A3F\uFF1F', [
-    "\u76F4\u63A5\u8BA9 AI \u5199\u4E00\u7A3F\uFF0C\u6211\u5FF5\u5B8C\u5C31\u884C",
-    "\u5148\u5217\u51E0\u4E2A\u6211\u7279\u522B\u60F3\u8BB2\u7684\u89C2\u70B9\uFF0C\u8BA9 AI \u4E32\u6210\u7A3F",
-    "\u548C AI \u4E00\u8D77\u5934\u8111\u98CE\u66B4\u5F00\u573A\u6848\u4F8B\u548C\u4E92\u52A8\u8BBE\u8BA1\uFF0C\u518D\u8BA9 AI \u5199\u5B8C\u6574\u8BB2\u7A3F",
-    "\u5148\u5B9A 3 \u4E2A\u6838\u5FC3\u4FE1\u606F\u3001\u76EE\u6807\u5BB6\u957F\u753B\u50CF\u3001\u4E0D\u80FD\u8BB2\u7684\u7981\u533A\uFF0C\u518D\u8BA9 AI \u56F4\u7ED5\u8FD9\u51E0\u70B9\u5199\u5E76\u63D0\u4F9B\u6570\u636E\u6765\u6E90"
-  ], "parent-talk"),
-  abilityQuestion("t-q14", "collaboration", "AI \u5E2E\u4F60\u505A\u7684\u8BFE\u4EF6\u91CC\uFF0C\u6848\u4F8B\u548C\u5B66\u6821\u6240\u5728\u57CE\u5E02\u5B8C\u5168\u4E0D\u76F8\u5173\u3002\u4F60\u4F1A\uFF1F", [
-    "\u628A\u4E0D\u76F8\u5173\u7684\u6848\u4F8B\u5220\u4E86",
-    "\u8BA9 AI \u5168\u90E8\u6362\u6210\u6211\u6240\u5728\u57CE\u5E02\u7684\u6848\u4F8B",
-    "\u8BA9 AI \u6539 3-5 \u4E2A\u6700\u663E\u773C\u7684\u6848\u4F8B",
-    "\u628A\u57CE\u5E02\u7279\u5F81\u3001\u5B66\u6821\u7279\u8272\u3001\u53EF\u5F15\u7528\u8D44\u6E90\u6574\u7406\u597D\uFF0C\u8BA9 AI \u6309\u5B66\u6821\u5B9E\u9645\u91CD\u5199\u5E76\u4FDD\u7559\u53EF\u590D\u7528\u6A21\u677F"
-  ], "localize"),
-  abilityQuestion("t-q15", "verification", "AI \u7ED9\u4F60\u4E00\u4EFD\u5B66\u751F\u4F5C\u6587\u8BC4\u5206\uFF085 \u5206\u5236\uFF09\uFF0C\u5206\u6570\u96C6\u4E2D\u5728 4-4.5 \u5206\uFF0C\u5206\u5E03\u5F88\u96C6\u4E2D\u3002\u4F60\u4F1A\uFF1F", [
-    "\u5206\u6570\u90FD\u5DEE\u4E0D\u591A\uFF0C\u5E94\u8BE5\u6CA1\u95EE\u9898",
-    "\u6574\u4F53\u770B\u4E00\u4E0B\u5206\u6570\uFF0C\u6311\u51E0\u4EFD\u590D\u8BC4",
-    "\u8BA9 AI \u628A\u8BC4\u5206\u4F9D\u636E\u5217\u51FA\u6765",
-    "\u8981\u6C42 AI \u540C\u65F6\u8F93\u51FA\u6BCF\u7BC7\u7684\u6263\u5206\u70B9\u3001\u4EAE\u70B9\u548C\u603B\u8BC4\uFF0C\u5E76\u548C\u6211\u81EA\u5DF1\u7684\u8BC4\u5206\u76F2\u6837\u6BD4\u5BF9\uFF0C\u6807\u8BB0 5 \u5206\u4EE5\u4E0A\u5DEE\u8DDD\u7684\u7BC7\u76EE"
-  ], "grade-distribution"),
-  abilityQuestion("t-q16", "agent", '\u5B66\u6821\u60F3\u8BD5\u4E00\u4E2A"AI \u81EA\u52A8\u51FA\u6708\u8003\u5377"\u7684 Agent\u3002\u4F60\u6700\u62C5\u5FC3\uFF1F', [
-    "\u4F1A\u4E0D\u4F1A\u51FA\u592A\u7B80\u5355\u7684\u9898",
-    "\u5B66\u751F\u4F1A\u4E0D\u4F1A\u76F4\u63A5\u6284\u7B54\u6848",
-    "AI \u80FD\u4E0D\u80FD\u771F\u7684\u51CF\u5C11\u6211\u7684\u5DE5\u4F5C\u91CF",
-    "\u5B83\u7684\u9898\u76EE\u8303\u56F4\u3001\u96BE\u5EA6\u68AF\u5EA6\u3001\u7B54\u6848\u552F\u4E00\u6027\u3001\u9519\u9898\u6EAF\u6E90\u662F\u5426\u7B26\u5408\u6211\u4EEC\u6708\u8003\u7684\u76EE\u7684"
-  ], "agent-trust"),
-  styleQuestion("t-q17", "\u63A5\u89E6\u4E00\u95E8\u65B0\u5B66\u79D1\u7684 AI \u5DE5\u5177\u65F6\uFF0C\u4F60\u66F4\u81EA\u7136\u7684\u505A\u6CD5\u662F\uFF1F", "explorationExecution", 2, { pole: "E", text: "\u5148\u62FF\u51E0\u4E2A\u73ED\u7EA7\u8BD5\u4E0D\u540C\u7528\u6CD5\uFF0C\u770B\u54EA\u79CD\u6700\u53D7\u6B22\u8FCE" }, { pole: "D", text: "\u5148\u770B\u5B98\u65B9\u6559\u7A0B\u548C\u522B\u4EBA\u7684\u4F7F\u7528\u6848\u4F8B\uFF0C\u518D\u5B9A\u4E00\u4E2A\u6700\u7A33\u7684\u65B9\u6848" }, "style-newtool"),
-  styleQuestion("t-q18", "AI \u7ED9\u4F60 3 \u5957\u8BFE\u4EF6\u98CE\u683C\u8BA9\u4F60\u9009\uFF0C\u4F60\u66F4\u503E\u5411\uFF1F", "explorationExecution", 1, { pole: "E", text: "3 \u5957\u90FD\u8BA9 AI \u5404\u81EA\u53D1\u5C55\u4E00\u7248\u518D\u6BD4\u8F83" }, { pole: "D", text: "\u9009\u4E00\u7248\u6700\u63A5\u8FD1\u6211\u98CE\u683C\u7684\uFF0C\u8BA9 AI \u7EE7\u7EED\u5B8C\u5584" }, "style-choose"),
-  styleQuestion("t-q19", "\u4F60\u5E0C\u671B AI \u5E2E\u4F60\u5199\u6559\u5B66\u8BBE\u8BA1\u7684\u65B9\u5F0F\u662F\uFF1F", "assignCocreate", 2, { pole: "A", text: "\u6211\u5199\u5B8C\u5927\u7EB2\u540E\u7ED9 AI \u5B8C\u6574\u6307\u4EE4\uFF0C\u8BA9\u5B83\u4E00\u7248\u51FA\u5B8C" }, { pole: "C", text: "\u6211\u548C AI \u8FB9\u8BA8\u8BBA\u8FB9\u6539\uFF0C\u6BCF\u4E2A\u73AF\u8282\u90FD\u8FC7\u4E00\u4E0B" }, "style-mode"),
-  styleQuestion("t-q20", "AI \u5199\u51FA\u7684\u7B2C\u4E00\u7248\u6559\u5B66\u8BBE\u8BA1\u548C\u4F60\u9884\u671F\u5DEE\u8DDD\u8F83\u5927\u65F6\uFF0C\u4F60\u66F4\u4E60\u60EF\uFF1F", "assignCocreate", 1, { pole: "A", text: "\u4E00\u6B21\u6027\u628A\u8981\u6539\u7684\u70B9\u5217\u6E05\u695A\uFF0C\u8BA9 AI \u91CD\u5199" }, { pole: "C", text: "\u5148\u8BA8\u8BBA\u54EA\u4E9B\u662F\u5173\u952E\u95EE\u9898\uFF0C\u518D\u51B3\u5B9A\u600E\u4E48\u6539" }, "style-fix"),
-  styleQuestion("t-q21", "AI \u5E2E\u4F60\u505A\u51FA\u4E00\u4EFD\u53EF\u7528\u7684\u8BFE\u4EF6\u540E\uFF0C\u4F60\u66F4\u503E\u5411\uFF1F", "fastVerify", 2, { pole: "F", text: "\u5148\u5728\u4E0B\u4E00\u8282\u8BFE\u5C0F\u8303\u56F4\u7528\uFF0C\u6839\u636E\u5B66\u751F\u53CD\u5E94\u518D\u6539" }, { pole: "V", text: "\u5148\u548C\u6559\u7814\u7EC4\u8BA8\u8BBA\u901A\u8FC7\uFF0C\u518D\u8FDB\u8BFE\u5802" }, "style-validate"),
-  styleQuestion("t-q22", "\u5B66\u6821\u5F15\u5165\u4E00\u4E2A\u65B0\u7684 AI \u5E73\u53F0\u65F6\uFF0C\u4F60\u66F4\u53EF\u80FD\uFF1F", "fastVerify", 1, { pole: "F", text: "\u9A6C\u4E0A\u62FF\u4E00\u4E2A\u73ED\u8BD5\u7528\u4E00\u5468\uFF0C\u770B\u6548\u679C" }, { pole: "V", text: "\u5148\u770B\u9690\u79C1\u534F\u8BAE\u3001\u6570\u636E\u5F52\u5C5E\u3001\u5B66\u751F\u4F7F\u7528\u6761\u6B3E\u518D\u51B3\u5B9A" }, "style-rollout")
+var COMMON_QUESTIONS = [
+  abilityQuestion("f-q1", "foundation", "scene", "\u8FC7\u53BB\u4E00\u4E2A\u6708\uFF0C\u4F60\u4F7F\u7528 AI \u7684\u60C5\u51B5\u66F4\u63A5\u8FD1\u54EA\u4E00\u79CD\uFF1F", [
+    { text: "\u9047\u5230\u641C\u7D22\u6216\u5199\u4F5C\u4EFB\u52A1\u65F6\u5076\u5C14\u7528\u4E00\u6B21", score: 0 },
+    { text: "\u6BCF\u5468\u4F1A\u5728\u51E0\u7C7B\u56FA\u5B9A\u4EFB\u52A1\u4E2D\u4F7F\u7528\u51E0\u6B21", score: 1 },
+    { text: "\u591A\u6570\u5DE5\u4F5C\u65E5\u90FD\u4F1A\u7528\u6765\u5904\u7406\u771F\u5B9E\u4EFB\u52A1", score: 2 },
+    { text: "\u5DF2\u5F62\u6210\u56FA\u5B9A\u6D41\u7A0B\u5E76\u6301\u7EED\u590D\u7528\u548C\u4F18\u5316", score: 3 }
+  ], "usage-frequency"),
+  multiQuestion("f-q2", "foundation", "agent", "\u4E0B\u9762\u54EA\u4E9B AI \u5DE5\u5177\u662F\u4F60\u7ECF\u5E38\u5B9E\u9645\u4F7F\u7528\u7684\uFF1F", [
+    { id: "f-q2-deepseek", text: "DeepSeek", score: 1, family: "model" },
+    { id: "f-q2-doubao", text: "\u8C46\u5305", score: 1, family: "model" },
+    { id: "f-q2-kimi", text: "Kimi", score: 1, family: "model" },
+    { id: "f-q2-qwen", text: "\u901A\u4E49\u5343\u95EE", score: 1, family: "model" },
+    { id: "f-q2-yuanbao", text: "\u817E\u8BAF\u5143\u5B9D", score: 1, family: "model" },
+    { id: "f-q2-chatgpt", text: "ChatGPT", score: 1, family: "model" },
+    { id: "f-q2-claude", text: "Claude", score: 1, family: "model" },
+    { id: "f-q2-gemini", text: "Gemini", score: 1, family: "model" },
+    { id: "f-q2-coze", text: "\u6263\u5B50 / Coze", score: 2, family: "agent" },
+    { id: "f-q2-feishu", text: "\u98DE\u4E66\u667A\u80FD\u4F19\u4F34", score: 2, family: "agent" },
+    { id: "f-q2-dify", text: "Dify", score: 3, family: "workflow" },
+    { id: "f-q2-n8n", text: "n8n", score: 3, family: "workflow" },
+    { id: "f-q2-cursor", text: "Cursor", score: 3, family: "coding" },
+    { id: "f-q2-codex", text: "Codex", score: 3, family: "coding" },
+    { id: "f-q2-claude-code", text: "Claude Code", score: 3, family: "coding" }
+  ], "tool-depth", "tool-inventory"),
+  multiQuestion("f-q3", "foundation", "scene", "\u4F60\u66FE\u7ECF\u7528 AI \u5B9E\u9645\u5B8C\u6210\u8FC7\u54EA\u4E9B\u7C7B\u578B\u7684\u4EFB\u52A1\uFF1F", [
+    { id: "f-q3-writing", text: "\u6587\u6848\u3001\u603B\u7ED3\u6216\u90AE\u4EF6", score: 1, family: "content" },
+    { id: "f-q3-research", text: "\u8D44\u6599\u641C\u7D22\u4E0E\u4FE1\u606F\u6574\u7406", score: 1, family: "research" },
+    { id: "f-q3-slides", text: "PPT\u3001\u8BB2\u7A3F\u6216\u6C47\u62A5\u6750\u6599", score: 1, family: "delivery" },
+    { id: "f-q3-data", text: "\u8868\u683C\u3001\u6570\u636E\u6216\u6279\u91CF\u5904\u7406", score: 1, family: "data" },
+    { id: "f-q3-media", text: "\u56FE\u7247\u3001\u89C6\u9891\u6216\u97F3\u9891\u5185\u5BB9", score: 1, family: "media" },
+    { id: "f-q3-service", text: "\u5BA2\u6237\u6216\u5B66\u751F\u670D\u52A1\u4EFB\u52A1", score: 1, family: "service" },
+    { id: "f-q3-knowledge", text: "\u77E5\u8BC6\u5E93\u6216\u8D44\u6599\u95EE\u7B54", score: 1, family: "knowledge" },
+    { id: "f-q3-code", text: "\u7F51\u7AD9\u3001\u7A0B\u5E8F\u6216\u81EA\u52A8\u5316", score: 1, family: "build" }
+  ], "task-breadth", "task-inventory"),
+  abilityQuestion("f-q4", "foundation", "agent", "\u4F60\u73B0\u5728\u66F4\u5E38\u7528\u54EA\u79CD\u65B9\u5F0F\u8BA9 AI \u5B8C\u6210\u4EFB\u52A1\uFF1F", [
+    { text: "\u76F4\u63A5\u63CF\u8FF0\u9700\u6C42\uFF0C\u4E3B\u8981\u770B\u5F53\u6B21\u56DE\u7B54\u662F\u5426\u53EF\u7528", score: 0 },
+    { text: "\u4F7F\u7528\u56FA\u5B9A\u6A21\u677F\uFF0C\u8865\u5145\u80CC\u666F\u540E\u751F\u6210\u5B8C\u6574\u521D\u7A3F", score: 1 },
+    { text: "\u5206\u9636\u6BB5\u63D0\u4F9B\u8D44\u6599\uFF0C\u6309\u53CD\u9988\u591A\u8F6E\u4FEE\u6539\u7ED3\u679C", score: 2 },
+    { text: "\u914D\u7F6E\u89C4\u5219\u4E0E\u5DE5\u5177\uFF0C\u8BA9\u6D41\u7A0B\u81EA\u52A8\u6267\u884C\u5E76\u7559\u75D5", score: 3 }
+  ], "usage-depth"),
+  multiQuestion("f-q5", "foundation", "agent", "\u4E0B\u9762\u54EA\u4E9B\u9879\u76EE\u7ECF\u5386\u7B26\u5408\u4F60\u7684\u771F\u5B9E\u5B8C\u6210\u60C5\u51B5\uFF1F", [
+    { id: "f-q5-none", text: "\u6682\u672A\u5B8C\u6210\u8FC7\u72EC\u7ACB AI \u9879\u76EE", score: 0, family: "none" },
+    { id: "f-q5-template", text: "\u4F53\u9A8C\u6216\u6539\u8FC7\u73B0\u6210\u9879\u76EE\u6A21\u677F", score: 1, family: "template" },
+    { id: "f-q5-website-live", text: "\u4E2A\u4EBA\u7F51\u7AD9\u5DF2\u5B8C\u6210\u5E76\u53EF\u8BBF\u95EE", score: 2, family: "website" },
+    { id: "f-q5-knowledge-active", text: "\u4E2A\u4EBA\u77E5\u8BC6\u5E93\u5DF2\u6301\u7EED\u4F7F\u7528", score: 2, family: "knowledge" },
+    { id: "f-q5-automation-live", text: "\u81EA\u52A8\u5316\u6D41\u7A0B\u5DF2\u7A33\u5B9A\u8FD0\u884C", score: 3, family: "automation" },
+    { id: "f-q5-mini-core", text: "\u53C2\u4E0E\u5C0F\u7A0B\u5E8F\u6838\u5FC3\u529F\u80FD\u5F00\u53D1", score: 3, family: "mini-core" },
+    { id: "f-q5-mini-live", text: "\u53C2\u4E0E\u7684\u5C0F\u7A0B\u5E8F\u5DF2\u8FD0\u884C\u4E0A\u7EBF", score: 3, family: "mini-live" }
+  ], "project-depth", "project-evidence"),
+  abilityQuestion("a-q1", "application", "task", "\u63A5\u5230\u4E00\u4E2A\u6BD4\u8F83\u6A21\u7CCA\u7684\u4EFB\u52A1\u65F6\uFF0C\u4F60\u901A\u5E38\u600E\u6837\u5F00\u59CB\u548C AI \u6C9F\u901A\uFF1F", [
+    { text: "\u5148\u8BA9 AI \u7ED9\u51E0\u4E2A\u65B9\u5411\uFF0C\u518D\u4ECE\u4E2D\u6311\u4E00\u4E2A\u7EE7\u7EED", score: 1 },
+    { text: "\u5148\u8BB2\u6E05\u80CC\u666F\u60C5\u51B5\uFF0C\u518D\u8BF7 AI \u751F\u6210\u5B8C\u6574\u65B9\u6848", score: 2 },
+    { text: "\u5148\u786E\u5B9A\u76EE\u6807\u3001\u5BF9\u8C61\u3001\u4EA4\u4ED8\u7269\u548C\u9A8C\u6536\u65B9\u5F0F", score: 3 },
+    { text: "\u5148\u53D1\u4E00\u53E5\u6838\u5FC3\u9700\u6C42\uFF0C\u6839\u636E\u56DE\u7B54\u518D\u9010\u6B65\u8865\u5145", score: 0 }
+  ], "task-definition"),
+  abilityQuestion("a-q2", "application", "data", "\u9700\u8981 AI \u53C2\u8003\u591A\u4EFD\u8D44\u6599\u5B8C\u6210\u4EFB\u52A1\u65F6\uFF0C\u4F60\u901A\u5E38\u600E\u4E48\u5904\u7406\uFF1F", [
+    { text: "\u6574\u7406\u6765\u6E90\u3001\u7248\u672C\u548C\u7528\u9014\uFF0C\u518D\u5206\u6279\u4EA4\u7ED9 AI", score: 3 },
+    { text: "\u6311\u51E0\u4EFD\u6700\u76F8\u5173\u8D44\u6599\uFF0C\u8BA9 AI \u5148\u505A\u51FA\u521D\u7A3F", score: 1 },
+    { text: "\u628A\u73B0\u6709\u8D44\u6599\u4E00\u8D77\u53D1\u9001\uFF0C\u518D\u8BF4\u660E\u91CD\u70B9\u5185\u5BB9", score: 0 },
+    { text: "\u5148\u8BA9 AI \u5EFA\u8D44\u6599\u6846\u67B6\uFF0C\u518D\u9010\u9879\u8865\u5145\u7F3A\u53E3", score: 2 }
+  ], "context-prep"),
+  abilityQuestion("a-q3", "application", "collaboration", "AI \u7684\u7B2C\u4E00\u7248\u7ED3\u679C\u548C\u9884\u671F\u6709\u5DEE\u8DDD\u65F6\uFF0C\u4F60\u66F4\u5E38\u600E\u4E48\u4FEE\u6539\uFF1F", [
+    { text: "\u6362\u4E00\u4E2A\u6A21\u578B\u91CD\u65B0\u63D0\u95EE\uFF0C\u518D\u6BD4\u8F83\u4E24\u7248\u7ED3\u679C", score: 1 },
+    { text: "\u544A\u8BC9 AI \u91CD\u65B0\u4F18\u5316\uFF0C\u76F4\u5230\u6574\u4F53\u611F\u89C9\u5408\u9002", score: 0 },
+    { text: "\u8865\u5145\u4E00\u4E2A\u53C2\u8003\u6848\u4F8B\uFF0C\u8BF7 AI \u6A21\u4EFF\u5176\u7ED3\u6784", score: 2 },
+    { text: "\u6309\u9A8C\u6536\u9879\u9010\u6761\u53CD\u9988\uFF0C\u5206\u8F6E\u4FEE\u6539\u5E76\u7559\u7248\u672C", score: 3 }
+  ], "iteration"),
+  abilityQuestion("a-q4", "application", "verification", "\u51C6\u5907\u4F7F\u7528 AI \u7ED3\u679C\u5BF9\u5916\u4EA4\u4ED8\u524D\uFF0C\u4F60\u901A\u5E38\u5982\u4F55\u68C0\u67E5\uFF1F", [
+    { text: "\u5FEB\u901F\u901A\u8BFB\u4E00\u904D\uFF0C\u91CD\u70B9\u4FEE\u6539\u8868\u8FBE\u548C\u683C\u5F0F", score: 1 },
+    { text: "\u6309\u6765\u6E90\u3001\u4E8B\u5B9E\u3001\u8FB9\u754C\u548C\u9A8C\u6536\u6E05\u5355\u590D\u6838", score: 3 },
+    { text: "\u8BA9\u53E6\u4E00\u4E2A AI \u590D\u67E5\uFF0C\u518D\u91C7\u7528\u5B83\u7684\u7ED3\u8BBA", score: 2 },
+    { text: "\u4E3B\u8981\u770B\u7ED3\u6784\u662F\u5426\u5B8C\u6574\uFF0C\u7EC6\u8282\u540E\u7EED\u518D\u8C03\u6574", score: 0 }
+  ], "verification"),
+  styleQuestion(
+    "s-q1",
+    "\u9762\u5BF9\u4E00\u4E2A\u5B8C\u5168\u964C\u751F\u7684\u4EFB\u52A1\uFF0C\u4F60\u66F4\u81EA\u7136\u7684\u7B2C\u4E00\u6B65\u662F\uFF1F",
+    "explorationExecution",
+    2,
+    { pole: "E", text: "\u5148\u8BA9 AI \u5C55\u5F00\u51E0\u79CD\u65B9\u5411\uFF0C\u518D\u8FB9\u8BD5\u8FB9\u6536\u655B" },
+    { pole: "D", text: "\u5148\u786E\u8BA4\u76EE\u6807\u4E0E\u8FB9\u754C\uFF0C\u518D\u6309\u6B65\u9AA4\u5411\u524D\u63A8\u8FDB" },
+    "style-start"
+  ),
+  styleQuestion(
+    "s-q2",
+    "AI \u7ED9\u51FA\u4E09\u5957\u90FD\u80FD\u7528\u7684\u65B9\u6848\u65F6\uFF0C\u4F60\u901A\u5E38\u4F1A\uFF1F",
+    "explorationExecution",
+    1,
+    { pole: "E", text: "\u8BA9\u4E09\u5957\u5404\u53D1\u5C55\u4E00\u70B9\uFF0C\u518D\u6BD4\u8F83\u65B0\u7684\u53EF\u80FD" },
+    { pole: "D", text: "\u9009\u6700\u63A5\u8FD1\u76EE\u6807\u7684\u4E00\u5957\uFF0C\u7EE7\u7EED\u6253\u78E8\u4EA4\u4ED8" },
+    "style-choice"
+  ),
+  styleQuestion(
+    "s-q3",
+    "\u4F60\u5E0C\u671B AI \u53C2\u4E0E\u4E00\u9879\u91CD\u8981\u4EFB\u52A1\u7684\u65B9\u5F0F\u662F\uFF1F",
+    "assignCocreate",
+    2,
+    { pole: "A", text: "\u6211\u7ED9\u6E05\u695A\u4EFB\u52A1\u4E0E\u6807\u51C6\uFF0C\u8BA9 AI \u5B8C\u6210\u521D\u7248" },
+    { pole: "C", text: "\u6211\u548C AI \u8FB9\u8BA8\u8BBA\u8FB9\u63A8\u8FDB\uFF0C\u5171\u540C\u5F62\u6210\u7ED3\u679C" },
+    "style-collaboration"
+  ),
+  styleQuestion(
+    "s-q4",
+    "AI \u7684\u601D\u8DEF\u4E0E\u4F60\u4E0D\u540C\u65F6\uFF0C\u4F60\u66F4\u503E\u5411\u600E\u4E48\u5904\u7406\uFF1F",
+    "assignCocreate",
+    1,
+    { pole: "A", text: "\u6574\u7406\u4FEE\u6539\u8981\u6C42\uFF0C\u8BA9 AI \u6309\u8981\u6C42\u91CD\u65B0\u5B8C\u6210" },
+    { pole: "C", text: "\u5148\u8BA8\u8BBA\u5206\u6B67\u539F\u56E0\uFF0C\u518D\u4E00\u8D77\u8C03\u6574\u4EFB\u52A1\u65B9\u5411" },
+    "style-disagreement"
+  ),
+  styleQuestion(
+    "s-q5",
+    "\u5F97\u5230\u4E00\u4EFD\u57FA\u672C\u53EF\u7528\u7684 AI \u6210\u679C\u540E\uFF0C\u4F60\u901A\u5E38\u4F1A\uFF1F",
+    "fastVerify",
+    2,
+    { pole: "F", text: "\u5148\u5728\u5C0F\u8303\u56F4\u771F\u5B9E\u4F7F\u7528\uFF0C\u518D\u6839\u636E\u53CD\u9988\u4F18\u5316" },
+    { pole: "V", text: "\u5148\u7CFB\u7EDF\u68C0\u67E5\u5173\u952E\u98CE\u9669\uFF0C\u518D\u8FDB\u5165\u771F\u5B9E\u4F7F\u7528" },
+    "style-delivery"
+  ),
+  styleQuestion(
+    "s-q6",
+    "\u51C6\u5907\u91C7\u7528\u4E00\u4E2A\u65B0\u7684 AI \u5DE5\u5177\u65F6\uFF0C\u4F60\u66F4\u63A5\u8FD1\uFF1F",
+    "fastVerify",
+    1,
+    { pole: "F", text: "\u5148\u62FF\u4E00\u4E2A\u771F\u5B9E\u4EFB\u52A1\u8BD5\u7528\uFF0C\u770B\u80FD\u5426\u63D0\u6548" },
+    { pole: "V", text: "\u5148\u4E86\u89E3\u6570\u636E\u4E0E\u89C4\u5219\uFF0C\u518D\u51B3\u5B9A\u662F\u5426\u4F7F\u7528" },
+    "style-tool"
+  )
 ];
-var consultantQuestions = [
-  abilityQuestion("c-q1", "scene", "\u4E00\u4F4D\u9AD8\u4E8C\u5BB6\u957F\u6765\u54A8\u8BE2\uFF0C\u5B69\u5B50\u6210\u7EE9\u4E2D\u7B49\u3001\u5BF9\u7F8E\u672F\u6709\u5174\u8DA3\u3002\u4F60\u6700\u81EA\u7136\u7684\u505A\u6CD5\u662F\uFF1F", [
-    "\u76F4\u63A5\u7ED9\u5BB6\u957F\u8BB2\u6211\u4EEC\u5B66\u6821\u7684\u4F18\u52BF\u548C\u5347\u5B66\u6570\u636E",
-    '\u7528 AI \u6574\u7406\u8FD9\u4EFD\u5B69\u5B50\u60C5\u51B5\u5BF9\u5E94\u7684"\u5178\u578B\u6210\u529F\u8DEF\u5F84"\uFF0C\u518D\u9488\u5BF9\u6027\u8BB2',
-    "\u548C AI \u6A21\u62DF\u4E00\u904D\u54A8\u8BE2\u5BF9\u8BDD\uFF0C\u627E\u51FA\u5BB6\u957F\u6700\u5173\u5FC3\u7684\u95EE\u9898\uFF0C\u518D\u9488\u5BF9\u6027\u56DE\u5E94",
-    "\u6574\u7406\u8FD9\u4F4D\u5BB6\u957F\u63D0\u5230\u7684\u4FE1\u606F\uFF08\u5B69\u5B50\u6210\u7EE9\u3001\u5174\u8DA3\u70B9\u3001\u5BB6\u5EAD\u671F\u5F85\uFF09\uFF0C\u8BA9 AI \u7ED9\u51FA\u54A8\u8BE2\u8981\u70B9\u548C\u9700\u8865\u95EE\u7684\u95EE\u9898\u6E05\u5355"
-  ], "consult-parent"),
-  abilityQuestion("c-q2", "scene", "\u4E00\u4E2A\u6708\u5185\u8981\u8DDF 30 \u4F4D\u5BB6\u957F\u6C9F\u901A\uFF0C\u6BCF\u4E2A\u4EBA\u7684\u5173\u6CE8\u70B9\u4E0D\u540C\u3002\u4F60\u4F1A\uFF1F", [
-    "\u7528 AI \u7ED9\u6BCF\u4F4D\u5BB6\u957F\u751F\u6210\u4E00\u4EFD\u4E13\u5C5E\u6C9F\u901A\u8BDD\u672F",
-    "\u53EA\u5BF9\u5176\u4E2D\u6700\u53EF\u80FD\u7B7E\u5355\u7684 5 \u4F4D\u505A\u4E2A\u6027\u5316\u6C9F\u901A",
-    "\u5148\u8BA9 AI \u6309\u5BB6\u957F\u753B\u50CF\u5206 3-4 \u7C7B\uFF0C\u6BCF\u7C7B\u7ED9\u4E00\u5957\u8BDD\u672F\u6A21\u677F\uFF0C\u6211\u518D\u9488\u5BF9\u4E2A\u4EBA\u8C03\u6574",
-    "\u628A 30 \u4F4D\u5BB6\u957F\u7684\u753B\u50CF\u3001\u8DDF\u8FDB\u9636\u6BB5\u3001\u5173\u952E\u7591\u8651\u6574\u7406\u6210\u8868\uFF0C\u8BA9 AI \u6309\u8868\u7ED9\u51FA\u4E0B\u4E00\u6B65\u6C9F\u901A\u91CD\u70B9\u548C\u7981\u5FCC"
-  ], "consult-batch"),
-  abilityQuestion("c-q3", "task", "\u6821\u957F\u8BA9\u4F60\u505A\u4E00\u4EFD\u300A2027 \u5C4A\u62DB\u751F\u65B9\u6848\u300B\uFF0C\u4F60\u6253\u7B97\u600E\u4E48\u7528 AI\uFF1F", [
-    "\u8BA9 AI \u76F4\u63A5\u51FA\u4E00\u4EFD\u5B8C\u6574\u65B9\u6848",
-    "\u6211\u5217\u8981\u70B9\uFF0CAI \u5E2E\u6211\u4E32\u6210\u5B8C\u6574\u6587\u6863",
-    "\u5148\u548C AI \u5934\u8111\u98CE\u66B4\u5B9A\u4F4D\u3001\u5356\u70B9\u3001\u8282\u594F\uFF0C\u518D\u8BA9 AI \u5199\u521D\u7A3F",
-    "\u628A\u53BB\u5E74\u65B9\u6848\u3001\u4ECA\u5E74\u653F\u7B56\u53D8\u5316\u3001\u76EE\u6807\u5BB6\u5EAD\u753B\u50CF\u3001\u9884\u7B97\u3001\u53EF\u7528\u6E20\u9053\u6574\u7406\u597D\uFF0C\u6807\u6CE8\u6BCF\u9879\u6570\u636E\u6765\u6E90\uFF0C\u8BA9 AI \u51FA\u65B9\u6848\u5E76\u4FDD\u7559\u53EF\u8C03\u53C2\u6570"
-  ], "admission-plan"),
-  abilityQuestion("c-q4", "task", '\u5BB6\u957F\u53CD\u590D\u95EE"\u4F60\u4EEC\u548C\u67D0\u673A\u6784\u7684\u533A\u522B"\uFF0CAI \u5E2E\u4F60\u51C6\u5907\u7684\u8BDD\u672F\u54EA\u6761\u66F4\u5408\u9002\uFF1F', [
-    "\u5F3A\u8C03\u6211\u4EEC\u5E08\u8D44\u5F3A\uFF0C\u673A\u6784\u662F\u6D41\u6C34\u7EBF",
-    "\u5217\u51FA\u6211\u4EEC\u548C\u5BF9\u65B9 5 \u4E2A\u7EF4\u5EA6\u7684\u5BF9\u6BD4",
-    "\u8BA9 AI \u6574\u7406\u5BB6\u957F\u6700\u5E38\u89C1\u7684 10 \u4E2A\u5BF9\u6BD4\u95EE\u9898\uFF0C\u7ED9\u5230\u8BDD\u672F\u548C\u6848\u4F8B",
-    "\u6574\u7406\u6211\u4EEC\u548C\u5BF9\u65B9\u5728\u8BFE\u7A0B\u3001\u5E08\u8D44\u3001\u4EF7\u683C\u3001\u670D\u52A1\u4E0A\u7684\u53EF\u6838\u9A8C\u4E8B\u5B9E\uFF0C\u8BA9 AI \u751F\u6210\u65E2\u4E0D\u8D2C\u4F4E\u5BF9\u65B9\u53C8\u80FD\u51F8\u663E\u5DEE\u5F02\u7684\u8BDD\u672F\uFF0C\u5E76\u6807\u6CE8\u6BCF\u6761\u4E8B\u5B9E\u6765\u6E90"
-  ], "objection"),
-  abilityQuestion("c-q5", "data", "\u4F60\u9700\u8981\u7ED9\u5BB6\u957F\u53D1\u4E00\u4EFD\u300A\u5B66\u5458\u6210\u957F\u624B\u518C\u300BPDF\uFF0C\u8D44\u6599\u96F6\u6563\u3002\u4F60\u4F1A\uFF1F", [
-    "\u628A\u8BB0\u5F97\u7684\u8981\u70B9\u7ED9 AI\uFF0C\u8BA9\u5B83\u5199",
-    "\u7528 AI \u5728\u7F51\u4E0A\u627E\u7C7B\u4F3C\u6A21\u677F\u518D\u6539",
-    "\u628A\u5F80\u5C4A\u5BB6\u957F\u6700\u5173\u5FC3\u7684 10 \u4E2A\u95EE\u9898\u7ED9 AI\uFF0C\u8BA9\u5B83\u751F\u6210\u5BF9\u5E94\u7AE0\u8282",
-    "\u6574\u7406\u6211\u6821\u8BFE\u7A0B\u8868\u3001\u5E08\u8D44\u4ECB\u7ECD\u3001\u5178\u578B\u5B66\u5458\u6545\u4E8B\u3001\u5BB6\u957F\u5E38\u89C1\u95EE\u7B54\u3001\u7B7E\u7EA6\u6D41\u7A0B\uFF0C\u6807\u6CE8\u8D44\u6599\u65E5\u671F\u548C\u9002\u7528\u8303\u56F4\u540E\u518D\u4EA4\u7ED9 AI"
-  ], "manual-write"),
-  abilityQuestion("c-q6", "data", 'AI \u603B\u7ED3"\u8FD1\u4E09\u5E74\u5BB6\u957F\u6EE1\u610F\u5EA6 95%"\uFF0C\u4F46\u4F60\u8BB0\u5F97\u53BB\u5E74\u6709\u8FC7\u4E00\u6B21\u6295\u8BC9\u98CE\u6CE2\u3002\u4F60\u4F1A\uFF1F', [
-    "95% \u5E94\u8BE5\u662F\u603B\u4F53\u60C5\u51B5\uFF0C\u6CA1\u95EE\u9898",
-    "\u628A 95% \u6539\u6210 90% \u6BD4\u8F83\u7A33",
-    "\u8BA9 AI \u89E3\u91CA\u8FD9\u4E2A 95% \u662F\u600E\u4E48\u7B97\u51FA\u6765\u7684",
-    "\u56DE\u5230\u539F\u59CB\u95EE\u5377\uFF0C\u6807\u6CE8\u90A3\u6B21\u6295\u8BC9\u548C\u540E\u7EED\u6539\u8FDB\uFF0C\u8BA9 AI \u91CD\u65B0\u7EDF\u8BA1\u53EF\u5BF9\u5916\u5F15\u7528\u7684\u6570\u636E\u5E76\u8BF4\u660E\u7EDF\u8BA1\u53E3\u5F84"
-  ], "fact-claim"),
-  abilityQuestion("c-q7", "collaboration", 'AI \u5199\u51FA\u7684\u62DB\u751F\u8BDD\u672F\u5BB6\u957F\u542C\u4E86\u89C9\u5F97"\u592A\u786C"\uFF0C\u4F60\u4F1A\uFF1F', [
-    "\u91CD\u5199\u4E00\u7248\u66F4\u8F6F\u7684\u8BDD\u672F",
-    '\u8BA9 AI \u628A"\u786C\u8BCD"\u6362\u6210"\u8F6F\u8BCD"',
-    "\u7ED9 AI \u51E0\u6761\u5177\u4F53\u5BB6\u957F\u53CD\u9988\u8BA9\u5B83\u6539",
-    "\u6574\u7406\u5BB6\u957F\u539F\u8BDD\u53CD\u9988\u3001\u54A8\u8BE2\u76EE\u6807\u3001\u6211\u4EEC\u5E95\u7EBF\u8BDD\u672F\uFF0C\u8BA9 AI \u6309\u573A\u666F\u91CD\u5199\u5E76\u4FDD\u7559\u53EF\u590D\u7528\u53E5\u5F0F"
-  ], "revise-tone"),
-  abilityQuestion("c-q8", "verification", 'AI \u5E2E\u4F60\u505A\u4E86\u4E00\u4EFD\u5BB6\u957F\u54A8\u8BE2\u524D\u7684"\u8BDD\u672F\u5305"\u3002\u4F60\u4F1A\u5982\u4F55\u9A8C\u6536\uFF1F', [
-    "\u770B\u4E00\u904D\u987A\u53E3\u5C31\u884C",
-    "\u6311\u6700\u5E38\u7528\u7684 3 \u53E5\u80CC\u4E0B\u6765",
-    "\u7528\u5176\u4E2D 2-3 \u53E5\u548C\u540C\u4E8B\u6F14\u7EC3\u4E00\u6B21",
-    '\u5BF9\u7167\u54A8\u8BE2\u76EE\u6807\u3001\u5BB6\u957F\u5E38\u89C1\u5F02\u8BAE\u3001\u54C1\u724C\u53E3\u5F84\u3001\u5408\u89C4\u8981\u6C42\u9010\u6761\u6838\u5BF9\uFF0C\u5BF9\u672A\u63D0\u4F9B\u6570\u636E\u7684\u90E8\u5206\u6807\u6CE8"\u5F85\u8865"'
-  ], "verify-scripts"),
-  abilityQuestion("c-q9", "verification", 'AI \u5728\u670B\u53CB\u5708\u6587\u6848\u91CC\u5199"\u6211\u4EEC\u5B66\u6821\u662F\u676D\u5DDE\u552F\u4E00\u901A\u8FC7 X \u8BA4\u8BC1\u7684"\uFF0C\u4F60\u4E0D\u786E\u5B9A\u3002\u4F60\u4F1A\uFF1F', [
-    "\u5E94\u8BE5\u6CA1\u95EE\u9898\uFF0C\u5148\u53D1",
-    '\u628A"\u552F\u4E00"\u6539\u6210"\u9996\u6279"',
-    "\u95EE AI \u8FD9\u4E2A\u8BA4\u8BC1\u7684\u5168\u79F0\u548C\u9881\u5E03\u673A\u6784",
-    '\u660E\u786E AI \u4E0D\u80FD\u7528\u672A\u7ECF\u6838\u5B9E\u7684"\u552F\u4E00/\u9996\u5BB6/\u6700"\u7B49\u7EDD\u5BF9\u5316\u8868\u8FF0\uFF0C\u8981\u6C42\u91CD\u5199\u5E76\u6807\u6CE8\u6BCF\u4E2A\u6570\u636E\u9700\u8981\u6838\u9A8C\u7684\u6765\u6E90'
-  ], "fact-rule"),
-  abilityQuestion("c-q10", "agent", "\u5E02\u573A\u90E8\u60F3\u4E0A\u4E00\u4E2A AI \u54A8\u8BE2\u52A9\u624B\u6302\u5B98\u5FAE\u3002\u4F60\u8BA4\u4E3A\u6700\u5408\u7406\u7684\u89D2\u8272\u662F\uFF1F", [
-    "24 \u5C0F\u65F6\u5728\u7EBF\u7B54\u7591\u7684\u5BA2\u670D",
-    "\u80FD\u4E3B\u52A8\u52A0\u5BB6\u957F\u5FAE\u4FE1\u7684 AI",
-    "\u80FD\u8BFB\u5B66\u6821\u8D44\u6599\u5E93\u5E76\u6309\u5BB6\u957F\u63D0\u95EE\u7ED9\u51FA\u51C6\u786E\u56DE\u7B54",
-    "\u80FD\u8BFB\u5B66\u6821\u8D44\u6599\u5E93\u3001\u653F\u7B56\u6587\u4EF6\u3001\u5408\u89C4\u8BDD\u672F\uFF0C\u6309\u5BB6\u957F\u753B\u50CF\u7ED9\u51FA\u521D\u7A3F\u5EFA\u8BAE\uFF0C\u5173\u952E\u51B3\u7B56\uFF08\u7B7E\u7EA6\u3001\u4EF7\u683C\u8BA9\u6B65\uFF09\u5FC5\u987B\u7531\u4EBA\u5B8C\u6210"
-  ], "agent-role"),
-  abilityQuestion("c-q11", "scene", "\u5468\u672B\u5F00\u653E\u65E5\u6709 50 \u7EC4\u5BB6\u5EAD\u6765\u54A8\u8BE2\u3002AI \u80FD\u5E2E\u4F60\u505A\u4EC0\u4E48\u6700\u6709\u6548\uFF1F", [
-    "\u7ED9\u6BCF\u7EC4\u5BB6\u5EAD\u751F\u6210\u6B22\u8FCE\u8BCD",
-    "\u73B0\u573A\u5E2E\u5BB6\u957F\u67E5\u5B66\u6821\u4FE1\u606F",
-    "\u5E2E\u6211\u5148\u6309\u5BB6\u957F\u80CC\u666F\u5206\u6279\u5339\u914D\u6700\u5408\u9002\u7684\u54A8\u8BE2\u5E08\u548C\u8BB2\u89E3\u91CD\u70B9",
-    "\u628A\u63D0\u524D\u6536\u96C6\u7684 50 \u7EC4\u5BB6\u5EAD\u753B\u50CF\u6574\u7406\u6210\u8868\uFF0C\u7ED9\u6BCF\u7EC4\u751F\u6210\u54A8\u8BE2\u76EE\u6807\u3001\u53EF\u80FD\u95EE\u9898\u3001\u63A8\u8350\u53C2\u89C2\u8DEF\u7EBF\uFF0C\u54A8\u8BE2\u5E08\u636E\u6B64\u51C6\u5907"
-  ], "open-day"),
-  abilityQuestion("c-q12", "data", '\u4F60\u60F3\u7528 AI \u5206\u6790"\u4E3A\u4EC0\u4E48\u8FD9\u4E2A\u6708\u7B7E\u5355\u7387\u4E0B\u964D"\uFF0C\u4F60\u4F1A\uFF1F', [
-    "\u628A\u8FD9\u4E2A\u6708\u6570\u636E\u7ED9 AI \u8BA9\u5B83\u5206\u6790",
-    "\u8BA9 AI \u5217\u51FA\u5E38\u89C1\u539F\u56E0\u518D\u5BF9\u7167",
-    "\u6211\u548C AI \u4E00\u8FB9\u8BA8\u8BBA\u4E00\u8FB9\u627E\u539F\u56E0",
-    "\u6574\u7406\u8FD9\u4E2A\u6708\u8DDF\u8FDB\u8BB0\u5F55\u3001\u5BB6\u957F\u53CD\u9988\u3001\u7ADE\u54C1\u52A8\u4F5C\u3001\u653F\u7B56\u53D8\u5316\uFF0C\u6807\u6CE8\u6570\u636E\u6765\u6E90\u548C\u65F6\u95F4\uFF0C\u8BA9 AI \u6309\u6570\u636E\u51FA\u5047\u8BBE\u5E76\u6807\u6CE8\u6BCF\u6761\u9700\u8981\u7684\u9A8C\u8BC1\u65B9\u5F0F"
-  ], "data-analysis"),
-  abilityQuestion("c-q13", "task", "\u4E00\u4EFD\u7ED9\u5BB6\u957F\u770B\u7684\u300A\u9AD8\u4E2D\u4E09\u5E74\u5B66\u4E60\u89C4\u5212\u300BPDF\uFF0CAI \u5E2E\u4F60\u600E\u4E48\u505A\uFF1F", [
-    "\u8BA9 AI \u5199\u4E00\u7248\u5B8C\u6574\u7684",
-    "\u6211\u5217\u6BCF\u4E2A\u5E74\u7EA7\u7684\u5173\u952E\u8BCD\uFF0CAI \u4E32\u8D77\u6765",
-    "\u8BA9 AI \u627E 5 \u4EFD\u540C\u7C7B\u89C4\u5212\u505A\u53C2\u8003\uFF0C\u6211\u6311\u4E00\u79CD\u6539",
-    "\u6574\u7406\u6211\u6821\u8BFE\u7A0B\u8282\u594F\u3001\u5404\u5E74\u7EA7\u5173\u952E\u8282\u70B9\u3001\u5BB6\u957F\u53EF\u53C2\u4E0E\u7684\u4E8B\u9879\u3001\u53EF\u63D0\u4F9B\u7684\u8D44\u6E90\uFF0C\u6807\u6CE8\u6BCF\u9879\u6570\u636E\u6765\u6E90\u540E\u8BA9 AI \u5199\u5E76\u4FDD\u7559\u53EF\u8C03\u6574\u7AE0\u8282"
-  ], "plan-write"),
-  abilityQuestion("c-q14", "collaboration", 'AI \u5199\u51FA\u7684\u89C4\u5212\u91CC"\u9AD8\u4E00"\u90E8\u5206\u548C\u6211\u4EEC\u5B9E\u9645\u8BFE\u7A0B\u4E0D\u5339\u914D\u3002\u4F60\u4F1A\uFF1F', [
-    "\u628A\u9AD8\u4E00\u6574\u6BB5\u5220\u6389",
-    "\u8BA9 AI \u91CD\u65B0\u751F\u6210\u9AD8\u4E00",
-    "\u7ED9 AI \u51E0\u6761\u6211\u4EEC\u9AD8\u4E00\u7684\u5B9E\u9645\u5B89\u6392\u8BA9\u5B83\u6539",
-    "\u6574\u7406\u9AD8\u4E00\u7684\u5B9E\u9645\u8BFE\u7A0B\u8868\u3001\u5173\u952E\u8282\u70B9\u3001\u5BB6\u957F\u89D2\u8272\uFF0C\u8BA9 AI \u6309\u4E8B\u5B9E\u91CD\u5199\u5E76\u6807\u6CE8\u54EA\u4E9B\u662F\u6211\u4EEC\u72EC\u6709\u3001\u54EA\u4E9B\u662F\u884C\u4E1A\u901A\u7528"
-  ], "align-facts"),
-  abilityQuestion("c-q15", "verification", "AI \u5E2E\u4F60\u5199\u7684 10 \u6761\u670B\u53CB\u5708\u6587\u6848\uFF0C\u54EA\u6761\u9002\u5408\u53D1\u4F60\u4F1A\uFF1F", [
-    "\u770B\u8D77\u6765\u90FD\u4E0D\u91CD\u590D\u5C31\u8F6E\u7740\u53D1",
-    "\u6311\u6570\u636E\u6700\u591A\u7684\u90A3\u6761",
-    "\u6311\u6700\u7B26\u5408\u5B66\u6821\u8C03\u6027\u7684\u90A3\u6761",
-    '\u5BF9\u7167\u5B66\u6821\u8C03\u6027\u3001\u5408\u89C4\u8981\u6C42\u3001\u5BB6\u957F\u5173\u6CE8\u70B9\u9010\u6761\u6253\u5206\uFF0C\u5BF9\u4F7F\u7528\u672A\u7ECF\u6838\u5B9E\u6570\u636E\u6216\u7EDD\u5BF9\u5316\u8868\u8FF0\u7684\u6807\u6CE8\u4E3A"\u4E0D\u53EF\u53D1"'
-  ], "verify-copy"),
-  abilityQuestion("c-q16", "agent", "AI \u52A9\u624B\u80FD\u5728\u4F60\u6CA1\u4E0A\u73ED\u65F6\u81EA\u52A8\u56DE\u590D\u5BB6\u957F\u54A8\u8BE2\u3002\u4F60\u6700\u62C5\u5FC3\uFF1F", [
-    "\u4F1A\u4E0D\u4F1A\u7B54\u9519",
-    "\u5BB6\u957F\u4F1A\u4E0D\u4F1A\u53D1\u73B0\u662F AI",
-    "\u80FD\u4E0D\u80FD\u6BD4\u4EBA\u5DE5\u56DE\u7B54\u5F97\u5FEB",
-    "\u5B83\u7684\u56DE\u7B54\u53E3\u5F84\u3001\u7D27\u6025\u60C5\u51B5\u8BC6\u522B\u3001\u5173\u952E\u95EE\u9898\u8F6C\u4EBA\u5DE5\u7684\u89C4\u5219\u3001\u5BB6\u957F\u9690\u79C1\u4FDD\u62A4\u662F\u5426\u5230\u4F4D"
-  ], "agent-risk"),
-  styleQuestion("c-q17", "\u9762\u5BF9\u4E00\u4E2A\u6311\u5254\u578B\u5BB6\u957F\uFF0C\u4F60\u66F4\u81EA\u7136\u7684\u7B2C\u4E00\u6B65\u662F\uFF1F", "explorationExecution", 2, { pole: "E", text: "\u5148\u591A\u89D2\u5EA6\u4E86\u89E3\u4ED6\u5230\u5E95\u5728\u62C5\u5FC3\u4EC0\u4E48" }, { pole: "D", text: "\u5148\u660E\u786E\u4ED6\u662F\u5426\u5728\u6211\u4EEC\u76EE\u6807\u5BB6\u5EAD\u753B\u50CF\u5185\uFF0C\u518D\u51B3\u5B9A\u6295\u5165\u7A0B\u5EA6" }, "style-difficult"),
-  styleQuestion("c-q18", "AI \u7ED9\u4F60\u4E09\u7248\u62DB\u751F\u65B9\u6848\uFF0C\u4F60\u503E\u5411\uFF1F", "explorationExecution", 1, { pole: "E", text: "\u4E09\u7248\u5404\u81EA\u53D1\u5C55\u4E00\u7248\uFF0C\u8BE6\u7EC6\u6BD4\u8F83" }, { pole: "D", text: "\u9009\u6700\u7A33\u7684\u4E00\u7248\u76F4\u63A5\u843D\u5730" }, "style-plan"),
-  styleQuestion("c-q19", "\u4F60\u5E0C\u671B AI \u5E2E\u4F60\u51C6\u5907\u54A8\u8BE2\u7684\u65B9\u5F0F\uFF1F", "assignCocreate", 2, { pole: "A", text: "\u6211\u63D0\u4F9B\u5B8C\u6574\u5BB6\u957F\u4FE1\u606F\uFF0CAI \u4E00\u6B21\u6027\u7ED9\u5168\u5957\u8BDD\u672F" }, { pole: "C", text: "\u6211\u548C AI \u8FB9\u51C6\u5907\u8FB9\u6F14\u7EC3\uFF0C\u8FC7\u7A0B\u91CC\u8C03\u4F18" }, "style-prep"),
-  styleQuestion("c-q20", "AI \u8BDD\u672F\u548C\u5BB6\u957F\u5B9E\u9645\u53CD\u9988\u5DEE\u8DDD\u5927\u65F6\uFF0C\u4F60\u66F4\u4E60\u60EF\uFF1F", "assignCocreate", 1, { pole: "A", text: "\u6574\u7406\u53CD\u9988\u6E05\u5355\u4E00\u6B21\u6027\u7ED9 AI \u91CD\u5199" }, { pole: "C", text: "\u548C AI \u8BA8\u8BBA\u54EA\u4E9B\u662F\u5076\u53D1\u3001\u54EA\u4E9B\u662F\u5171\u6027\u95EE\u9898\u518D\u51B3\u5B9A" }, "style-feedback"),
-  styleQuestion("c-q21", "AI \u5E2E\u4F60\u505A\u5B8C\u4E00\u4EFD\u5BB6\u957F\u4F1A\u8BB2\u7A3F\u540E\uFF0C\u4F60\u66F4\u503E\u5411\uFF1F", "fastVerify", 2, { pole: "F", text: "\u5148\u5728\u4E00\u6B21\u5C0F\u578B\u5BB6\u957F\u4F1A\u8BD5\u8BB2\uFF0C\u770B\u53CD\u5E94\u518D\u4F18\u5316" }, { pole: "V", text: "\u5148\u5728\u6821\u5185\u5BF9\u5BB6\u957F\u4EE3\u8868\u6F14\u7EC3\u901A\u8FC7\u518D\u6B63\u5F0F\u8BB2" }, "style-rehearse"),
-  styleQuestion("c-q22", "\u4F60\u8BD5\u7528\u4E00\u4E2A\u65B0\u7684 AI \u9500\u552E\u5DE5\u5177\u65F6\uFF0C\u66F4\u53EF\u80FD\uFF1F", "fastVerify", 1, { pole: "F", text: "\u9A6C\u4E0A\u62FF\u6765\u8DDF 1-2 \u4E2A\u5BB6\u957F\u6C9F\u901A\u770B\u6548\u679C" }, { pole: "V", text: "\u5148\u4E86\u89E3\u6570\u636E\u5F52\u5C5E\u3001\u5BB6\u957F\u9690\u79C1\u548C\u9500\u552E\u5408\u89C4\u518D\u51B3\u5B9A" }, "style-toolnew")
-];
-var headteacherQuestions = [
-  abilityQuestion("h-q1", "scene", "\u65B0\u751F\u5165\u5B66\u7B2C\u4E00\u5468\uFF0C\u4F60\u8981\u548C\u5BB6\u957F\u5EFA\u7ACB\u8054\u7CFB\u3002AI \u600E\u4E48\u7528\u6700\u81EA\u7136\uFF1F", [
-    "\u7528 AI \u5199\u4E00\u5C01\u7EDF\u4E00\u7684\u5F00\u5B66\u62A5\u5230\u901A\u77E5",
-    "\u7528 AI \u5E2E\u6211\u60F3\u4E00\u4E9B\u5F00\u573A\u8BDD\u9898",
-    "\u8BA9 AI \u6309\u4E0D\u540C\u5BB6\u5EAD\u7C7B\u578B\u51C6\u5907\u51E0\u7248\u901A\u77E5\uFF0C\u6211\u6311\u6539",
-    "\u6574\u7406\u5BB6\u957F\u4FE1\u606F\u8868\uFF08\u5B69\u5B50\u6765\u6E90\u3001\u662F\u5426\u5BC4\u5BBF\u3001\u7279\u6B8A\u9700\u6C42\uFF09\uFF0C\u8BA9 AI \u5E2E\u751F\u6210\u6709\u9488\u5BF9\u6027\u7684\u5F00\u5B66\u6C9F\u901A\u8981\u70B9\u6E05\u5355"
-  ], "class-new"),
-  abilityQuestion("h-q2", "scene", "\u73ED\u91CC\u6700\u8FD1\u6709 3 \u4E2A\u5B66\u751F\u60C5\u7EEA\u6CE2\u52A8\u8F83\u5927\uFF0C\u4F60\u6700\u81EA\u7136\u7684\u505A\u6CD5\u662F\uFF1F", [
-    "\u627E AI \u5B66\u4E00\u4E9B\u5E94\u5BF9\u8BDD\u672F",
-    "AI \u5E2E\u6211\u6574\u7406\u4E00\u4E0B\u6700\u8FD1\u73ED\u7EA7\u53D1\u751F\u4E86\u4EC0\u4E48\u5927\u4E8B",
-    "\u6211\u53E3\u8FF0\u6BCF\u4E2A\u5B66\u751F\u6700\u8FD1\u8868\u73B0\uFF0CAI \u5E2E\u6211\u5217\u89C2\u5BDF\u6E05\u5355",
-    "\u6574\u7406\u8FD9 3 \u4E2A\u5B66\u751F\u8FD1 1 \u4E2A\u6708\u8003\u52E4\u3001\u4F5C\u4E1A\u3001\u4E92\u52A8\u3001\u793E\u4EA4\u8BB0\u5F55\uFF0C\u6807\u6CE8\u4FE1\u606F\u6765\u6E90\uFF08\u81EA\u5DF1/\u79D1\u4EFB/\u5BB6\u957F\uFF09\uFF0C\u8BA9 AI \u7ED9\u89C2\u5BDF\u89D2\u5EA6\u548C\u8C08\u8BDD\u5EFA\u8BAE"
-  ], "student-care"),
-  abilityQuestion("h-q3", "task", "\u5B66\u6821\u8BA9\u4F60\u505A\u4E00\u4EFD\u300A\u73ED\u7EA7\u6587\u5316\u5EFA\u8BBE\u65B9\u6848\u300B\uFF0C\u4F60\u6253\u7B97\u600E\u4E48\u7528 AI\uFF1F", [
-    "\u76F4\u63A5\u8BA9 AI \u5199\u4E00\u7248\u5B8C\u6574\u65B9\u6848",
-    "\u6211\u628A\u73ED\u7EA7\u60C5\u51B5\u53E3\u8FF0\u4E00\u4E0B\uFF0CAI \u5E2E\u6211\u6DA6\u8272",
-    "\u6211\u5148\u5B9A\u4E3B\u9898\uFF0CAI \u5E2E\u6211\u5C55\u5F00\u6D3B\u52A8\u548C\u89C6\u89C9",
-    "\u6574\u7406\u73ED\u7EA7\u4EBA\u6570\u3001\u7537\u5973\u6BD4\u3001\u7279\u957F\u5206\u5E03\u3001\u5BB6\u59D4\u4F1A\u8D44\u6E90\u3001\u5E74\u5EA6\u6D3B\u52A8\u9884\u7B97\uFF0C\u8BA9 AI \u51FA\u591A\u7248\u65B9\u6848\u5E76\u6807\u6CE8\u53EF\u590D\u7528 vs \u9700\u65B0\u8BBE\u8BA1\u7684\u90E8\u5206"
-  ], "class-culture"),
-  abilityQuestion("h-q4", "task", "\u5BB6\u957F\u5BF9\u5B69\u5B50\u5347\u5B66\u65B9\u5411\u6709\u5206\u6B67\uFF08\u7238\u60F3\u8D70\u6587\u5316\u8BFE\uFF0C\u5988\u60F3\u8D70\u827A\u8003\uFF09\uFF0C\u4F60\u6765\u8C03\u89E3\u3002\u4F60\u4F1A\uFF1F", [
-    "\u6309\u5B66\u6821\u653F\u7B56\u7ED9\u5BB6\u957F\u8BB2\u4E00\u904D",
-    "\u8BA9 AI \u5E2E\u6211\u8BF4\u670D\u5176\u4E2D\u4E00\u65B9",
-    "\u8BA9 AI \u6574\u7406\u4E24\u79CD\u65B9\u5411\u7684\u5229\u5F0A\u6E05\u5355",
-    "\u628A\u4E24\u4E2A\u65B9\u5411\u7684\u8FD1\u5E74\u6570\u636E\u3001\u5C31\u4E1A\u60C5\u51B5\u3001\u6211\u6821\u5B9E\u9645\u6848\u4F8B\u6574\u7406\u597D\uFF0C\u6807\u6CE8\u4FE1\u606F\u6765\u6E90\uFF0C\u8BA9 AI \u5E2E\u6211\u505A\u4E00\u4EFD\u53CC\u65B9\u90FD\u80FD\u542C\u7684\u4E2D\u7ACB\u6750\u6599"
-  ], "conflict-mediation"),
-  abilityQuestion("h-q5", "data", "\u5B66\u6821\u8981\u6C42\u6BCF\u5468\u63D0\u4EA4\u4E00\u4EFD\u300A\u73ED\u7EA7\u5468\u62A5\u300B\uFF0C\u4F60\u600E\u4E48\u7528 AI\uFF1F", [
-    "\u8BA9 AI \u76F4\u63A5\u6309\u4E0A\u5468\u60C5\u51B5\u5199",
-    "\u6211\u53E3\u8FF0\u91CD\u70B9\uFF0CAI \u5E2E\u6211\u7EC4\u7EC7\u8BED\u8A00",
-    "\u6211\u548C AI \u4E00\u8D77\u5217\u5468\u62A5\u6846\u67B6\uFF0C\u518D\u8BA9 AI \u5199",
-    "\u6574\u7406\u672C\u5468\u8003\u52E4\u3001\u4F5C\u4E1A\u3001\u8BFE\u5802\u8868\u73B0\u3001\u5BB6\u6821\u6C9F\u901A\u8BB0\u5F55\u3001\u5F85\u89E3\u51B3\u95EE\u9898\uFF0C\u6807\u6CE8\u4FE1\u606F\u6765\u6E90\u540E\u8BA9 AI \u5199\u5E76\u4FDD\u7559\u53EF\u586B\u5145\u6A21\u677F"
-  ], "weekly-report"),
-  abilityQuestion("h-q6", "data", 'AI \u5199"\u8FD9\u5468\u73ED\u7EA7\u6574\u4F53\u8868\u73B0\u826F\u597D"\uFF0C\u4F46\u4F60\u8BB0\u5F97\u6709 2 \u6B21\u8F83\u5927\u51B2\u7A81\u3002\u4F60\u4F1A\uFF1F', [
-    "\u6574\u4F53\u826F\u597D\u6CA1\u95EE\u9898\uFF0C\u7EC6\u8282\u7565\u8FC7",
-    '\u5728\u5468\u62A5\u91CC\u52A0\u4E00\u53E5"\u5076\u6709\u6469\u64E6"',
-    '\u8BA9 AI \u628A"\u826F\u597D"\u6539\u5F97\u51C6\u786E\u4E9B',
-    '\u8BA9 AI \u91CD\u5199"\u826F\u597D"\u7684\u5177\u4F53\u542B\u4E49\uFF1A\u57FA\u4E8E\u54EA\u4E9B\u6570\u636E\u3001\u5FFD\u7565\u54EA\u4E9B\u4F8B\u5916\u3001\u672A\u63D0\u7684\u4E24\u8D77\u51B2\u7A81\u662F\u5426\u9700\u8981\u8865\u5145\u5E76\u8BF4\u660E\u539F\u56E0'
-  ], "honest-report"),
-  abilityQuestion("h-q7", "collaboration", 'AI \u5199\u51FA\u7684\u5BB6\u6821\u6C9F\u901A\u8BDD\u672F\u5BB6\u957F\u770B\u4E86\u89C9\u5F97"\u673A\u68B0"\uFF0C\u4F60\u4F1A\uFF1F', [
-    "\u91CD\u5199\u4E00\u7248\u66F4\u53E3\u8BED\u7684",
-    "\u8BA9 AI \u5168\u90E8\u6539\u6210\u53E3\u8BED",
-    "\u7ED9 AI \u51E0\u6761\u5BB6\u957F\u539F\u8BDD\u8BA9\u5B83\u6539",
-    "\u6574\u7406\u8FD9\u4E2A\u5BB6\u957F\u7684\u539F\u8BDD\u3001\u5B69\u5B50\u5B9E\u9645\u8868\u73B0\u3001\u6211\u6821\u65E2\u5F80\u6C9F\u901A\u98CE\u683C\uFF0C\u8BA9 AI \u6309\u573A\u666F\u91CD\u5199\u5E76\u4FDD\u7559\u53EF\u590D\u7528\u53E5\u5F0F"
-  ], "rewrite-warm"),
-  abilityQuestion("h-q8", "verification", "AI \u5E2E\u4F60\u505A\u4E86\u4E00\u4EFD\u300A\u5B66\u751F\u7EFC\u5408\u7D20\u8D28\u8BC4\u4EF7\u300B\u3002\u4F60\u4F1A\u5982\u4F55\u9A8C\u6536\uFF1F", [
-    "\u770B\u4E00\u904D\u901A\u987A\u5C31\u884C",
-    "\u53EA\u68C0\u67E5\u5206\u6570\u6709\u6CA1\u6709\u9519",
-    "\u6311\u4E24\u4E2A\u5B66\u751F\u548C\u4EFB\u8BFE\u8001\u5E08\u5BF9\u4E00\u4E0B",
-    '\u5BF9\u7167\u8BC4\u4EF7\u7EF4\u5EA6\u3001\u672C\u5B66\u671F\u4E8B\u5B9E\u8BB0\u5F55\u3001\u73ED\u4E3B\u4EFB\u89C2\u5BDF\uFF0C\u5BF9\u6BCF\u6761\u8BC4\u4EF7\u90FD\u6807\u6CE8\u4F9D\u636E\u6765\u6E90\uFF0C\u5BF9"\u5F85\u8865\u5145"\u9879\u660E\u786E\u622A\u6B62\u65F6\u95F4'
-  ], "verify-eval"),
-  abilityQuestion("h-q9", "verification", 'AI \u5728\u5B66\u751F\u8BC4\u8BED\u91CC\u5199\u4E86"\u8BE5\u751F\u5B66\u4E60\u6001\u5EA6\u7AEF\u6B63"\uFF0C\u4F46\u5176\u5B9E\u4ED6\u8FD9\u5B66\u671F\u7ECF\u5E38\u8FDF\u5230\u3002\u4F60\u4F1A\uFF1F', [
-    "\u628A\u8FD9\u53E5\u8BDD\u5220\u4E86",
-    "\u8BA9 AI \u91CD\u5199\u8FD9\u4E00\u6BB5",
-    "\u8BA9 AI \u628A\u8FD9\u53E5\u8BDD\u6539\u5177\u4F53\u4E00\u4E9B",
-    "\u660E\u786E AI \u5FC5\u987B\u57FA\u4E8E\u672C\u5B66\u671F\u4E8B\u5B9E\u8BB0\u5F55\u5199\u8BC4\u8BED\uFF0C\u4FEE\u6B63\u8BE5\u6761\u5E76\u8BA9 AI \u5217\u51FA\u8FD8\u6709\u54EA\u4E9B\u7C7B\u4F3C\u7684\u5957\u8BDD\u9700\u8981\u66FF\u6362"
-  ], "rewrite-vague"),
-  abilityQuestion("h-q10", "agent", "\u5B66\u6821\u60F3\u7ED9\u73ED\u4E3B\u4EFB\u914D\u4E00\u4E2A AI \u52A9\u624B\u5904\u7406\u65E5\u5E38\u6742\u4E8B\u3002\u4F60\u6700\u5E0C\u671B\u5B83\u80FD\uFF1F", [
-    "\u5E2E\u6211\u56DE\u5BB6\u957F\u5FAE\u4FE1",
-    "\u5E2E\u6211\u5199\u5468\u62A5\u548C\u603B\u7ED3",
-    "\u80FD\u8BFB\u5B66\u6821\u8D44\u6599\u548C\u5B66\u751F\u6863\u6848\uFF0C\u6309\u6211\u6307\u4EE4\u6574\u7406\u4FE1\u606F",
-    "\u80FD\u8BFB\u73ED\u7EA7\u8D44\u6599\u3001\u5B66\u751F\u6863\u6848\u3001\u653F\u7B56\u6587\u4EF6\uFF0C\u6309\u6211\u6307\u4EE4\u6574\u7406\u4FE1\u606F\u548C\u8D77\u8349\u8349\u7A3F\uFF0C\u4F46\u6D89\u53CA\u5B66\u751F\u8BC4\u4EF7\u3001\u5BB6\u957F\u654F\u611F\u6C9F\u901A\u5FC5\u987B\u7531\u6211\u786E\u8BA4"
-  ], "agent-help"),
-  abilityQuestion("h-q11", "scene", "\u5BB6\u957F\u4F1A\u524D 30 \u5206\u949F\u4E34\u65F6\u53D6\u6D88\uFF0CAI \u80FD\u5E2E\u4F60\u505A\u4EC0\u4E48\u6700\u6709\u6548\uFF1F", [
-    "\u5E2E\u6211\u60F3\u4E2A\u5F00\u573A",
-    "\u5E2E\u6211\u628A\u6750\u6599\u6539\u6210\u4E00\u5C01\u4FE1",
-    "\u548C AI \u6F14\u7EC3\u4E00\u904D\u5BB6\u957F\u53EF\u80FD\u95EE\u7684\u95EE\u9898",
-    "\u6574\u7406\u539F\u8BA1\u5212\u8981\u70B9\u3001\u6700\u8FD1\u5BB6\u957F\u5173\u5FC3\u7684\u95EE\u9898\u3001\u5FC5\u987B\u544A\u77E5\u7684\u4FE1\u606F\uFF0CAI \u5E2E\u6211\u628A\u5BB6\u957F\u4F1A\u6539\u6210 10 \u5206\u949F\u901A\u77E5 + \u4E00\u5C01\u4FE1\uFF0C\u6807\u6CE8\u54EA\u4E9B\u4FE1\u606F\u5FC5\u8BFB"
-  ], "last-minute"),
-  abilityQuestion("h-q12", "data", '\u4F60\u6000\u7591\u73ED\u91CC\u5B66\u751F\u6700\u8FD1"\u4F5C\u4E1A\u6284\u88AD\u7387\u4E0A\u5347"\uFF0CAI \u5E2E\u4F60\u600E\u4E48\u5206\u6790\uFF1F', [
-    "\u8BA9 AI \u76F4\u63A5\u5206\u6790\u4F5C\u4E1A\u6570\u636E",
-    "\u8BA9 AI \u5217\u51FA\u53EF\u80FD\u539F\u56E0",
-    "\u6211\u548C AI \u4E00\u8FB9\u804A\u4E00\u8FB9\u627E\u539F\u56E0",
-    "\u6574\u7406\u8FD1 1 \u4E2A\u6708\u4F5C\u4E1A\u63D0\u4EA4\u8BB0\u5F55\u3001\u67E5\u91CD\u7ED3\u679C\u3001\u4E2A\u522B\u5B66\u751F\u8BBF\u8C08\u8BB0\u5F55\uFF0C\u6807\u6CE8\u4FE1\u606F\u6765\u6E90\uFF0C\u8BA9 AI \u51FA\u5047\u8BBE\u5E76\u6807\u6CE8\u6BCF\u6761\u9700\u8981\u7684\u9A8C\u8BC1\u65B9\u5F0F"
-  ], "data-find"),
-  abilityQuestion("h-q13", "task", "\u73ED\u91CC\u6709\u5B66\u751F\u88AB\u6821\u56ED\u6B3A\u51CC\uFF0C\u4F60\u8981\u51FA\u4E00\u4EFD\u5904\u7406\u65B9\u6848\u3002AI \u5E2E\u4F60\u600E\u4E48\u7528\uFF1F", [
-    "\u8BA9 AI \u5199\u4E00\u7248\u5904\u7406\u65B9\u6848",
-    "\u6211\u628A\u60C5\u51B5\u8BF4\u7ED9 AI \u8BA9\u5B83\u7ED9\u5EFA\u8BAE",
-    "\u548C AI \u5934\u8111\u98CE\u66B4\u5404\u79CD\u5904\u7406\u65B9\u5F0F",
-    "\u6574\u7406\u4E8B\u4EF6\u7ECF\u8FC7\u3001\u6D89\u53CA\u5B66\u751F\u3001\u5BB6\u957F\u6001\u5EA6\u3001\u5B66\u6821\u653F\u7B56\u3001\u5FC3\u7406\u8001\u5E08\u610F\u89C1\uFF0C\u6807\u6CE8\u4FE1\u606F\u6765\u6E90\u548C\u654F\u611F\u4FE1\u606F\u8131\u654F\u72B6\u6001\u540E\u8BA9 AI \u51FA\u65B9\u6848"
-  ], "bully-handle"),
-  abilityQuestion("h-q14", "collaboration", "AI \u7ED9\u7684\u5904\u7406\u5EFA\u8BAE\u548C\u4F60\u6821\u5B9E\u9645\u5904\u5206\u6761\u4F8B\u4E0D\u4E00\u81F4\u3002\u4F60\u4F1A\uFF1F", [
-    "\u6309 AI \u5EFA\u8BAE\u529E",
-    "\u5B8C\u5168\u6309\u5B66\u6821\u6761\u4F8B\u6765",
-    "\u8BA9 AI \u628A\u5EFA\u8BAE\u6539\u6210\u7B26\u5408\u5B66\u6821\u6761\u4F8B\u7684",
-    "\u6574\u7406\u5B66\u6821\u6761\u4F8B\u539F\u6587\u548C\u672C\u6B21\u4E8B\u4EF6\u5177\u4F53\u60C5\u51B5\uFF0C\u8BA9 AI \u6309\u6761\u4F8B\u91CD\u5199\u5E76\u6807\u6CE8\u54EA\u4E9B\u662F\u6761\u4F8B\u786C\u6027\u8981\u6C42\u3001\u54EA\u4E9B\u662F\u5EFA\u8BAE\u7A7A\u95F4"
-  ], "policy-align"),
-  abilityQuestion("h-q15", "verification", "AI \u5E2E\u4F60\u5199\u7684 5 \u4EFD\u5B66\u751F\u8C08\u8BDD\u8BB0\u5F55\uFF0C\u4F60\u4F1A\u600E\u4E48\u68C0\u67E5\uFF1F", [
-    "\u770B\u4E00\u904D\u901A\u987A\u5C31\u884C",
-    "\u53EA\u770B\u8001\u5E08\u8BC4\u4EF7\u90E8\u5206",
-    "\u6311\u548C AI \u5173\u7CFB\u6700\u719F\u7684\u5B66\u751F\u90A3\u4EFD\u8BE6\u7EC6\u770B",
-    '\u5BF9\u7167\u6BCF\u6B21\u8C08\u8BDD\u7684\u65F6\u95F4\u3001\u5730\u70B9\u3001\u5BF9\u8C61\u3001\u8BAE\u9898\u3001\u627F\u8BFA\u4E8B\u9879\u9010\u6761\u6838\u5BF9\uFF0C\u5BF9"\u5F85\u8DDF\u8FDB"\u9879\u660E\u786E\u65F6\u95F4\u8282\u70B9'
-  ], "verify-talk"),
-  abilityQuestion("h-q16", "agent", '\u4F60\u62C5\u5FC3 AI \u52A9\u624B\u5728\u5B66\u751F\u8BC4\u4EF7\u91CC"\u8FC7\u5EA6\u7F8E\u8A00"\u3002\u4F60\u6700\u770B\u91CD\uFF1F', [
-    "AI \u6587\u91C7\u597D",
-    "AI \u51FA\u7A3F\u5FEB",
-    "AI \u80FD\u627E\u5230\u6240\u6709\u76F8\u5173\u4E8B\u5B9E",
-    "AI \u7684\u6BCF\u6761\u8BC4\u4EF7\u90FD\u6709\u4E8B\u5B9E\u4F9D\u636E\u3001\u672A\u63D0\u4F9B\u4F9D\u636E\u7684\u90E8\u5206\u660E\u786E\u6807\u6CE8\uFF0C\u5BF9\u654F\u611F\u8BCD\u6709\u63D0\u9192"
-  ], "agent-honest"),
-  styleQuestion("h-q17", "\u9762\u5BF9\u4E00\u4E2A\u7A81\u7136\u6765\u544A\u72B6\u7684\u5BB6\u957F\uFF0C\u4F60\u66F4\u81EA\u7136\u7684\u7B2C\u4E00\u6B65\u662F\uFF1F", "explorationExecution", 2, { pole: "E", text: "\u5148\u8BA9\u5BB6\u957F\u8BF4\u5B8C\u6574\u4EF6\u4E8B\uFF0C\u8FC7\u7A0B\u4E2D\u627E\u5173\u952E" }, { pole: "D", text: "\u5148\u660E\u786E\u8FD9\u4EF6\u4E8B\u7684\u7D27\u6025\u7A0B\u5EA6\u548C\u5F71\u54CD\u8303\u56F4\uFF0C\u518D\u51B3\u5B9A\u600E\u4E48\u5904\u7406" }, "style-parent"),
-  styleQuestion("h-q18", "AI \u7ED9\u4F60\u4E09\u7248\u5B66\u751F\u8C08\u8BDD\u65B9\u6848\uFF0C\u4F60\u503E\u5411\uFF1F", "explorationExecution", 1, { pole: "E", text: "\u4E09\u7248\u5404\u81EA\u51C6\u5907\u5F00\u5934\uFF0C\u5BF9\u6BD4\u54EA\u4E2A\u6700\u81EA\u7136" }, { pole: "D", text: "\u9009\u6700\u7A33\u91CD\u7684\u4E00\u7248\uFF0C\u6309\u90E8\u5C31\u73ED\u8C08" }, "style-talk"),
-  styleQuestion("h-q19", "\u4F60\u5E0C\u671B AI \u5E2E\u4F60\u5199\u73ED\u7EA7\u603B\u7ED3\u7684\u65B9\u5F0F\uFF1F", "assignCocreate", 2, { pole: "A", text: "\u6211\u5217\u8981\u70B9\uFF0CAI \u4E00\u7248\u5199\u5B8C" }, { pole: "C", text: "\u6211\u548C AI \u8FB9\u5199\u8FB9\u8BA8\u8BBA\uFF0C\u54EA\u6BB5\u4E0D\u6EE1\u610F\u6539\u54EA\u6BB5" }, "style-summary"),
-  styleQuestion("h-q20", "AI \u5199\u7684\u603B\u7ED3\u548C\u4F60\u60F3\u8868\u8FBE\u7684\u6709\u51FA\u5165\u65F6\uFF0C\u4F60\u66F4\u4E60\u60EF\uFF1F", "assignCocreate", 1, { pole: "A", text: "\u4E00\u6B21\u6027\u628A\u8981\u6539\u7684\u5730\u65B9\u5217\u6E05\u695A\uFF0C\u8BA9 AI \u91CD\u5199" }, { pole: "C", text: "\u548C AI \u8BA8\u8BBA\u4E00\u4E0B\u54EA\u4E9B\u662F\u8868\u8FBE\u5DEE\u5F02\u3001\u54EA\u4E9B\u662F\u89C2\u70B9\u5DEE\u5F02" }, "style-edit"),
-  styleQuestion("h-q21", "AI \u5E2E\u4F60\u505A\u4E86\u4E00\u4EFD\u5BB6\u957F\u4F1A\u8BB2\u7A3F\u540E\uFF0C\u4F60\u66F4\u503E\u5411\uFF1F", "fastVerify", 2, { pole: "F", text: "\u5148\u5728\u73ED\u91CC\u5B66\u751F\u5E72\u90E8\u90A3\u8BD5\u8BB2\u4E00\u4E0B" }, { pole: "V", text: "\u5148\u548C\u5E74\u7EA7\u7EC4\u8001\u5E08\u5BF9\u4E00\u904D\u53E3\u5F84\u518D\u8BB2" }, "style-try"),
-  styleQuestion("h-q22", "\u4F60\u8BD5\u7528\u4E00\u4E2A\u65B0\u7684 AI \u73ED\u4E3B\u4EFB\u5DE5\u5177\u65F6\uFF0C\u66F4\u53EF\u80FD\uFF1F", "fastVerify", 1, { pole: "F", text: "\u9A6C\u4E0A\u62FF\u6765\u5904\u7406\u4E00\u4E24\u4EF6\u6742\u4E8B\u770B\u6548\u679C" }, { pole: "V", text: "\u5148\u786E\u8BA4\u5B83\u5904\u7406\u5B66\u751F\u6570\u636E\u662F\u5426\u7B26\u5408\u9690\u79C1\u89C4\u8303\u518D\u51B3\u5B9A" }, "style-tool")
-];
-var traineeQuestions = [
-  abilityQuestion("n-q1", "scene", "\u5165\u804C\u7B2C 1 \u5468\uFF0C\u5E08\u7236\u8BA9\u4F60\u6574\u7406\u4E00\u4EFD\u300A\u90E8\u95E8\u5DE5\u4F5C\u5730\u56FE\u300B\u3002\u4F60\u6253\u7B97\uFF1F", [
-    "\u76F4\u63A5\u95EE AI \u884C\u4E1A\u901A\u7528\u6A21\u677F",
-    "\u7528 AI \u5E2E\u6211\u60F3\u4E00\u4EFD\u76EE\u5F55",
-    "\u548C AI \u6A21\u62DF\u4E00\u4E0B\u6211\u53EF\u80FD\u9700\u8981\u4E86\u89E3\u7684\u5185\u5BB9",
-    "\u6574\u7406\u6211\u8FD9\u5468\u89C2\u5BDF\u5230\u7684\u90E8\u95E8\u4F1A\u8BAE\u3001\u6D41\u7A0B\u6587\u6863\u3001\u4EBA\u5458\u5206\u5DE5\uFF0C\u6807\u6CE8\u4FE1\u606F\u6765\u6E90\uFF0C\u8BA9 AI \u5E2E\u6211\u68B3\u7406\u7ED3\u6784\u5E76\u6807\u6CE8\u5F85\u8865\u5145\u9879"
-  ], "onboard"),
-  abilityQuestion("n-q2", "scene", "\u4E3B\u7BA1\u8BA9\u4F60\u5199\u4E00\u4EFD\u300A\u7ADE\u54C1\u5206\u6790\u300B\u3002\u4F60\u6253\u7B97\uFF1F", [
-    "\u8BA9 AI \u5199\u4E00\u7248\u5B8C\u6574\u7684",
-    "\u6211\u53E3\u8FF0\u8981\u70B9\uFF0CAI \u5E2E\u6211\u6DA6\u8272",
-    "\u6211\u5217\u5927\u7EB2\uFF0CAI \u5E2E\u6211\u6269\u5199",
-    "\u6574\u7406\u6211\u4EEC\u548C\u7ADE\u54C1\u53EF\u516C\u5F00\u4FE1\u606F\u3001\u6700\u8FD1\u52A8\u4F5C\u3001\u7528\u6237\u8BC4\u4EF7\uFF0C\u6807\u6CE8\u6BCF\u6761\u4FE1\u606F\u6765\u6E90\u548C\u65E5\u671F\uFF0C\u8BA9 AI \u5199\u5E76\u4FDD\u7559\u53EF\u8C03\u7ED3\u6784"
-  ], "competitive"),
-  abilityQuestion("n-q3", "task", "\u4E3B\u7BA1\u8BA9\u4F60 3 \u5929\u5185\u4EA4\u4E00\u4EFD\u300A\u4E0B\u5B63\u5EA6 OKR \u8349\u6848\u300B\u3002\u4F60\u600E\u4E48\u7528 AI\uFF1F", [
-    "\u8BA9 AI \u76F4\u63A5\u751F\u6210 OKR",
-    "\u6211\u5217\u60F3\u6CD5\uFF0CAI \u5E2E\u6211\u6574\u7406\u8BED\u8A00",
-    "\u548C AI \u5934\u8111\u98CE\u66B4 OKR \u89D2\u5EA6",
-    "\u6574\u7406\u90E8\u95E8\u76EE\u6807\u3001\u6211\u63A5\u624B\u7684\u5DE5\u4F5C\u3001\u53EF\u7528\u8D44\u6E90\u3001\u5173\u952E\u98CE\u9669\uFF0C\u6807\u6CE8\u6BCF\u9879\u6765\u6E90\uFF0C\u8BA9 AI \u6309 SMART \u539F\u5219\u51FA\u8349\u6848\u5E76\u6807\u6CE8\u5F85\u786E\u8BA4\u9879"
-  ], "okr"),
-  abilityQuestion("n-q4", "task", "\u4F60\u5BF9\u4E3B\u7BA1\u7684\u67D0\u4E2A\u51B3\u7B56\u6709\u7591\u95EE\uFF0C\u4F46\u4E0D\u786E\u5B9A\u8BE5\u4E0D\u8BE5\u95EE\u3002AI \u5E2E\u4F60\uFF1F", [
-    "\u8BA9 AI \u6559\u6211\u600E\u4E48\u8BF4",
-    "\u8BA9 AI \u5E2E\u6211\u5206\u6790\u8BE5\u4E0D\u8BE5\u95EE",
-    "\u548C AI \u6A21\u62DF\u4E00\u904D\u5BF9\u8BDD",
-    "\u6574\u7406\u8FD9\u4E2A\u51B3\u7B56\u7684\u516C\u5F00\u4FE1\u606F\u3001\u53EF\u80FD\u7684\u5F71\u54CD\u3001\u6211\u80FD\u95EE\u7684\u5408\u9002\u573A\u5408\uFF0C\u8BA9 AI \u5E2E\u6211\u5217\u5229\u5F0A\u548C\u8868\u8FBE\u65B9\u5F0F\uFF0C\u4F46\u6700\u7EC8\u662F\u5426\u95EE\u7531\u6211\u51B3\u5B9A"
-  ], "ask-boss"),
-  abilityQuestion("n-q5", "data", "\u90E8\u95E8\u8981\u4F60\u6574\u7406\u4E00\u4EFD\u300A\u884C\u4E1A\u6708\u62A5\u300B\u3002\u4F60\u6253\u7B97\uFF1F", [
-    "\u8BA9 AI \u76F4\u63A5\u5199",
-    "\u6211\u628A\u8BB0\u5F97\u7684\u4E8B\u4EF6\u8BF4\u7ED9 AI \u8BA9\u5B83\u5199",
-    "\u6211\u5217\u4E8B\u4EF6\u6E05\u5355\uFF0CAI \u5E2E\u6211\u4E32\u6210\u6708\u62A5",
-    "\u6574\u7406\u672C\u6708\u884C\u4E1A\u65B0\u95FB\u3001\u653F\u7B56\u3001\u7ADE\u54C1\u52A8\u4F5C\u3001\u6570\u636E\u6765\u6E90\u94FE\u63A5\u548C\u65E5\u671F\uFF0C\u8BA9 AI \u5199\u5E76\u6807\u6CE8\u6BCF\u6761\u6570\u636E\u539F\u59CB\u94FE\u63A5"
-  ], "monthly"),
-  abilityQuestion("n-q6", "data", 'AI \u5728\u6708\u62A5\u91CC\u5199"\u884C\u4E1A\u6574\u4F53\u589E\u957F 20%"\uFF0C\u4F46\u4F60\u8BB0\u5F97\u6570\u636E\u6765\u6E90\u4E0D\u4E00\u81F4\u3002\u4F60\u4F1A\uFF1F', [
-    "AI \u5E94\u8BE5\u6CA1\u9519\uFF0C\u5148\u7528",
-    "\u628A 20% \u6539\u6210 15% \u6BD4\u8F83\u7A33",
-    "\u8BA9 AI \u7ED9\u51FA 20% \u7684\u6765\u6E90",
-    "\u56DE\u5230\u539F\u59CB\u6570\u636E\uFF0C\u7EDF\u4E00\u7EDF\u8BA1\u53E3\u5F84\uFF0C\u6807\u6CE8\u4E0D\u540C\u6765\u6E90\u7684\u53EF\u6BD4\u6027\uFF0C\u8BA9 AI \u91CD\u65B0\u7ED9\u51FA\u53EF\u5BF9\u5916\u5F15\u7528\u7684\u6570\u5B57\u5E76\u8BF4\u660E\u8BA1\u7B97\u65B9\u5F0F"
-  ], "verify-data"),
-  abilityQuestion("n-q7", "collaboration", 'AI \u5199\u51FA\u7684\u6708\u62A5\u88AB\u4E3B\u7BA1\u8BF4"\u592A\u5B66\u751F\u6C14"\u3002\u4F60\u4F1A\uFF1F', [
-    '\u5168\u90E8\u7528\u66F4"\u804C\u4E1A"\u7684\u8BCD\u91CD\u5199',
-    "\u8BA9 AI \u6539\u5F97\u66F4\u4E13\u4E1A",
-    "\u7ED9 AI \u51E0\u6761\u4E3B\u7BA1\u539F\u8BDD\u8BA9\u5B83\u6539",
-    "\u6574\u7406\u4E3B\u7BA1\u539F\u8BDD\u3001\u6211\u4EEC\u90E8\u95E8\u6708\u62A5\u4EE5\u5F80\u8303\u672C\u3001\u76EE\u6807\u8BFB\u8005\uFF0C\u8BA9 AI \u6309\u98CE\u683C\u91CD\u5199\u5E76\u4FDD\u7559\u53EF\u590D\u7528\u6BB5\u843D"
-  ], "rewrite-pro"),
-  abilityQuestion("n-q8", "verification", "AI \u5E2E\u4F60\u505A\u4E86 5 \u4EFD\u4F1A\u8BAE\u7EAA\u8981\u3002\u4F60\u4F1A\u5982\u4F55\u9A8C\u6536\uFF1F", [
-    "\u770B\u4E00\u904D\u901A\u987A\u5C31\u884C",
-    "\u53EA\u770B\u51B3\u8BAE\u90E8\u5206",
-    "\u6311\u6700\u91CD\u8981\u7684\u90A3\u6B21\u8BE6\u7EC6\u770B",
-    '\u5BF9\u7167\u4F1A\u8BAE\u5F55\u97F3\u6216\u7B14\u8BB0\u6838\u5BF9\u6BCF\u6761\u51B3\u8BAE\u3001\u5F85\u529E\u3001\u8D1F\u8D23\u4EBA\u3001\u65F6\u95F4\u8282\u70B9\uFF0C\u5BF9\u6A21\u7CCA\u5904\u6807\u6CE8"\u5F85\u786E\u8BA4"'
-  ], "verify-minutes"),
-  abilityQuestion("n-q9", "verification", "AI \u5199\u9519\u4E86\u4E00\u4E2A\u53C2\u4F1A\u4EBA\u59D3\u540D\uFF08\u628A\u540C\u540D\u7684\u4E24\u4E2A\u90E8\u95E8\u540C\u4E8B\u641E\u6DF7\uFF09\u3002\u4F60\u4F1A\uFF1F", [
-    "\u6539\u6389\u8FD9\u4E00\u5904",
-    "\u8BA9 AI \u5168\u6587\u91CD\u5199",
-    "\u7ED9 AI \u540D\u5355\u8BA9\u5B83\u91CD\u5199",
-    "\u660E\u786E AI \u5FC5\u987B\u4F9D\u636E\u4F1A\u8BAE\u51FA\u5E2D\u8BB0\u5F55\u5199\uFF0C\u4FEE\u6B63\u8BE5\u6761\u5E76\u8BA9 AI \u5217\u51FA\u8FD8\u6709\u6CA1\u6709\u5176\u4ED6\u4E8B\u5B9E\u6027\u9519\u8BEF"
-  ], "fact-name"),
-  abilityQuestion("n-q10", "agent", "\u516C\u53F8\u60F3\u7ED9\u65B0\u4EBA\u914D\u4E00\u4E2A AI \u52A9\u7406\u5E2E\u878D\u5165\u56E2\u961F\u3002\u4F60\u6700\u5E0C\u671B\u5B83\u80FD\uFF1F", [
-    "\u56DE\u7B54\u516C\u53F8\u57FA\u672C\u95EE\u9898",
-    "\u5E2E\u6211\u5199\u5468\u62A5\u548C\u603B\u7ED3",
-    "\u80FD\u8BFB\u516C\u53F8\u5185\u90E8\u8D44\u6599\uFF0C\u6309\u6211\u6307\u4EE4\u6574\u7406\u4FE1\u606F",
-    "\u80FD\u8BFB\u516C\u53F8\u8D44\u6599\u3001\u5C97\u4F4D\u8BF4\u660E\u3001\u5185\u90E8 Wiki\uFF0C\u6309\u6211\u6307\u4EE4\u6574\u7406\u4FE1\u606F\u548C\u8D77\u8349\u8349\u7A3F\uFF0C\u4F46\u6D89\u53CA\u4FDD\u5BC6\u4FE1\u606F\u548C\u6700\u7EC8\u51B3\u7B56\u7531\u4EBA\u5B8C\u6210"
-  ], "agent-junior"),
-  abilityQuestion("n-q11", "scene", "\u7B2C\u4E00\u6B21\u548C\u90E8\u95E8\u540C\u4E8B\u5403\u996D\uFF0CAI \u80FD\u5E2E\u4F60\u4EC0\u4E48\uFF1F", [
-    "\u5E2E\u6211\u60F3\u51E0\u4E2A\u804A\u5929\u8BDD\u9898",
-    "\u5E2E\u6211\u60F3 3 \u4E2A\u6709\u8DA3\u7684\u5F00\u573A\u767D",
-    "AI \u6A21\u62DF\u4E00\u4E0B\u996D\u5C40\u4E0A\u53EF\u80FD\u804A\u4EC0\u4E48",
-    "\u6574\u7406\u90E8\u95E8\u540C\u4E8B\u7684\u516C\u5F00\u80CC\u666F\uFF08\u9886\u82F1/\u5B98\u7F51/\u8FD1 3 \u4E2A\u6708\u5206\u4EAB\uFF09\uFF0CAI \u5E2E\u6211\u6807\u6CE8\u5171\u540C\u8BDD\u9898\u548C\u9700\u8981\u907F\u514D\u7684\u8BDD\u9898"
-  ], "lunch"),
-  abilityQuestion("n-q12", "data", '\u4E3B\u7BA1\u8BA9\u4F60"\u7528\u6570\u636E\u770B\u90E8\u95E8\u95EE\u9898"\uFF0C\u4F60\u6253\u7B97\uFF1F', [
-    "\u8BA9 AI \u81EA\u5DF1\u627E\u6570\u636E",
-    "\u6211\u53E3\u8FF0\u90E8\u95E8\u60C5\u51B5\u8BA9 AI \u603B\u7ED3",
-    "\u548C AI \u5934\u8111\u98CE\u66B4\u53EF\u80FD\u7684\u6570\u636E",
-    "\u6574\u7406\u90E8\u95E8\u53EF\u7528\u7684\u6570\u636E\u6E90\uFF08\u4E1A\u52A1\u3001\u8FD0\u8425\u3001HR\u3001\u8D22\u52A1\uFF09\uFF0C\u6807\u6CE8\u6570\u636E\u53EF\u83B7\u53D6\u8303\u56F4\u548C\u654F\u611F\u7EA7\u522B\uFF0C\u8BA9 AI \u7ED9\u5206\u6790\u89D2\u5EA6\u5E76\u6807\u6CE8\u6BCF\u6761\u9700\u8981\u7684\u53D6\u6570\u65B9\u5F0F"
-  ], "data-explore"),
-  abilityQuestion("n-q13", "task", "\u4F60\u88AB\u6307\u6D3E\u53BB\u4E00\u4E2A\u8DE8\u90E8\u95E8\u9879\u76EE\u7EC4\uFF0C\u7B2C\u4E00\u6B21\u5F00\u4F1A\u524D\u4F60\u600E\u4E48\u505A\uFF1F", [
-    "\u8BA9 AI \u5199\u4E00\u4EFD\u81EA\u6211\u4ECB\u7ECD",
-    "\u8BA9 AI \u5E2E\u6211\u60F3\u60F3\u95EE\u4EC0\u4E48\u95EE\u9898",
-    "AI \u5E2E\u6211\u6A21\u62DF\u4E00\u4E0B\u4F1A\u8BAE",
-    "\u6574\u7406\u9879\u76EE\u80CC\u666F\u3001\u53C2\u4F1A\u89D2\u8272\u3001\u6211\u90E8\u95E8\u5173\u6CE8\u70B9\u3001\u654F\u611F\u4FE1\u606F\uFF0CAI \u5E2E\u6211\u5217\u4F1A\u8BAE\u76EE\u6807\u3001\u8981\u63D0\u7684\u95EE\u9898\u3001\u4E0D\u80FD\u8868\u6001\u7684\u4E8B"
-  ], "meeting-prep"),
-  abilityQuestion("n-q14", "collaboration", 'AI \u5E2E\u4F60\u51C6\u5907\u7684\u4F1A\u8BAE\u95EE\u9898\u88AB\u540C\u4E8B\u8BF4"\u592A\u7EC6"\u3002\u4F60\u4F1A\uFF1F', [
-    "\u628A\u592A\u7EC6\u7684\u95EE\u9898\u5220\u4E86",
-    "\u8BA9 AI \u5168\u90E8\u6539\u6210\u5B8F\u89C2\u95EE\u9898",
-    "\u7ED9 AI \u51E0\u6761\u540C\u4E8B\u53CD\u9988\u8BA9\u5B83\u6539",
-    "\u6574\u7406\u540C\u4E8B\u539F\u8BDD\u3001\u4ED6\u4EEC\u90E8\u95E8\u5173\u6CE8\u70B9\u3001\u6211\u4EEC\u90E8\u95E8\u5E95\u7EBF\uFF0CAI \u5E2E\u6211\u6309\u89D2\u8272\u91CD\u5199\u5E76\u6807\u6CE8\u54EA\u4E9B\u662F\u5FC5\u95EE\u3001\u54EA\u4E9B\u662F\u52A0\u5206\u9879"
-  ], "align-questions"),
-  abilityQuestion("n-q15", "verification", "AI \u5E2E\u4F60\u5199\u7684\u300A\u9879\u76EE\u5468\u62A5\u300B\uFF0C\u4F60\u4F1A\u600E\u4E48\u68C0\u67E5\uFF1F", [
-    "\u770B\u4E00\u904D\u901A\u987A\u5C31\u884C",
-    "\u53EA\u770B\u8FDB\u5EA6\u767E\u5206\u6BD4",
-    "\u6311\u548C\u9879\u76EE\u6700\u76F8\u5173\u7684\u90E8\u5206\u770B",
-    '\u5BF9\u7167\u672C\u5468\u4E8B\u9879\u6E05\u5355\u3001\u6570\u636E\u6307\u6807\u3001\u98CE\u9669\u4E8B\u9879\u3001\u8DE8\u90E8\u95E8\u534F\u8C03\u70B9\u9010\u6761\u6838\u5BF9\uFF0C\u5BF9"\u5F85\u8DDF\u8FDB"\u9879\u660E\u786E\u8D1F\u8D23\u4EBA\u548C\u65F6\u95F4'
-  ], "verify-weekly"),
-  abilityQuestion("n-q16", "agent", "AI \u52A9\u7406\u60F3\u81EA\u52A8\u5E2E\u4F60\u56DE\u590D\u5185\u90E8\u90AE\u4EF6\u3002\u4F60\u6700\u770B\u91CD\uFF1F", [
-    "\u5B83\u80FD\u5199\u5F97\u50CF\u6211",
-    "\u5B83\u80FD\u79D2\u56DE",
-    "\u5B83\u80FD\u8BFB\u5230\u6211\u90E8\u95E8\u76F8\u5173\u5386\u53F2\u90AE\u4EF6",
-    "\u5B83\u5BF9\u90AE\u4EF6\u7C7B\u578B\u80FD\u5206\u7C7B\uFF0C\u5173\u952E\u90AE\u4EF6\uFF08\u6D89\u53CA\u627F\u8BFA\u3001\u51B3\u7B56\u3001\u8DE8\u90E8\u95E8\u534F\u8C03\uFF09\u4F1A\u5148\u505C\u4E00\u4E0B\u8BA9\u4EBA\u786E\u8BA4\uFF0C\u666E\u901A\u901A\u77E5\u81EA\u52A8\u8D77\u8349\u4E0D\u53D1\u9001"
-  ], "agent-mail"),
-  styleQuestion("n-q17", "\u9762\u5BF9\u4E00\u4E2A\u5B8C\u5168\u964C\u751F\u7684\u65B0\u4EFB\u52A1\uFF0C\u4F60\u66F4\u81EA\u7136\u7684\u7B2C\u4E00\u6B65\u662F\uFF1F", "explorationExecution", 2, { pole: "E", text: "\u5148\u8BA9 AI \u5217\u51E0\u79CD\u53EF\u80FD\u7684\u65B9\u5411\u518D\u9009" }, { pole: "D", text: "\u5148\u95EE\u6E05\u695A\u4EFB\u52A1\u76EE\u6807\u548C\u9A8C\u6536\u6807\u51C6\u518D\u52A8" }, "style-newtask"),
-  styleQuestion("n-q18", "AI \u7ED9\u4F60\u4E09\u7248 OKR \u8349\u6848\uFF0C\u4F60\u503E\u5411\uFF1F", "explorationExecution", 1, { pole: "E", text: "\u4E09\u7248\u5404\u81EA\u53D1\u5C55\u4E00\u7248\uFF0C\u8BE6\u7EC6\u6BD4\u8F83" }, { pole: "D", text: "\u9009\u6700\u7A33\u7684\u4E00\u7248\uFF0C\u6309\u4E3B\u7BA1\u98CE\u683C\u8C03" }, "style-okr"),
-  styleQuestion("n-q19", "\u4F60\u5E0C\u671B AI \u5E2E\u4F60\u5199\u5DE5\u4F5C\u6587\u6863\u7684\u65B9\u5F0F\uFF1F", "assignCocreate", 2, { pole: "A", text: "\u6211\u5217\u8981\u70B9\uFF0CAI \u4E00\u7248\u5199\u5B8C\uFF0C\u6211\u518D\u6539" }, { pole: "C", text: "\u6211\u548C AI \u8FB9\u8BA8\u8BBA\u8FB9\u5199\uFF0C\u8FC7\u7A0B\u91CC\u5BF9\u9F50" }, "style-doc"),
-  styleQuestion("n-q20", "AI \u5199\u51FA\u7684\u6587\u6863\u548C\u4F60\u9884\u671F\u5DEE\u8DDD\u5927\u65F6\uFF0C\u4F60\u66F4\u4E60\u60EF\uFF1F", "assignCocreate", 1, { pole: "A", text: "\u4E00\u6B21\u6027\u628A\u8981\u6539\u7684\u70B9\u5217\u6E05\u695A\uFF0C\u8BA9 AI \u91CD\u5199" }, { pole: "C", text: "\u548C AI \u8BA8\u8BBA\u54EA\u4E9B\u662F\u8868\u8FBE\u5DEE\u5F02\u3001\u54EA\u4E9B\u662F\u8BA4\u77E5\u5DEE\u5F02" }, "style-gap"),
-  styleQuestion("n-q21", "AI \u5E2E\u4F60\u505A\u51FA\u4E00\u4EFD\u53EF\u7528\u6587\u6863\u540E\uFF0C\u4F60\u66F4\u503E\u5411\uFF1F", "fastVerify", 2, { pole: "F", text: "\u5148\u53D1\u7ED9\u5173\u7CFB\u597D\u7684\u540C\u4E8B\u770B\u4E00\u773C\u518D\u4EA4" }, { pole: "V", text: "\u5148\u6309\u516C\u53F8\u683C\u5F0F\u3001\u8FC7\u5F80\u7248\u672C\u6838\u5BF9\u518D\u4EA4" }, "style-docv"),
-  styleQuestion("n-q22", "\u516C\u53F8\u5F15\u5165\u65B0\u7684 AI \u5DE5\u5177\u65F6\uFF0C\u4F60\u66F4\u53EF\u80FD\uFF1F", "fastVerify", 1, { pole: "F", text: "\u9A6C\u4E0A\u62FF\u6765\u8BD5\u4E00\u4E24\u4E2A\u771F\u5B9E\u5DE5\u4F5C\u770B\u6548\u679C" }, { pole: "V", text: "\u5148\u770B\u6570\u636E\u5B89\u5168\u3001\u5185\u90E8\u5408\u89C4\u518D\u51B3\u5B9A" }, "style-newai")
-];
-var adminQuestions = [
-  abilityQuestion("a-q1", "scene", "\u65B0\u5B66\u671F\u6392\u8BFE\uFF0C40 \u4E2A\u73ED + 60 \u4F4D\u8001\u5E08\u7684\u7EA6\u675F\u6781\u591A\u3002\u4F60\u6700\u81EA\u7136\u7684\u505A\u6CD5\u662F\uFF1F", [
-    "\u8BA9 AI \u6309\u89C4\u5219\u81EA\u52A8\u6392\u4E00\u7248",
-    "\u6211\u53E3\u8FF0\u7EA6\u675F\uFF0CAI \u5E2E\u6211\u751F\u6210\u521D\u7A3F",
-    "\u6211\u548C AI \u5934\u8111\u98CE\u66B4\u6392\u8BFE\u7B56\u7565",
-    "\u6574\u7406\u786C\u7EA6\u675F\uFF08\u6559\u5BA4\u3001\u8BFE\u65F6\u3001\u5E08\u8BAD\uFF09\u3001\u8F6F\u7EA6\u675F\uFF08\u5B66\u751F\u9009\u8BFE\u3001\u6559\u7814\u7EC4\u671F\u671B\uFF09\u3001\u5F80\u5E74\u5751\u70B9\uFF0C\u6807\u6CE8\u6765\u6E90\u540E\u8BA9 AI \u51FA\u591A\u7248\u6392\u8BFE\u5E76\u6807\u6CE8\u53EF\u8C03\u53C2\u6570"
-  ], "schedule"),
-  abilityQuestion("a-q2", "scene", "\u6821\u957F\u8BA9\u4F60\u505A\u4E00\u4EFD\u300A\u5E74\u5EA6\u6559\u5B66\u6570\u636E\u767D\u76AE\u4E66\u300B\u3002\u4F60\u6253\u7B97\uFF1F", [
-    "\u8BA9 AI \u76F4\u63A5\u751F\u6210",
-    "\u6211\u53E3\u8FF0\u6570\u636E\uFF0CAI \u5E2E\u6211\u5199",
-    "\u6211\u548C AI \u5217\u767D\u76AE\u4E66\u6846\u67B6\u518D\u5199",
-    "\u6574\u7406\u5B66\u6821\u4E00\u5E74\u6559\u5B66\u3001\u5E08\u8D44\u3001\u751F\u6E90\u3001\u5347\u5B66\u6570\u636E\uFF0C\u6807\u6CE8\u6BCF\u9879\u6765\u6E90\u548C\u7EDF\u8BA1\u53E3\u5F84\uFF0C\u8BA9 AI \u5199\u5E76\u4FDD\u7559\u53EF\u8C03\u56FE\u8868\u5360\u4F4D"
-  ], "whitepaper"),
-  abilityQuestion("a-q3", "task", '\u6821\u957F\u8BA9\u4F60\u8BC4\u4F30"\u662F\u5426\u5F15\u5165\u65B0\u6821\u672C\u8BFE\u7A0B"\u3002\u4F60\u6253\u7B97\uFF1F', [
-    "\u8BA9 AI \u76F4\u63A5\u7ED9\u7ED3\u8BBA",
-    "\u6211\u5217\u503E\u5411\uFF0CAI \u5E2E\u6211\u6574\u7406",
-    "\u548C AI \u5934\u8111\u98CE\u66B4\u8BC4\u4F30\u7EF4\u5EA6",
-    "\u6574\u7406\u5B66\u6821\u6218\u7565\u3001\u5E08\u8D44\u5339\u914D\u5EA6\u3001\u751F\u6E90\u9700\u6C42\u3001\u8BD5\u70B9\u6570\u636E\u3001\u98CE\u9669\u70B9\uFF0C\u6807\u6CE8\u6BCF\u9879\u6765\u6E90\uFF0C\u8BA9 AI \u51FA\u8BC4\u4F30\u62A5\u544A\u5E76\u6807\u6CE8\u5173\u952E\u5047\u8BBE"
-  ], "evaluate"),
-  abilityQuestion("a-q4", "task", "\u4E09\u4E2A\u5B66\u79D1\u7EC4\u90FD\u62A5\u9884\u7B97\uFF0C\u4F60\u9700\u8981\u5728 1 \u5929\u5185\u51FA\u6C47\u603B\u65B9\u6848\u3002AI \u5E2E\u4F60\uFF1F", [
-    "\u628A\u4E09\u4EFD\u9884\u7B97\u7ED9 AI \u8BA9\u5B83\u5408\u5E76",
-    "\u6211\u5217\u5408\u5E76\u89C4\u5219\uFF0CAI \u5E2E\u6211\u4E32",
-    "\u548C AI \u5934\u8111\u98CE\u66B4\u5408\u5E76\u65B9\u6848",
-    "\u6574\u7406\u4E09\u4EFD\u9884\u7B97\u660E\u7EC6\u3001\u5171\u4EAB\u9879\u3001\u51B2\u7A81\u9879\u3001\u5B66\u6821\u5E74\u5EA6\u9884\u7B97\u4E0A\u9650\uFF0C\u6807\u6CE8\u6765\u6E90\uFF0C\u8BA9 AI \u51FA\u6C47\u603B\u5E76\u6807\u6CE8\u54EA\u4E9B\u53EF\u780D\u3001\u54EA\u4E9B\u5FC5\u987B\u4FDD"
-  ], "budget"),
-  abilityQuestion("a-q5", "data", "\u4F60\u8981\u505A\u4E00\u4EFD\u300A\u5B66\u751F\u8BC4\u6559\u62A5\u544A\u300B\u3002\u4F60\u6253\u7B97\uFF1F", [
-    "\u8BA9 AI \u76F4\u63A5\u5206\u6790",
-    "\u6211\u53E3\u8FF0\u5370\u8C61\u8BA9 AI \u5199",
-    "\u6211\u5217\u7EF4\u5EA6\uFF0CAI \u5E2E\u6211\u5199",
-    "\u6574\u7406\u8BC4\u6559\u539F\u59CB\u6570\u636E\uFF08\u53BB\u6807\u8BC6\uFF09\u3001\u6837\u672C\u91CF\u3001\u6536\u96C6\u65B9\u5F0F\uFF0C\u6807\u6CE8\u6BCF\u9879\u6765\u6E90\uFF0C\u8BA9 AI \u51FA\u62A5\u544A\u5E76\u4FDD\u7559\u539F\u59CB\u6570\u636E\u53EF\u8FFD\u6EAF"
-  ], "teaching-eval"),
-  abilityQuestion("a-q6", "data", 'AI \u62A5\u544A\u91CC\u8BF4"\u5B66\u751F\u5BF9\u65B0\u8BFE\u6539\u6EE1\u610F\u5EA6 92%"\uFF0C\u4F46\u6837\u672C\u53EA\u6709 30%\u3002\u4F60\u4F1A\uFF1F', [
-    "92% \u8FD9\u4E2A\u6570\u6CA1\u95EE\u9898",
-    "\u628A 92% \u6539\u6210 80% \u6BD4\u8F83\u7A33",
-    "\u8BA9 AI \u89E3\u91CA 92% \u600E\u4E48\u7B97\u7684",
-    '\u660E\u786E AI \u5FC5\u987B\u6807\u6CE8\u6837\u672C\u91CF\u3001\u6536\u96C6\u65B9\u5F0F\u3001\u7F6E\u4FE1\u5EA6\uFF0C\u5BF9\u4F4E\u6837\u672C\u6570\u636E\u660E\u786E"\u4EC5\u4F9B\u53C2\u8003"\uFF0C\u91CD\u5199\u62A5\u544A'
-  ], "verify-sample"),
-  abilityQuestion("a-q7", "collaboration", 'AI \u5199\u51FA\u7684\u8BC4\u4F30\u62A5\u544A\u88AB\u6821\u957F\u8BF4"\u4E0D\u591F\u5168\u9762"\u3002\u4F60\u4F1A\uFF1F', [
-    "\u91CD\u5199\u66F4\u5168\u9762\u7684\u7248\u672C",
-    "\u8BA9 AI \u5168\u90E8\u52A0\u4E0A\u66F4\u591A\u6570\u636E",
-    "\u7ED9 AI \u51E0\u6761\u6821\u957F\u539F\u8BDD\u8BA9\u5B83\u6539",
-    "\u6574\u7406\u6821\u957F\u539F\u8BDD\u3001\u8FC7\u53BB\u7C7B\u4F3C\u62A5\u544A\u7ED3\u6784\u3001\u5B66\u6821\u6218\u7565\u6587\u4EF6\uFF0C\u8BA9 AI \u6309\u5B66\u6821\u8BED\u5883\u91CD\u5199\u5E76\u4FDD\u7559\u53EF\u590D\u7528\u5206\u6790\u6846\u67B6"
-  ], "rewrite-full"),
-  abilityQuestion("a-q8", "verification", "AI \u5E2E\u4F60\u505A\u4E86 6 \u4E2A\u5B66\u79D1\u7EC4\u7684\u53D1\u5C55\u89C4\u5212\u3002\u4F60\u4F1A\u5982\u4F55\u9A8C\u6536\uFF1F", [
-    "\u770B\u4E00\u904D\u901A\u987A\u5C31\u884C",
-    "\u53EA\u68C0\u67E5\u6570\u5B57\u6307\u6807",
-    "\u6311\u91CD\u70B9\u5B66\u79D1\u7EC4\u8BE6\u7EC6\u770B",
-    '\u5BF9\u7167\u5B66\u6821\u6218\u7565\u3001\u5E08\u8D44\u73B0\u72B6\u3001\u672C\u5B66\u5E74\u5EA6\u8D44\u6E90\uFF0C\u5BF9\u6BCF\u9879\u76EE\u6807\u3001\u63AA\u65BD\u3001\u65F6\u95F4\u8282\u70B9\u6807\u6CE8\u4F9D\u636E\uFF0C\u5BF9"\u5F85\u786E\u8BA4"\u9879\u660E\u786E\u622A\u6B62\u65F6\u95F4'
-  ], "verify-plans"),
-  abilityQuestion("a-q9", "verification", 'AI \u5728\u5B66\u79D1\u89C4\u5212\u91CC\u628A"\u5347\u5B66\u7387"\u4F5C\u4E3A\u6838\u5FC3\u6307\u6807\uFF0C\u4F46\u5B66\u6821\u5176\u5B9E\u66F4\u770B\u91CD"\u5168\u9762\u53D1\u5C55"\u3002\u4F60\u4F1A\uFF1F', [
-    '\u628A"\u5347\u5B66\u7387"\u5220\u4E86',
-    "\u8BA9 AI \u5168\u6587\u91CD\u5199\u6307\u6807",
-    "\u8BA9 AI \u628A\u6838\u5FC3\u6307\u6807\u6539\u4E86",
-    "\u660E\u786E AI \u5FC5\u987B\u6309\u5B66\u6821\u5B98\u65B9\u6218\u7565\u6587\u4EF6\u8BBE\u6307\u6807\uFF0C\u4FEE\u6B63\u8BE5\u89C4\u5212\u5E76\u8BA9 AI \u5217\u51FA\u8FD8\u6709\u54EA\u4E9B\u662F\u6309\u4E2A\u4EBA\u504F\u597D\u800C\u975E\u5B66\u6821\u6218\u7565\u5199\u7684"
-  ], "fact-strategy"),
-  abilityQuestion("a-q10", "agent", "\u5B66\u6821\u60F3\u7ED9\u6559\u5B66\u7BA1\u7406\u914D\u4E00\u4E2A AI \u52A9\u624B\u3002\u4F60\u6700\u770B\u91CD\uFF1F", [
-    "\u80FD\u5E2E\u6211\u67E5\u6570\u636E",
-    "\u80FD\u5E2E\u6211\u5199\u6587\u6863",
-    "\u80FD\u8BFB\u5B66\u6821\u8D44\u6599\u5E93\uFF0C\u6309\u6211\u6307\u4EE4\u6574\u7406\u4FE1\u606F",
-    "\u80FD\u8BFB\u5B66\u6821\u8D44\u6599\u5E93\u3001\u653F\u7B56\u6587\u4EF6\u3001\u5185\u90E8\u6D41\u7A0B\uFF0C\u6309\u6211\u6307\u4EE4\u6574\u7406\u4FE1\u606F\u548C\u8D77\u8349\u8349\u7A3F\uFF0C\u5BF9\u6D89\u53CA\u51B3\u7B56\u3001\u8BC4\u4F30\u3001\u5BB6\u957F\u6C9F\u901A\u7684\u5185\u5BB9\u5FC5\u987B\u4EBA\u786E\u8BA4"
-  ], "agent-admin"),
-  abilityQuestion("a-q11", "scene", "\u5F00\u5B66\u524D\u4E00\u5468 5 \u9879\u7D27\u6025\u4EFB\u52A1\u540C\u65F6\u6765\u3002AI \u5E2E\u4F60\uFF1F", [
-    "\u5E2E\u6211\u60F3\u4F18\u5148\u7EA7",
-    "\u5E2E\u6211\u628A\u4EFB\u52A1\u5217\u8868\u5217\u4E00\u4E0B",
-    "\u5E2E\u6211\u628A\u6BCF\u9879\u4EFB\u52A1\u7684\u6B65\u9AA4\u5217\u51FA\u6765",
-    "\u6574\u7406 5 \u9879\u4EFB\u52A1\u7684\u622A\u6B62\u65F6\u95F4\u3001\u4F9D\u8D56\u5173\u7CFB\u3001\u53EF\u5206\u6D3E\u4EBA\u624B\u3001\u5173\u952E\u4EA7\u51FA\uFF0CAI \u5E2E\u6211\u6392\u4F18\u5148\u7EA7\u548C\u5E76\u884C\u65B9\u6848"
-  ], "multi-task"),
-  abilityQuestion("a-q12", "data", '\u4F60\u60F3\u7528 AI \u5206\u6790"\u4E3A\u4EC0\u4E48\u672C\u5B66\u671F\u6295\u8BC9\u589E\u52A0"\u3002\u4F60\u6253\u7B97\uFF1F', [
-    "\u628A\u6295\u8BC9\u8BB0\u5F55\u7ED9 AI \u8BA9\u5B83\u5206\u6790",
-    "\u6211\u53E3\u8FF0\u5370\u8C61\u8BA9 AI \u5199",
-    "\u548C AI \u5934\u8111\u98CE\u66B4\u53EF\u80FD\u539F\u56E0",
-    "\u6574\u7406\u672C\u5B66\u671F\u6295\u8BC9\u8BB0\u5F55\u3001\u5904\u7406\u7ED3\u679C\u3001\u65F6\u95F4\u5206\u5E03\u3001\u5BF9\u5E94\u653F\u7B56\u53D8\u5316\uFF0C\u6807\u6CE8\u6765\u6E90\uFF0CAI \u51FA\u5047\u8BBE\u5E76\u6807\u6CE8\u6BCF\u6761\u9700\u8981\u7684\u9A8C\u8BC1\u65B9\u5F0F"
-  ], "data-reason"),
-  abilityQuestion("a-q13", "task", "\u4F60\u8D1F\u8D23\u65B0\u6559\u5E08\u57F9\u8BAD\u65B9\u6848\u8BBE\u8BA1\u3002AI \u5E2E\u4F60\uFF1F", [
-    "\u8BA9 AI \u76F4\u63A5\u51FA\u65B9\u6848",
-    "\u6211\u5217\u76EE\u6807\uFF0CAI \u5E2E\u6211\u5199",
-    "\u548C AI \u5934\u8111\u98CE\u66B4\u65B9\u6848",
-    "\u6574\u7406\u5B66\u6821\u57F9\u8BAD\u76EE\u6807\u3001\u65B0\u6559\u5E08\u5B9E\u9645\u9700\u6C42\u3001\u53EF\u7528\u8D44\u6E90\u3001\u8FC7\u5F80\u57F9\u8BAD\u53CD\u9988\uFF0C\u6807\u6CE8\u6765\u6E90\uFF0C\u8BA9 AI \u51FA\u591A\u7248\u65B9\u6848\u5E76\u6807\u6CE8\u9884\u7B97\u548C\u65F6\u95F4\u6295\u5165"
-  ], "training"),
-  abilityQuestion("a-q14", "collaboration", "AI \u51FA\u7684\u57F9\u8BAD\u65B9\u6848\u548C\u6559\u52A1\u5904\u73B0\u6709\u5B89\u6392\u51B2\u7A81\u3002\u4F60\u4F1A\uFF1F", [
-    "\u628A\u51B2\u7A81\u90E8\u5206\u5220\u4E86",
-    "\u8BA9 AI \u6309\u6559\u52A1\u5904\u5B89\u6392\u91CD\u5199",
-    "\u7ED9 AI \u51E0\u6761\u6559\u52A1\u5904\u5B89\u6392\u8BA9\u5B83\u6539",
-    "\u6574\u7406\u6559\u52A1\u5904\u51B2\u7A81\u4E8B\u9879\u7684\u771F\u5B9E\u539F\u56E0\u3001\u53EF\u8C03\u6574\u7A7A\u95F4\u3001\u5FC5\u987B\u9075\u5B88\u7684\u786C\u7EA6\u675F\uFF0C\u8BA9 AI \u6309\u771F\u5B9E\u7EA6\u675F\u91CD\u5199\u5E76\u6807\u6CE8\u54EA\u4E9B\u662F\u534F\u5546\u9879"
-  ], "conflict-align"),
-  abilityQuestion("a-q15", "verification", "AI \u5E2E\u4F60\u51FA\u7684 10 \u4EFD\u5DE5\u4F5C\u603B\u7ED3\uFF0C\u4F60\u4F1A\u600E\u4E48\u68C0\u67E5\uFF1F", [
-    "\u770B\u4E00\u904D\u901A\u987A\u5C31\u884C",
-    "\u53EA\u770B\u6570\u5B57\u6307\u6807",
-    "\u6311\u91CD\u8981\u5C97\u4F4D\u90A3\u4EFD\u8BE6\u7EC6\u770B",
-    '\u5BF9\u7167\u6BCF\u4EFD\u5DE5\u4F5C\u804C\u8D23\u3001\u5E74\u521D\u76EE\u6807\u3001\u672C\u5E74\u5EA6\u5173\u952E\u4E8B\u4EF6\u9010\u6761\u6838\u5BF9\uFF0C\u5BF9\u672A\u63D0\u4F9B\u6570\u636E\u6216\u5938\u5F20\u8868\u8FF0\u6807\u6CE8"\u5F85\u8865"\u6216"\u5F85\u4FEE"'
-  ], "verify-summaries"),
-  abilityQuestion("a-q16", "agent", "AI \u52A9\u624B\u8981\u8FDB\u6821\u7EA7\u6570\u636E\u770B\u677F\u3002\u4F60\u6700\u770B\u91CD\uFF1F", [
-    "\u6570\u636E\u5168",
-    "\u6570\u636E\u5FEB",
-    "\u80FD\u6309\u89D2\u8272\u770B\u5230\u4E0D\u540C\u6570\u636E",
-    "\u6570\u636E\u6743\u9650\u5206\u7EA7\u6E05\u6670\uFF0C\u654F\u611F\u6570\u636E\u6709\u8131\u654F\uFF0C\u51B3\u7B56\u5EFA\u8BAE\u5FC5\u987B\u53EF\u8FFD\u6EAF\u5230\u539F\u59CB\u6570\u636E\u548C\u8D23\u4EFB\u4EBA"
-  ], "agent-dashboard"),
-  styleQuestion("a-q17", "\u9762\u5BF9\u4E0A\u7EA7\u5E03\u7F6E\u7684\u6A21\u7CCA\u4EFB\u52A1\uFF0C\u4F60\u66F4\u81EA\u7136\u7684\u7B2C\u4E00\u6B65\u662F\uFF1F", "explorationExecution", 2, { pole: "E", text: "\u5148\u591A\u89D2\u5EA6\u6536\u96C6\u4FE1\u606F\u518D\u5B9A\u65B9\u5411" }, { pole: "D", text: "\u5148\u786E\u8BA4\u4EFB\u52A1\u8FB9\u754C\u548C\u9A8C\u6536\u6807\u51C6\u518D\u542F\u52A8" }, "style-vague"),
-  styleQuestion("a-q18", "AI \u7ED9\u4F60\u4E09\u7248\u5B66\u6821\u65B9\u6848\uFF0C\u4F60\u503E\u5411\uFF1F", "explorationExecution", 1, { pole: "E", text: "\u4E09\u7248\u5404\u81EA\u53D1\u5C55\u4E00\u7248\u518D\u6BD4\u8F83" }, { pole: "D", text: "\u9009\u6700\u7A33\u7684\u4E00\u7248\uFF0C\u6309\u5B66\u6821\u60EF\u4F8B\u8C03" }, "style-school"),
-  styleQuestion("a-q19", "\u4F60\u5E0C\u671B AI \u5E2E\u4F60\u5199\u89C4\u5212\u6587\u6863\u7684\u65B9\u5F0F\uFF1F", "assignCocreate", 2, { pole: "A", text: "\u6211\u5217\u8981\u70B9\uFF0CAI \u4E00\u7248\u5199\u5B8C" }, { pole: "C", text: "\u6211\u548C AI \u8FB9\u5199\u8FB9\u5BF9\u9F50" }, "style-plan-mode"),
-  styleQuestion("a-q20", "AI \u5199\u7684\u65B9\u6848\u548C\u4F60\u9884\u671F\u5DEE\u8DDD\u5927\u65F6\uFF0C\u4F60\u66F4\u4E60\u60EF\uFF1F", "assignCocreate", 1, { pole: "A", text: "\u4E00\u6B21\u6027\u628A\u8981\u6539\u7684\u70B9\u5217\u6E05\u695A\uFF0C\u8BA9 AI \u91CD\u5199" }, { pole: "C", text: "\u548C AI \u8BA8\u8BBA\u54EA\u4E9B\u662F\u8868\u8FBE\u5DEE\u5F02\u3001\u54EA\u4E9B\u662F\u8BA4\u77E5\u5DEE\u5F02" }, "style-plan-fix"),
-  styleQuestion("a-q21", "AI \u5E2E\u4F60\u505A\u51FA\u4E00\u4EFD\u89C4\u5212\u540E\uFF0C\u4F60\u66F4\u503E\u5411\uFF1F", "fastVerify", 2, { pole: "F", text: "\u5148\u5728\u5C0F\u8303\u56F4\u8BD5\u70B9\uFF0C\u518D\u51B3\u5B9A\u662F\u5426\u5168\u6821\u63A8" }, { pole: "V", text: "\u5148\u7ECF\u8FC7\u591A\u65B9\u8BC4\u5BA1\u901A\u8FC7\u518D\u843D\u5730" }, "style-validate"),
-  styleQuestion("a-q22", "\u5B66\u6821\u5F15\u5165\u65B0 AI \u7CFB\u7EDF\u65F6\uFF0C\u4F60\u66F4\u53EF\u80FD\uFF1F", "fastVerify", 1, { pole: "F", text: "\u9A6C\u4E0A\u6311\u4E00\u4E2A\u90E8\u95E8\u8BD5\u8FD0\u884C\u770B\u6548\u679C" }, { pole: "V", text: "\u5148\u770B\u6570\u636E\u5B89\u5168\u3001\u5408\u89C4\u3001\u5BB6\u957F\u6C9F\u901A\u5F71\u54CD\u518D\u51B3\u5B9A" }, "style-newsystem")
-];
+var BUSINESS_QUESTIONS = {
+  consultant: [
+    abilityQuestion("c-q1", "business", "task", "\u51C6\u5907\u7B2C\u4E00\u6B21\u5BB6\u957F\u54A8\u8BE2\u65F6\uFF0C\u4F60\u4F1A\u600E\u6837\u4F7F\u7528 AI\uFF1F", [
+      { text: "\u8BA9 AI \u751F\u6210\u6807\u51C6\u54A8\u8BE2\u6D41\u7A0B\uFF0C\u73B0\u573A\u7075\u6D3B\u8C03\u6574", score: 1 },
+      { text: "\u5148\u6574\u7406\u5BB6\u5EAD\u4FE1\u606F\uFF0C\u518D\u751F\u6210\u95EE\u9898\u4E0E\u5224\u65AD\u6E05\u5355", score: 3 },
+      { text: "\u8BF7 AI \u6A21\u62DF\u5BB6\u957F\u63D0\u95EE\uFF0C\u63D0\u524D\u7EC3\u4E60\u56DE\u7B54\u65B9\u5F0F", score: 2 },
+      { text: "\u54A8\u8BE2\u540E\u518D\u628A\u8BB0\u5F55\u53D1\u7ED9 AI\uFF0C\u8BF7\u5B83\u6574\u7406\u91CD\u70B9", score: 0 }
+    ], "consultation-prep"),
+    abilityQuestion("c-q2", "business", "collaboration", "\u5BB6\u957F\u5BF9\u8D39\u7528\u548C\u7ED3\u679C\u90FD\u6709\u987E\u8651\u65F6\uFF0C\u4F60\u4F1A\u600E\u6837\u501F\u52A9 AI\uFF1F", [
+      { text: "\u751F\u6210\u4E00\u6BB5\u5B8C\u6574\u8BF4\u670D\u8BDD\u672F\uFF0C\u76F4\u63A5\u7528\u4E8E\u6C9F\u901A", score: 0 },
+      { text: "\u6574\u7406\u5E38\u89C1\u5F02\u8BAE\uFF0C\u8BF7 AI \u5206\u522B\u7ED9\u51FA\u56DE\u5E94\u5EFA\u8BAE", score: 1 },
+      { text: "\u7ED3\u5408\u5BB6\u5EAD\u60C5\u51B5\uFF0C\u8BBE\u8BA1\u5206\u5C42\u6C9F\u901A\u4E0E\u8DDF\u8FDB\u8282\u70B9", score: 3 },
+      { text: "\u8BA9 AI \u626E\u6F14\u5BB6\u957F\uFF0C\u6A21\u62DF\u51E0\u8F6E\u9AD8\u538B\u54A8\u8BE2\u5BF9\u8BDD", score: 2 }
+    ], "objection-handling"),
+    abilityQuestion("c-q3", "business", "verification", "AI \u7ED9\u51FA\u7684\u827A\u8003\u653F\u7B56\u4FE1\u606F\u51C6\u5907\u53D1\u7ED9\u5BB6\u957F\u65F6\uFF0C\u4F60\u4F1A\uFF1F", [
+      { text: "\u8C03\u6574\u6210\u6613\u61C2\u8868\u8FBE\uFF0C\u518D\u53D1\u9001\u7ED9\u5BB6\u957F\u53C2\u8003", score: 1 },
+      { text: "\u8BF7\u53E6\u4E00\u4E2A AI \u590D\u6838\uFF0C\u4E24\u8FB9\u4E00\u81F4\u5C31\u91C7\u7528", score: 2 },
+      { text: "\u6807\u6CE8\u4EC5\u4F9B\u53C2\u8003\uFF0C\u63D0\u9192\u5BB6\u957F\u81EA\u884C\u518D\u6B21\u786E\u8BA4", score: 0 },
+      { text: "\u56DE\u67E5\u5B98\u65B9\u539F\u6587\u3001\u5E74\u4EFD\u548C\u9002\u7528\u8303\u56F4\u540E\u518D\u53D1", score: 3 }
+    ], "policy-check")
+  ],
+  coach: [
+    abilityQuestion("o-q1", "business", "scene", "\u5B66\u751F\u8FDE\u7EED\u51E0\u6B21\u6CA1\u6709\u6309\u65F6\u4EA4\u4F5C\u4E1A\uFF0C\u4F60\u4F1A\u600E\u6837\u4F7F\u7528 AI\uFF1F", [
+      { text: "\u751F\u6210\u4E00\u6BB5\u63D0\u9192\u8BDD\u672F\uFF0C\u5206\u522B\u53D1\u7ED9\u5B66\u751F\u5BB6\u957F", score: 0 },
+      { text: "\u6574\u7406\u7F3A\u4EA4\u8BB0\u5F55\uFF0C\u8BF7 AI \u5E2E\u5FD9\u5F52\u7EB3\u53EF\u80FD\u539F\u56E0", score: 2 },
+      { text: "\u7ED3\u5408\u8BB0\u5F55\u548C\u6C9F\u901A\uFF0C\u5236\u5B9A\u5206\u9636\u6BB5\u8DDF\u8FDB\u65B9\u6848", score: 3 },
+      { text: "\u8BA9 AI \u63D0\u4F9B\u51E0\u79CD\u7BA1\u7406\u529E\u6CD5\uFF0C\u9009\u62E9\u4E00\u9879\u8BD5\u7528", score: 1 }
+    ], "assignment-followup"),
+    abilityQuestion("o-q2", "business", "data", "\u6BCF\u5468\u9700\u8981\u8DDF\u8FDB\u591A\u540D\u5B66\u751F\u5B66\u4E60\u60C5\u51B5\u65F6\uFF0C\u4F60\u4F1A\uFF1F", [
+      { text: "\u628A\u804A\u5929\u8BB0\u5F55\u4EA4\u7ED9 AI\uFF0C\u751F\u6210\u6BCF\u4EBA\u60C5\u51B5\u6458\u8981", score: 1 },
+      { text: "\u5EFA\u7ACB\u7EDF\u4E00\u8BB0\u5F55\u8868\uFF0C\u8BA9 AI \u6807\u8BB0\u53D8\u5316\u548C\u5F02\u5E38", score: 3 },
+      { text: "\u53EA\u8BB0\u5F55\u9700\u8981\u91CD\u70B9\u5173\u6CE8\u7684\u5B66\u751F\u548C\u5177\u4F53\u95EE\u9898", score: 0 },
+      { text: "\u8BA9 AI \u6309\u6210\u7EE9\u548C\u4F5C\u4E1A\u8868\u73B0\u751F\u6210\u8DDF\u8FDB\u987A\u5E8F", score: 2 }
+    ], "student-tracking"),
+    abilityQuestion("o-q3", "business", "verification", "AI \u5224\u65AD\u67D0\u4F4D\u5B66\u751F\u53EF\u80FD\u51FA\u73B0\u5B66\u4E60\u5026\u6020\u65F6\uFF0C\u4F60\u4F1A\uFF1F", [
+      { text: "\u5148\u6309 AI \u5EFA\u8BAE\u6C9F\u901A\uFF0C\u518D\u89C2\u5BDF\u5B66\u751F\u7684\u53CD\u5E94", score: 1 },
+      { text: "\u7ED3\u5408\u51FA\u52E4\u3001\u4F5C\u4E1A\u548C\u8BBF\u8C08\u8BB0\u5F55\u4EA4\u53C9\u5224\u65AD", score: 3 },
+      { text: "\u8BF7 AI \u7ED9\u51FA\u66F4\u591A\u53EF\u80FD\u6027\uFF0C\u518D\u9009\u62E9\u4E00\u79CD\u89E3\u91CA", score: 2 },
+      { text: "\u628A\u5224\u65AD\u5199\u8FDB\u5468\u62A5\uFF0C\u63D0\u9192\u6559\u5E08\u548C\u5BB6\u957F\u5173\u6CE8", score: 0 }
+    ], "student-risk")
+  ],
+  teacher: [
+    abilityQuestion("t-q1", "business", "task", "\u51C6\u5907\u4E00\u8282\u65B0\u8BFE\u65F6\uFF0C\u4F60\u66F4\u53EF\u80FD\u600E\u6837\u4F7F\u7528 AI\uFF1F", [
+      { text: "\u8BA9 AI \u751F\u6210\u5B8C\u6574\u6559\u6848\uFF0C\u518D\u6309\u7ECF\u9A8C\u8FDB\u884C\u4FEE\u6539", score: 1 },
+      { text: "\u5148\u786E\u5B9A\u5B66\u60C5\u4E0E\u76EE\u6807\uFF0C\u518D\u8BBE\u8BA1\u6D3B\u52A8\u548C\u8BC4\u4EF7", score: 3 },
+      { text: "\u8BF7 AI \u7ED9\u51FA\u51E0\u79CD\u5BFC\u5165\u65B9\u5F0F\uFF0C\u9009\u62E9\u5408\u9002\u65B9\u6848", score: 2 },
+      { text: "\u4E3B\u8981\u7528 AI \u641C\u96C6\u6848\u4F8B\uFF0C\u6559\u5B66\u7ED3\u6784\u81EA\u5DF1\u5B8C\u6210", score: 0 }
+    ], "lesson-design"),
+    abilityQuestion("t-q2", "business", "collaboration", "\u4F7F\u7528 AI \u8F85\u52A9\u4F5C\u4E1A\u8BC4\u4EF7\u65F6\uFF0C\u4F60\u4F1A\u600E\u6837\u5B89\u6392\uFF1F", [
+      { text: "\u8BA9 AI \u5148\u5199\u5168\u90E8\u8BC4\u8BED\uFF0C\u6211\u7EDF\u4E00\u8C03\u6574\u8868\u8FBE", score: 0 },
+      { text: "\u63D0\u4F9B\u8BC4\u4EF7\u6807\u51C6\uFF0C\u8BA9 AI \u6807\u51FA\u9700\u8981\u5173\u6CE8\u5904", score: 2 },
+      { text: "AI \u505A\u5206\u7C7B\u7EDF\u8BA1\uFF0C\u6211\u8D1F\u8D23\u4E2A\u6027\u5224\u65AD\u548C\u53CD\u9988", score: 3 },
+      { text: "\u6311\u9009\u5178\u578B\u4F5C\u4E1A\u8BF7 AI \u603B\u7ED3\u5171\u6027\u95EE\u9898", score: 1 }
+    ], "assignment-review"),
+    abilityQuestion("t-q3", "business", "verification", "AI \u63D0\u4F9B\u4E86\u4E00\u6761\u65B0\u7684\u6559\u5B66\u7814\u7A76\u7ED3\u8BBA\uFF0C\u4F60\u4F1A\uFF1F", [
+      { text: "\u7528\u4E8E\u6559\u7814\u8BA8\u8BBA\uFF0C\u8BF7\u540C\u4E8B\u4E00\u8D77\u5224\u65AD\u662F\u5426\u9002\u7528", score: 2 },
+      { text: "\u67E5\u627E\u539F\u59CB\u7814\u7A76\u3001\u6837\u672C\u548C\u9002\u7528\u6761\u4EF6\u540E\u518D\u7528", score: 3 },
+      { text: "\u4F5C\u4E3A\u65B0\u601D\u8DEF\u52A0\u5165\u65B9\u6848\uFF0C\u5E76\u6CE8\u660E\u7531 AI \u63D0\u4F9B", score: 1 },
+      { text: "\u53EA\u8981\u7B26\u5408\u6559\u5B66\u7ECF\u9A8C\uFF0C\u5C31\u5148\u5728\u8BFE\u5802\u4E2D\u8BD5\u7528", score: 0 }
+    ], "research-check")
+  ],
+  general: [
+    abilityQuestion("g-q1", "business", "task", "\u9886\u5BFC\u8BA9\u4F60\u5C3D\u5FEB\u51C6\u5907\u4E00\u4EFD\u60C5\u51B5\u6C47\u62A5\uFF0C\u4F60\u4F1A\u600E\u6837\u7528 AI\uFF1F", [
+      { text: "\u8BF4\u660E\u6C47\u62A5\u4E3B\u9898\uFF0C\u8BF7 AI \u76F4\u63A5\u751F\u6210\u5B8C\u6574\u6750\u6599", score: 0 },
+      { text: "\u5148\u5217\u76EE\u6807\u548C\u53D7\u4F17\uFF0C\u518D\u6574\u7406\u4E8B\u5B9E\u4E0E\u7ED3\u6784\u8981\u6C42", score: 3 },
+      { text: "\u627E\u4E00\u4EFD\u4EE5\u5F80\u6750\u6599\uFF0C\u8BF7 AI \u6309\u76F8\u540C\u683C\u5F0F\u6539\u5199", score: 1 },
+      { text: "\u8BF7 AI \u5148\u95EE\u5173\u952E\u95EE\u9898\uFF0C\u518D\u9010\u9879\u8865\u9F50\u6750\u6599", score: 2 }
+    ], "work-report"),
+    abilityQuestion("g-q2", "business", "data", "\u9700\u8981\u6574\u5408\u591A\u4E2A\u90E8\u95E8\u7684\u8D44\u6599\u65F6\uFF0C\u4F60\u901A\u5E38\u4F1A\uFF1F", [
+      { text: "\u5168\u90E8\u4EA4\u7ED9 AI\uFF0C\u8BF7\u5B83\u7EDF\u4E00\u683C\u5F0F\u5E76\u63D0\u70BC\u91CD\u70B9", score: 0 },
+      { text: "\u5148\u6309\u6765\u6E90\u548C\u7248\u672C\u5F52\u7C7B\uFF0C\u518D\u5EFA\u7ACB\u7EDF\u4E00\u53E3\u5F84", score: 3 },
+      { text: "\u6311\u51FA\u5DEE\u5F02\u8F83\u5927\u7684\u90E8\u5206\uFF0C\u8BF7 AI \u534F\u52A9\u6BD4\u8F83", score: 2 },
+      { text: "\u5148\u91C7\u7528\u6700\u65B0\u8D44\u6599\uFF0C\u5176\u4F59\u5185\u5BB9\u4F5C\u4E3A\u8865\u5145\u53C2\u8003", score: 1 }
+    ], "cross-team-data"),
+    abilityQuestion("g-q3", "business", "verification", "AI \u751F\u6210\u7684\u65B9\u6848\u4E2D\u5305\u542B\u51E0\u9879\u964C\u751F\u6570\u636E\uFF0C\u4F60\u4F1A\uFF1F", [
+      { text: "\u5220\u9664\u964C\u751F\u6570\u636E\uFF0C\u53EA\u4FDD\u7559\u719F\u6089\u7684\u5185\u5BB9", score: 1 },
+      { text: "\u8981\u6C42 AI \u5217\u6765\u6E90\uFF0C\u518D\u9010\u9879\u56DE\u5230\u539F\u6587\u6838\u5BF9", score: 3 },
+      { text: "\u6362\u4E00\u4E2A\u6A21\u578B\u590D\u6838\uFF0C\u7ED3\u679C\u63A5\u8FD1\u5C31\u7EE7\u7EED\u4F7F\u7528", score: 2 },
+      { text: "\u4FDD\u7559\u6570\u636E\u5E76\u6807\u6CE8\u4E3A\u4F30\u7B97\uFF0C\u4EA4\u4ED8\u540E\u518D\u786E\u8BA4", score: 0 }
+    ], "data-verification")
+  ]
+};
 var OPEN_PROMPTS = {
-  teacher: "\u8BF7\u5199\u4E00\u6BB5\u4F60\u4F1A\u76F4\u63A5\u4EA4\u7ED9 AI \u7684\u63D0\u793A\u8BCD\uFF0C\u7528\u6765\u51C6\u5907\u672C\u5B66\u671F\u4E00\u8282\u516C\u5F00\u8BFE\uFF1A\u8BFE\u9898\u81EA\u62DF\uFF08\u5982\u300A\u8272\u5F69\u6784\u6210\u300B\u300A\u901F\u5199\u57FA\u7840\u300B\uFF09\uFF0C\u4E0A\u8BFE\u65F6\u95F4 45 \u5206\u949F\uFF0C\u542C\u8BFE\u5BF9\u8C61\u662F\u540C\u7EC4\u6559\u5E08 + \u6559\u5B66\u4E3B\u4EFB\uFF0C\u8BF7\u628A\u4ED6\u4EEC\u7684\u5173\u6CE8\u70B9\u4E5F\u5199\u8FDB\u63D0\u793A\u8BCD\u3002",
-  consultant: "\u8BF7\u5199\u4E00\u6BB5\u4F60\u4F1A\u76F4\u63A5\u4EA4\u7ED9 AI \u7684\u63D0\u793A\u8BCD\uFF0C\u7528\u6765\u51C6\u5907\u4E00\u6B21\u5BB6\u957F\u54A8\u8BE2\u540E\u7684\u8DDF\u8FDB\u6C9F\u901A\uFF1A\u5BB6\u957F\u662F\u7B2C\u4E00\u6B21\u6765\u54A8\u8BE2\u7684\u9AD8\u4E00\u5BB6\u957F\uFF0C\u5B69\u5B50\u6210\u7EE9\u4E2D\u7B49\u3001\u5BF9\u7F8E\u672F\u6709\u5174\u8DA3\u3001\u5BB6\u5EAD\u5BF9\u827A\u8003\u8D39\u7528\u6709\u987E\u8651\u3002",
-  headteacher: "\u8BF7\u5199\u4E00\u6BB5\u4F60\u4F1A\u76F4\u63A5\u4EA4\u7ED9 AI \u7684\u63D0\u793A\u8BCD\uFF0C\u7528\u6765\u51C6\u5907\u4E00\u6B21\u5BB6\u957F\u4F1A\u5F00\u573A\u53D1\u8A00\uFF1A\u73ED\u7EA7\u65B0\u9AD8\u4E00\uFF0C30 \u4F4D\u5BB6\u957F\u5230\u573A\uFF0C10 \u5206\u949F\u53D1\u8A00\uFF0C\u8BF7\u628A\u73ED\u7EA7\u7BA1\u7406\u3001\u5BB6\u6821\u914D\u5408\u3001\u65B0\u9AD8\u8003\u53D8\u5316\u90FD\u8986\u76D6\u5230\u3002",
-  trainee: "\u8BF7\u5199\u4E00\u6BB5\u4F60\u4F1A\u76F4\u63A5\u4EA4\u7ED9 AI \u7684\u63D0\u793A\u8BCD\uFF0C\u7528\u6765\u51C6\u5907\u5165\u804C\u7B2C\u4E00\u4E2A\u6708\u7684\u4E2A\u4EBA\u603B\u7ED3\uFF1A\u76F4\u5C5E\u4E3B\u7BA1 + \u90E8\u95E8\u8D1F\u8D23\u4EBA + HR \u90FD\u770B\uFF0C\u8BF7\u628A\u5DE5\u4F5C\u6210\u679C\u3001\u5B66\u4E60\u6210\u957F\u3001\u672A\u6765\u89C4\u5212\u90FD\u5199\u6E05\u695A\u3002",
-  admin: "\u8BF7\u5199\u4E00\u6BB5\u4F60\u4F1A\u76F4\u63A5\u4EA4\u7ED9 AI \u7684\u63D0\u793A\u8BCD\uFF0C\u7528\u6765\u5199\u4E00\u4EFD\u300A\u4E0B\u5B66\u671F\u6559\u7814\u7EC4\u8C03\u6574\u5EFA\u8BAE\u300B\uFF1A\u6821\u957F + \u6559\u52A1\u4E3B\u4EFB + \u5404\u6559\u7814\u7EC4\u957F\u90FD\u4F1A\u770B\u5230\uFF0C\u8BF7\u628A\u73B0\u72B6\u3001\u95EE\u9898\u3001\u8C03\u6574\u65B9\u6848\u3001\u98CE\u9669\u90FD\u8986\u76D6\u5230\u3002"
+  consultant: "\u8BF7\u5199\u4E00\u6BB5\u4F60\u4F1A\u76F4\u63A5\u4EA4\u7ED9 AI \u7684\u5B8C\u6574\u63D0\u793A\u8BCD\uFF1A\u4E3A\u4E00\u4F4D\u7B2C\u4E00\u6B21\u54A8\u8BE2\u827A\u8003\u7684\u9AD8\u4E8C\u5BB6\u957F\u51C6\u5907\u540E\u7EED\u6C9F\u901A\u65B9\u6848\u3002\u5B66\u751F\u6587\u5316\u6210\u7EE9\u4E2D\u7B49\u3001\u5BF9\u7F8E\u672F\u6709\u5174\u8DA3\uFF0C\u5BB6\u957F\u540C\u65F6\u62C5\u5FC3\u8D39\u7528\u3001\u5347\u5B66\u7ED3\u679C\u548C\u5B66\u4E60\u98CE\u9669\u3002\u4F60\u9700\u8981\u5728\u4E0B\u4E00\u6B2120\u5206\u949F\u6C9F\u901A\u4E2D\u5E2E\u52A9\u5BB6\u957F\u7406\u89E3\u8DEF\u5F84\u5E76\u660E\u786E\u4E0B\u4E00\u6B65\u884C\u52A8\u3002",
+  coach: "\u8BF7\u5199\u4E00\u6BB5\u4F60\u4F1A\u76F4\u63A5\u4EA4\u7ED9 AI \u7684\u5B8C\u6574\u63D0\u793A\u8BCD\uFF1A\u4E3A\u4E00\u540D\u8FDE\u7EED\u4E24\u5468\u4F5C\u4E1A\u5B8C\u6210\u7387\u4E0B\u964D\u3001\u8FD1\u671F\u6C9F\u901A\u610F\u613F\u8F83\u5F31\u7684\u9AD8\u4E8C\u5B66\u751F\u8BBE\u8BA1\u4E00\u5468\u8DDF\u8FDB\u65B9\u6848\u3002\u4F60\u624B\u5934\u6709\u51FA\u52E4\u3001\u4F5C\u4E1A\u3001\u6D4B\u8BC4\u548C\u6C9F\u901A\u8BB0\u5F55\uFF0C\u9700\u8981\u517C\u987E\u5B66\u751F\u611F\u53D7\u3001\u5B66\u4E60\u6267\u884C\u548C\u5FC5\u8981\u7684\u5BB6\u6821\u6C9F\u901A\u3002",
+  teacher: "\u8BF7\u5199\u4E00\u6BB5\u4F60\u4F1A\u76F4\u63A5\u4EA4\u7ED9 AI \u7684\u5B8C\u6574\u63D0\u793A\u8BCD\uFF1A\u51C6\u5907\u4E00\u828245\u5206\u949F\u7684\u516C\u5F00\u8BFE\uFF0C\u8BFE\u9898\u53EF\u4EE5\u7ED3\u5408\u4F60\u7684\u771F\u5B9E\u6559\u5B66\u5185\u5BB9\u3002\u5BF9\u8C61\u662F\u5F53\u524D\u6240\u6559\u5B66\u751F\uFF0C\u542C\u8BFE\u4EBA\u5458\u5305\u62EC\u540C\u7EC4\u6559\u5E08\u548C\u6559\u5B66\u8D1F\u8D23\u4EBA\uFF0C\u9700\u8981\u4F53\u73B0\u5B66\u60C5\u3001\u76EE\u6807\u3001\u6D3B\u52A8\u8BBE\u8BA1\u3001\u8BC4\u4EF7\u65B9\u5F0F\u548C\u8BFE\u540E\u6539\u8FDB\u3002",
+  general: "\u8BF7\u5199\u4E00\u6BB5\u4F60\u4F1A\u76F4\u63A5\u4EA4\u7ED9 AI \u7684\u5B8C\u6574\u63D0\u793A\u8BCD\uFF1A\u628A\u6765\u81EA\u4E09\u4E2A\u90E8\u95E8\u3001\u683C\u5F0F\u4E0D\u540C\u4E14\u90E8\u5206\u4FE1\u606F\u5B58\u5728\u51B2\u7A81\u7684\u6750\u6599\uFF0C\u6574\u7406\u6210\u4E00\u4EFD\u4F9B\u8D1F\u8D23\u4EBA\u51B3\u7B56\u7684\u5DE5\u4F5C\u7B80\u62A5\u3002\u9700\u8981\u8BF4\u660E\u4E8B\u5B9E\u6765\u6E90\u3001\u6838\u5FC3\u95EE\u9898\u3001\u53EF\u9009\u65B9\u6848\u3001\u98CE\u9669\u548C\u5EFA\u8BAE\u884C\u52A8\uFF0C\u5E76\u6807\u51FA\u4ECD\u9700\u4EBA\u5DE5\u786E\u8BA4\u7684\u4FE1\u606F\u3002"
 };
 function getOpenPromptForRole(role) {
-  return OPEN_PROMPTS[role] || OPEN_PROMPTS.teacher;
+  return OPEN_PROMPTS[role] || OPEN_PROMPTS.general;
 }
-var QUESTION_BANK = {
-  teacher: teacherQuestions,
-  consultant: consultantQuestions,
-  headteacher: headteacherQuestions,
-  trainee: traineeQuestions,
-  admin: adminQuestions
-};
 function getQuestionsForRole(role) {
-  return QUESTION_BANK[role] || teacherQuestions;
+  const business = BUSINESS_QUESTIONS[role] || BUSINESS_QUESTIONS.general;
+  return [...COMMON_QUESTIONS, ...business];
 }
-var questions = teacherQuestions;
+var questions = getQuestionsForRole("teacher");
 var styleProfiles = {
-  EAF: { name: "\u7075\u611F\u63A2\u8DEF\u8005", strength: "\u64C5\u957F\u5FEB\u901F\u6253\u5F00\u601D\u8DEF\u5E76\u628A\u4EFB\u52A1\u4EA4\u7ED9 AI \u63A8\u8FDB", blindSpot: "\u5BB9\u6613\u5728\u65B9\u5411\u5F88\u591A\u65F6\u5FFD\u7565\u6536\u675F\u548C\u6838\u9A8C" },
-  EAV: { name: "\u6D1E\u5BDF\u7814\u7A76\u8005", strength: "\u559C\u6B22\u63A2\u7D22\u591A\u79CD\u53EF\u80FD\uFF0C\u5E76\u91CD\u89C6\u4F9D\u636E\u548C\u8D28\u91CF", blindSpot: "\u53EF\u80FD\u82B1\u8F83\u591A\u65F6\u95F4\u7814\u7A76\uFF0C\u63A8\u8FDF\u7B2C\u4E00\u6B21\u771F\u5B9E\u4EA4\u4ED8" },
-  ECF: { name: "\u7075\u611F\u5171\u521B\u8005", strength: "\u5584\u4E8E\u5728\u5BF9\u8BDD\u4E2D\u6FC0\u53D1\u60F3\u6CD5\u5E76\u5FEB\u901F\u5F62\u6210\u65B0\u65B9\u6848", blindSpot: "\u591A\u8F6E\u4EA4\u6D41\u5BB9\u6613\u53D1\u6563\uFF0C\u9700\u8981\u4E3B\u52A8\u56FA\u5B9A\u76EE\u6807\u548C\u7248\u672C" },
-  ECV: { name: "\u6DF1\u5EA6\u5171\u7814\u8005", strength: "\u64C5\u957F\u4E0E AI \u6DF1\u5165\u8BA8\u8BBA\u5E76\u4E0D\u65AD\u6821\u51C6\u5224\u65AD", blindSpot: "\u5BB9\u6613\u5728\u7EC6\u8282\u4E2D\u6295\u5165\u8FC7\u591A\uFF0C\u9700\u8981\u8BBE\u7F6E\u4EA4\u4ED8\u8282\u70B9" },
-  DAF: { name: "\u654F\u6377\u6267\u884C\u8005", strength: "\u76EE\u6807\u660E\u786E\u3001\u59D4\u6D3E\u76F4\u63A5\uFF0C\u80FD\u5FEB\u901F\u505A\u51FA\u53EF\u7528\u7ED3\u679C", blindSpot: "\u901F\u5EA6\u8F83\u5FEB\u65F6\u53EF\u80FD\u9057\u6F0F\u8D44\u6599\u8FB9\u754C\u548C\u5F02\u5E38\u60C5\u51B5" },
-  DAV: { name: "\u6807\u51C6\u4EA4\u4ED8\u8005", strength: "\u64C5\u957F\u7ED9\u6E05\u695A\u6807\u51C6\uFF0C\u8BA9 AI \u7A33\u5B9A\u5B8C\u6210\u4EFB\u52A1", blindSpot: "\u9762\u5BF9\u9AD8\u5EA6\u6A21\u7CCA\u7684\u65B0\u95EE\u9898\u65F6\u53EF\u80FD\u63A2\u7D22\u4E0D\u8DB3" },
-  DCF: { name: "\u534F\u540C\u63A8\u8FDB\u8005", strength: "\u80FD\u56F4\u7ED5\u76EE\u6807\u4E0E AI \u5FEB\u901F\u534F\u4F5C\u3001\u8FB9\u505A\u8FB9\u8C03\u6574", blindSpot: "\u9891\u7E41\u8C03\u6574\u53EF\u80FD\u6253\u65AD\u6574\u4F53\u7ED3\u6784\uFF0C\u9700\u8981\u4FDD\u7559\u9A8C\u6536\u6E05\u5355" },
-  DCV: { name: "\u8D28\u91CF\u5B88\u95E8\u4EBA", strength: "\u76EE\u6807\u805A\u7126\u3001\u5171\u540C\u6821\u51C6\uFF0C\u5E76\u5BF9\u4EA4\u4ED8\u8D28\u91CF\u4FDD\u6301\u654F\u611F", blindSpot: "\u8D28\u91CF\u8981\u6C42\u8F83\u9AD8\u65F6\u53EF\u80FD\u964D\u4F4E\u8BD5\u9519\u901F\u5EA6" }
+  EAF: {
+    name: "\u7075\u611F\u63A2\u8DEF\u8005",
+    tagline: "\u5148\u6253\u5F00\u53EF\u80FD\u6027\uFF0C\u518D\u5FEB\u901F\u8BA9 AI \u63A8\u8FDB\u3002",
+    startMode: "\u4F60\u4E60\u60EF\u4ECE\u591A\u4E2A\u65B9\u5411\u8D77\u6B65\uFF0C\u901A\u8FC7\u5FEB\u901F\u8BD5\u505A\u627E\u5230\u503C\u5F97\u7EE7\u7EED\u7684\u8DEF\u7EBF\u3002",
+    divisionMode: "\u4F60\u503E\u5411\u7ED9\u51FA\u76EE\u6807\u540E\u8BA9 AI \u4E3B\u52A8\u4EA7\u51FA\uFF0C\u518D\u4ECE\u7ED3\u679C\u4E2D\u9009\u62E9\u548C\u8C03\u6574\u3002",
+    speedQuality: "\u4F60\u66F4\u76F8\u4FE1\u771F\u5B9E\u53CD\u9988\uFF0C\u613F\u610F\u5148\u505A\u51FA\u53EF\u7528\u7248\u672C\u518D\u6301\u7EED\u4F18\u5316\u3002",
+    strengths: ["\u5FEB\u901F\u6253\u5F00\u601D\u8DEF", "\u6562\u4E8E\u5C1D\u8BD5\u65B0\u5DE5\u5177", "\u80FD\u8FC5\u901F\u5F62\u6210\u521D\u7248"],
+    risks: ["\u65B9\u5411\u8FC7\u591A\u65F6\u4E0D\u6613\u6536\u675F", "\u53EF\u80FD\u5F31\u5316\u4E8B\u5B9E\u4E0E\u8FB9\u754C\u68C0\u67E5"],
+    bestTasks: ["\u521B\u610F\u7B56\u5212", "\u65B0\u9879\u76EE\u63A2\u7D22", "\u5185\u5BB9\u539F\u578B"],
+    collaborationMode: "\u5148\u7ED9 AI \u8BD5\u9519\u7A7A\u95F4\uFF0C\u518D\u7528\u660E\u786E\u8282\u70B9\u6536\u675F\u65B9\u5411\u3002",
+    recommendedWorkflow: ["\u751F\u6210\u4E09\u4E2A\u65B9\u5411", "\u9009\u5B9A\u4E00\u6761\u4E3B\u7EBF", "\u6309\u6E05\u5355\u5B8C\u6210\u6838\u9A8C"],
+    nextProjects: ["\u4E2A\u4EBA\u7F51\u7AD9", "\u5185\u5BB9\u7B56\u5212 Agent"],
+    upgrade: "\u6BCF\u6B21\u63A2\u7D22\u524D\u5148\u5199\u4E0B\u505C\u6B62\u6761\u4EF6\u548C\u6700\u7EC8\u9A8C\u6536\u9879\u3002",
+    strength: "\u64C5\u957F\u5FEB\u901F\u6253\u5F00\u601D\u8DEF\u5E76\u8BA9 AI \u63A8\u8FDB",
+    blindSpot: "\u5BB9\u6613\u5728\u65B9\u5411\u5F88\u591A\u65F6\u5FFD\u7565\u6536\u675F\u548C\u6838\u9A8C"
+  },
+  EAV: {
+    name: "\u6D1E\u5BDF\u7814\u7A76\u8005",
+    tagline: "\u5E7F\u6CDB\u63A2\u7D22\uFF0C\u540C\u65F6\u8FFD\u95EE\u4F9D\u636E\u4E0E\u98CE\u9669\u3002",
+    startMode: "\u4F60\u4F1A\u5148\u6269\u5927\u4FE1\u606F\u9762\uFF0C\u6BD4\u8F83\u591A\u79CD\u89E3\u91CA\u540E\u518D\u51B3\u5B9A\u91C7\u7528\u54EA\u6761\u8DEF\u5F84\u3002",
+    divisionMode: "\u4F60\u613F\u610F\u628A\u68C0\u7D22\u548C\u6574\u7406\u4EA4\u7ED9 AI\uFF0C\u4F46\u91CD\u8981\u5224\u65AD\u901A\u5E38\u7531\u81EA\u5DF1\u628A\u5173\u3002",
+    speedQuality: "\u4F60\u91CD\u89C6\u8BC1\u636E\u548C\u5B8C\u6574\u6027\uFF0C\u5B81\u613F\u591A\u6838\u5BF9\u4E00\u6B65\u518D\u8FDB\u5165\u6B63\u5F0F\u4F7F\u7528\u3002",
+    strengths: ["\u4FE1\u606F\u641C\u96C6\u5168\u9762", "\u5584\u4E8E\u6BD4\u8F83\u89C2\u70B9", "\u98CE\u9669\u610F\u8BC6\u8F83\u5F3A"],
+    risks: ["\u7814\u7A76\u65F6\u95F4\u53EF\u80FD\u8FC7\u957F", "\u5BB9\u6613\u63A8\u8FDF\u7B2C\u4E00\u6B21\u4EA4\u4ED8"],
+    bestTasks: ["\u884C\u4E1A\u7814\u7A76", "\u653F\u7B56\u5206\u6790", "\u590D\u6742\u9009\u578B"],
+    collaborationMode: "\u8BA9 AI \u5E76\u884C\u7814\u7A76\u4E0D\u540C\u65B9\u5411\uFF0C\u518D\u7EDF\u4E00\u6765\u6E90\u548C\u5224\u65AD\u6807\u51C6\u3002",
+    recommendedWorkflow: ["\u5217\u51FA\u7814\u7A76\u95EE\u9898", "\u5E76\u884C\u68C0\u7D22\u4E0E\u6BD4\u5BF9", "\u5F62\u6210\u5E26\u6765\u6E90\u7ED3\u8BBA"],
+    nextProjects: ["\u4E13\u9898\u77E5\u8BC6\u5E93", "\u7814\u7A76\u578B Agent"],
+    upgrade: "\u4E3A\u7814\u7A76\u9636\u6BB5\u8BBE\u7F6E\u65F6\u95F4\u76D2\uFF0C\u5E76\u63D0\u524D\u5B9A\u4E49\u6700\u4F4E\u53EF\u4EA4\u4ED8\u7248\u672C\u3002",
+    strength: "\u559C\u6B22\u63A2\u7D22\u591A\u79CD\u53EF\u80FD\u5E76\u91CD\u89C6\u4F9D\u636E",
+    blindSpot: "\u53EF\u80FD\u6295\u5165\u8FC7\u591A\u7814\u7A76\u65F6\u95F4"
+  },
+  ECF: {
+    name: "\u7075\u611F\u5171\u521B\u8005",
+    tagline: "\u5728\u6301\u7EED\u5BF9\u8BDD\u4E2D\u6FC0\u53D1\u60F3\u6CD5\u5E76\u5FEB\u901F\u6210\u5F62\u3002",
+    startMode: "\u4F60\u4E60\u60EF\u5148\u804A\u8D77\u6765\uFF0C\u901A\u8FC7\u8FFD\u95EE\u3001\u53CD\u95EE\u548C\u8054\u60F3\u9010\u6E10\u770B\u6E05\u4EFB\u52A1\u65B9\u5411\u3002",
+    divisionMode: "\u4F60\u628A AI \u5F53\u6210\u8BA8\u8BBA\u4F19\u4F34\uFF0C\u53CC\u65B9\u5728\u591A\u8F6E\u4E92\u52A8\u4E2D\u5171\u540C\u5F62\u6210\u7ED3\u679C\u3002",
+    speedQuality: "\u4F60\u613F\u610F\u5FEB\u901F\u5C1D\u8BD5\uFF0C\u5E76\u6839\u636E\u4EA4\u6D41\u8FC7\u7A0B\u4E0D\u65AD\u6539\u53D8\u548C\u4F18\u5316\u7248\u672C\u3002",
+    strengths: ["\u5BF9\u8BDD\u4E2D\u5BB9\u6613\u4EA7\u751F\u65B0\u610F", "\u8C03\u6574\u65B9\u5411\u6BD4\u8F83\u7075\u6D3B", "\u5171\u521B\u8FC7\u7A0B\u53C2\u4E0E\u5EA6\u9AD8"],
+    risks: ["\u591A\u8F6E\u4EA4\u6D41\u5BB9\u6613\u53D1\u6563", "\u5173\u952E\u51B3\u5B9A\u53EF\u80FD\u6CA1\u6709\u7559\u75D5"],
+    bestTasks: ["\u5185\u5BB9\u521B\u4F5C", "\u8BFE\u7A0B\u5171\u521B", "\u65B9\u6848\u8111\u66B4"],
+    collaborationMode: "\u6BCF\u8F6E\u53EA\u89E3\u51B3\u4E00\u4E2A\u5173\u952E\u95EE\u9898\uFF0C\u5E76\u53CA\u65F6\u56FA\u5316\u5DF2\u7ECF\u8FBE\u6210\u7684\u5171\u8BC6\u3002",
+    recommendedWorkflow: ["\u5171\u540C\u6F84\u6E05\u95EE\u9898", "\u5206\u8F6E\u53D1\u5C55\u65B9\u6848", "\u9501\u5B9A\u7248\u672C\u4E0E\u51B3\u7B56"],
+    nextProjects: ["\u5171\u521B\u63D0\u793A\u8BCD\u5E93", "\u8BFE\u7A0B\u8BBE\u8BA1\u52A9\u624B"],
+    upgrade: "\u5728\u6BCF\u8F6E\u5BF9\u8BDD\u7ED3\u675F\u65F6\u8BA9 AI \u8F93\u51FA\u5171\u8BC6\u3001\u5206\u6B67\u548C\u4E0B\u4E00\u6B65\u3002",
+    strength: "\u5584\u4E8E\u5728\u5BF9\u8BDD\u4E2D\u6FC0\u53D1\u60F3\u6CD5",
+    blindSpot: "\u591A\u8F6E\u4EA4\u6D41\u5BB9\u6613\u53D1\u6563"
+  },
+  ECV: {
+    name: "\u6DF1\u5EA6\u5171\u7814\u8005",
+    tagline: "\u901A\u8FC7\u6DF1\u5165\u5BF9\u8BDD\uFF0C\u628A\u590D\u6742\u95EE\u9898\u7814\u7A76\u900F\u3002",
+    startMode: "\u4F60\u4F1A\u4ECE\u4E0D\u540C\u89D2\u5EA6\u63D0\u51FA\u95EE\u9898\uFF0C\u4E0E AI \u4E00\u8D77\u6784\u5EFA\u5BF9\u4EFB\u52A1\u7684\u5B8C\u6574\u7406\u89E3\u3002",
+    divisionMode: "\u4F60\u503E\u5411\u5171\u540C\u5206\u6790\u548C\u6821\u51C6\uFF0C\u91CD\u8981\u7ED3\u8BBA\u4F1A\u5728\u8BA8\u8BBA\u4E2D\u9010\u5C42\u786E\u8BA4\u3002",
+    speedQuality: "\u4F60\u91CD\u89C6\u63A8\u7406\u8FC7\u7A0B\u548C\u7ED3\u679C\u53EF\u9760\u6027\uFF0C\u901A\u5E38\u4E0D\u4F1A\u6025\u4E8E\u91C7\u7528\u7B2C\u4E00\u7248\u3002",
+    strengths: ["\u590D\u6742\u95EE\u9898\u7406\u89E3\u6DF1\u5165", "\u5584\u4E8E\u53D1\u73B0\u9690\u542B\u5047\u8BBE", "\u80FD\u591F\u6301\u7EED\u6821\u51C6\u5224\u65AD"],
+    risks: ["\u5BB9\u6613\u9677\u5165\u7EC6\u8282\u8BA8\u8BBA", "\u4EA4\u4ED8\u8282\u594F\u53EF\u80FD\u504F\u6162"],
+    bestTasks: ["\u590D\u6742\u51B3\u7B56", "\u8BFE\u7A0B\u7814\u7A76", "\u7B56\u7565\u8BBE\u8BA1"],
+    collaborationMode: "\u7528\u9636\u6BB5\u7ED3\u8BBA\u548C\u51B3\u7B56\u65E5\u5FD7\u63A7\u5236\u6DF1\u5EA6\u8BA8\u8BBA\u7684\u8303\u56F4\u3002",
+    recommendedWorkflow: ["\u5EFA\u7ACB\u95EE\u9898\u5730\u56FE", "\u9010\u5C42\u9A8C\u8BC1\u5047\u8BBE", "\u5F62\u6210\u51B3\u7B56\u4E0E\u8BC1\u636E\u94FE"],
+    nextProjects: ["\u51B3\u7B56\u77E5\u8BC6\u5E93", "\u6DF1\u5EA6\u7814\u7A76\u5DE5\u4F5C\u6D41"],
+    upgrade: "\u4E3A\u6BCF\u4E2A\u7814\u7A76\u9636\u6BB5\u8BBE\u7F6E\u660E\u786E\u8F93\u51FA\uFF0C\u907F\u514D\u65E0\u9650\u5EF6\u4F38\u3002",
+    strength: "\u64C5\u957F\u4E0E AI \u6DF1\u5165\u8BA8\u8BBA\u5E76\u6821\u51C6\u5224\u65AD",
+    blindSpot: "\u5BB9\u6613\u5728\u7EC6\u8282\u4E2D\u6295\u5165\u8FC7\u591A"
+  },
+  DAF: {
+    name: "\u654F\u6377\u6267\u884C\u8005",
+    tagline: "\u76EE\u6807\u660E\u786E\u3001\u59D4\u6D3E\u76F4\u63A5\u3001\u5FEB\u901F\u4EA4\u4ED8\u3002",
+    startMode: "\u4F60\u66F4\u613F\u610F\u5148\u660E\u786E\u8981\u4EC0\u4E48\uFF0C\u7136\u540E\u9A6C\u4E0A\u8BA9 AI \u5F00\u59CB\u5F62\u6210\u7ED3\u679C\u3002",
+    divisionMode: "\u4F60\u901A\u5E38\u8D1F\u8D23\u76EE\u6807\u548C\u6807\u51C6\uFF0CAI \u8D1F\u8D23\u9AD8\u6548\u5B8C\u6210\u5927\u90E8\u5206\u521D\u7248\u5DE5\u4F5C\u3002",
+    speedQuality: "\u4F60\u504F\u597D\u5148\u4EA4\u4ED8\u53EF\u7528\u6210\u679C\uFF0C\u518D\u4ECE\u771F\u5B9E\u4F7F\u7528\u4E2D\u53D1\u73B0\u9700\u8981\u4FEE\u6539\u7684\u5730\u65B9\u3002",
+    strengths: ["\u63A8\u8FDB\u901F\u5EA6\u5FEB", "\u4EFB\u52A1\u59D4\u6D3E\u6E05\u695A", "\u5BB9\u6613\u5F62\u6210\u7A33\u5B9A\u4EA7\u51FA"],
+    risks: ["\u53EF\u80FD\u63A2\u7D22\u4E0D\u8DB3", "\u5FEB\u901F\u4EA4\u4ED8\u65F6\u5BB9\u6613\u6F0F\u6389\u5F02\u5E38"],
+    bestTasks: ["\u9AD8\u9891\u6587\u6848", "\u6807\u51C6\u6750\u6599", "\u5FEB\u901F\u6267\u884C"],
+    collaborationMode: "\u7528\u77ED\u6307\u4EE4\u542F\u52A8\uFF0C\u7528\u5173\u952E\u9A8C\u6536\u70B9\u63A7\u5236\u8D28\u91CF\u3002",
+    recommendedWorkflow: ["\u660E\u786E\u4EA4\u4ED8\u6807\u51C6", "AI \u5B8C\u6210\u521D\u7248", "\u5C0F\u8303\u56F4\u4F7F\u7528\u540E\u4FEE\u6B63"],
+    nextProjects: ["\u6279\u91CF\u5185\u5BB9\u5DE5\u4F5C\u6D41", "\u81EA\u52A8\u5316\u6267\u884C Agent"],
+    upgrade: "\u5728\u5FEB\u901F\u4EA4\u4ED8\u524D\u589E\u52A0\u4E00\u6B21\u6765\u6E90\u3001\u8FB9\u754C\u548C\u5F02\u5E38\u68C0\u67E5\u3002",
+    strength: "\u76EE\u6807\u660E\u786E\u5E76\u80FD\u5FEB\u901F\u505A\u51FA\u7ED3\u679C",
+    blindSpot: "\u901F\u5EA6\u8F83\u5FEB\u65F6\u53EF\u80FD\u9057\u6F0F\u8FB9\u754C"
+  },
+  DAV: {
+    name: "\u6807\u51C6\u4EA4\u4ED8\u8005",
+    tagline: "\u628A\u6807\u51C6\u8BF4\u6E05\u695A\uFF0C\u8BA9 AI \u7A33\u5B9A\u4EA4\u4ED8\u3002",
+    startMode: "\u4F60\u901A\u5E38\u5148\u628A\u76EE\u6807\u3001\u683C\u5F0F\u548C\u8981\u6C42\u786E\u8BA4\u6E05\u695A\uFF0C\u518D\u5F00\u59CB\u8C03\u7528 AI\u3002",
+    divisionMode: "\u4F60\u8D1F\u8D23\u5B9A\u4E49\u89C4\u8303\u548C\u9A8C\u6536\uFF0CAI \u6309\u89C4\u5219\u5B8C\u6210\u53EF\u590D\u7528\u7684\u6807\u51C6\u6210\u679C\u3002",
+    speedQuality: "\u4F60\u91CD\u89C6\u4E00\u81F4\u6027\u548C\u53EF\u9760\u6027\uFF0C\u6B63\u5F0F\u4EA4\u4ED8\u524D\u4F1A\u5B8C\u6210\u5FC5\u8981\u68C0\u67E5\u3002",
+    strengths: ["\u4EFB\u52A1\u8FB9\u754C\u6E05\u6670", "\u4EA4\u4ED8\u7A33\u5B9A\u53EF\u63A7", "\u5BB9\u6613\u6C89\u6DC0\u6807\u51C6\u6A21\u677F"],
+    risks: ["\u9762\u5BF9\u6A21\u7CCA\u95EE\u9898\u63A2\u7D22\u4E0D\u8DB3", "\u89C4\u5219\u8FC7\u591A\u65F6\u7075\u6D3B\u6027\u4E0B\u964D"],
+    bestTasks: ["\u6807\u51C6\u62A5\u544A", "\u6279\u91CF\u6750\u6599", "\u6D41\u7A0B\u89C4\u8303"],
+    collaborationMode: "\u7528\u6A21\u677F\u3001\u793A\u4F8B\u548C\u9A8C\u6536\u6E05\u5355\u8BA9 AI \u7A33\u5B9A\u590D\u73B0\u3002",
+    recommendedWorkflow: ["\u5B9A\u4E49\u6807\u51C6\u6A21\u677F", "\u6309\u6A21\u677F\u751F\u6210", "\u9010\u9879\u9A8C\u6536\u5F52\u6863"],
+    nextProjects: ["\u6807\u51C6\u5316\u77E5\u8BC6\u5E93", "\u6587\u6863\u751F\u6210 Agent"],
+    upgrade: "\u5728\u6B63\u5F0F\u6267\u884C\u524D\u4FDD\u7559\u4E00\u4E2A\u5C0F\u8303\u56F4\u63A2\u7D22\u73AF\u8282\u3002",
+    strength: "\u64C5\u957F\u7ED9\u51FA\u6E05\u695A\u6807\u51C6\u5E76\u7A33\u5B9A\u4EA4\u4ED8",
+    blindSpot: "\u9762\u5BF9\u9AD8\u5EA6\u6A21\u7CCA\u95EE\u9898\u65F6\u63A2\u7D22\u4E0D\u8DB3"
+  },
+  DCF: {
+    name: "\u534F\u540C\u63A8\u8FDB\u8005",
+    tagline: "\u56F4\u7ED5\u76EE\u6807\u6301\u7EED\u534F\u4F5C\uFF0C\u8FB9\u505A\u8FB9\u8C03\u6574\u3002",
+    startMode: "\u4F60\u4F1A\u5148\u786E\u8BA4\u4E3B\u8981\u76EE\u6807\uFF0C\u7136\u540E\u5728\u63A8\u8FDB\u8FC7\u7A0B\u4E2D\u9010\u6B65\u89E3\u51B3\u5177\u4F53\u95EE\u9898\u3002",
+    divisionMode: "\u4F60\u4E0E AI \u4FDD\u6301\u9891\u7E41\u534F\u4F5C\uFF0C\u6839\u636E\u6BCF\u4E00\u6B65\u7ED3\u679C\u52A8\u6001\u8C03\u6574\u5206\u5DE5\u3002",
+    speedQuality: "\u4F60\u613F\u610F\u5FEB\u901F\u63A8\u8FDB\uFF0C\u4E5F\u4F1A\u5728\u5173\u952E\u8282\u70B9\u5171\u540C\u68C0\u67E5\u662F\u5426\u504F\u79BB\u76EE\u6807\u3002",
+    strengths: ["\u534F\u4F5C\u63A8\u8FDB\u987A\u7545", "\u5E94\u5BF9\u53D8\u5316\u7075\u6D3B", "\u53CD\u9988\u8F6C\u5316\u901F\u5EA6\u5FEB"],
+    risks: ["\u9891\u7E41\u8C03\u6574\u4F1A\u6253\u65AD\u7ED3\u6784", "\u7248\u672C\u4E4B\u95F4\u5BB9\u6613\u7F3A\u5C11\u8BB0\u5F55"],
+    bestTasks: ["\u9879\u76EE\u63A8\u8FDB", "\u8FED\u4EE3\u8FD0\u8425", "\u8DE8\u90E8\u95E8\u534F\u4F5C"],
+    collaborationMode: "\u4EE5\u4EFB\u52A1\u770B\u677F\u548C\u9636\u6BB5\u7248\u672C\u7EF4\u6301\u5171\u540C\u8282\u594F\u3002",
+    recommendedWorkflow: ["\u62C6\u5206\u9636\u6BB5\u76EE\u6807", "\u8FB9\u505A\u8FB9\u53CD\u9988", "\u8282\u70B9\u590D\u76D8\u5E76\u56FA\u5316"],
+    nextProjects: ["\u9879\u76EE\u534F\u4F5C Agent", "\u81EA\u52A8\u8DDF\u8FDB\u5DE5\u4F5C\u6D41"],
+    upgrade: "\u6BCF\u6B21\u8C03\u6574\u90FD\u8BB0\u5F55\u539F\u56E0\u3001\u5F71\u54CD\u548C\u5F53\u524D\u6709\u6548\u7248\u672C\u3002",
+    strength: "\u80FD\u56F4\u7ED5\u76EE\u6807\u4E0E AI \u5FEB\u901F\u534F\u4F5C",
+    blindSpot: "\u9891\u7E41\u8C03\u6574\u53EF\u80FD\u6253\u65AD\u6574\u4F53\u7ED3\u6784"
+  },
+  DCV: {
+    name: "\u8D28\u91CF\u5B88\u95E8\u4EBA",
+    tagline: "\u76EE\u6807\u805A\u7126\u3001\u5171\u540C\u6821\u51C6\u3001\u4E25\u5B88\u8D28\u91CF\u3002",
+    startMode: "\u4F60\u901A\u5E38\u5148\u9501\u5B9A\u76EE\u6807\u4E0E\u98CE\u9669\uFF0C\u518D\u548C AI \u4E00\u8D77\u62C6\u89E3\u5B9E\u73B0\u8DEF\u5F84\u3002",
+    divisionMode: "\u4F60\u4F1A\u4E0E AI \u5171\u540C\u6821\u51C6\u5173\u952E\u5224\u65AD\uFF0C\u540C\u65F6\u4FDD\u7559\u6700\u7EC8\u8D28\u91CF\u8D23\u4EFB\u3002",
+    speedQuality: "\u4F60\u66F4\u91CD\u89C6\u6B63\u5F0F\u7ED3\u679C\u7684\u53EF\u4FE1\u5EA6\uFF0C\u4E60\u60EF\u5728\u5173\u952E\u8282\u70B9\u7CFB\u7EDF\u6838\u9A8C\u3002",
+    strengths: ["\u8D28\u91CF\u610F\u8BC6\u7A33\u5B9A", "\u98CE\u9669\u63A7\u5236\u624E\u5B9E", "\u5173\u952E\u5224\u65AD\u8F83\u53EF\u9760"],
+    risks: ["\u8D28\u91CF\u8981\u6C42\u53EF\u80FD\u62D6\u6162\u8BD5\u9519", "\u5BB9\u6613\u6295\u5165\u8FC7\u591A\u68C0\u67E5\u6210\u672C"],
+    bestTasks: ["\u91CD\u8981\u4EA4\u4ED8", "\u9AD8\u98CE\u9669\u51B3\u7B56", "\u8D28\u91CF\u5BA1\u6838"],
+    collaborationMode: "\u8BA9 AI \u53C2\u4E0E\u68C0\u67E5\u4E0E\u53CD\u9A73\uFF0C\u4F46\u5173\u952E\u8BC1\u636E\u5FC5\u987B\u56DE\u5230\u539F\u59CB\u6765\u6E90\u3002",
+    recommendedWorkflow: ["\u660E\u786E\u98CE\u9669\u6E05\u5355", "\u5171\u540C\u5B8C\u6210\u4E0E\u6821\u51C6", "\u72EC\u7ACB\u6838\u9A8C\u540E\u4EA4\u4ED8"],
+    nextProjects: ["\u8D28\u91CF\u68C0\u67E5 Agent", "\u5408\u89C4\u77E5\u8BC6\u5E93"],
+    upgrade: "\u533A\u5206\u5FC5\u987B\u6838\u9A8C\u548C\u53EF\u4EE5\u8BD5\u9519\u7684\u90E8\u5206\uFF0C\u63D0\u5347\u6574\u4F53\u8282\u594F\u3002",
+    strength: "\u5BF9\u4EA4\u4ED8\u8D28\u91CF\u4FDD\u6301\u7A33\u5B9A\u654F\u611F",
+    blindSpot: "\u8D28\u91CF\u8981\u6C42\u8F83\u9AD8\u65F6\u53EF\u80FD\u964D\u4F4E\u8BD5\u9519\u901F\u5EA6"
+  }
 };
 var levelForScore = (score) => {
   if (score >= 80) return { code: "L4", name: "Agent\u63A8\u52A8\u8005", range: "80\u2013100" };
@@ -913,19 +727,67 @@ var levelForScore = (score) => {
   if (score >= 40) return { code: "L2", name: "\u4EFB\u52A1\u8868\u8FBE\u8005", range: "40\u201359" };
   return { code: "L1", name: "AI\u4F53\u9A8C\u8005", range: "0\u201339" };
 };
-function scoreStyle(selectedIds, questionList) {
-  const items = questionList || questions;
-  const totals = {
-    explorationExecution: 0,
-    assignCocreate: 0,
-    fastVerify: 0
+var LEVELS = [
+  { code: "L1", name: "AI\u4F53\u9A8C\u8005", range: "0\u201339" },
+  { code: "L2", name: "\u4EFB\u52A1\u8868\u8FBE\u8005", range: "40\u201359" },
+  { code: "L3", name: "\u534F\u540C\u4EA4\u4ED8\u8005", range: "60\u201379" },
+  { code: "L4", name: "Agent\u63A8\u52A8\u8005", range: "80\u2013100" }
+];
+function nextLevel(level) {
+  const index = LEVELS.findIndex((item) => item.code === level.code);
+  return LEVELS[Math.min(LEVELS.length - 1, index + 1)];
+}
+function normalizeAnswerIds(answers) {
+  if (!Array.isArray(answers)) return [];
+  return [...new Set(answers.flatMap((value) => Array.isArray(value) ? value : [value]).filter(Boolean))];
+}
+function selectedOptions(question, selectedIds) {
+  return question.options.filter((option) => selectedIds.includes(option.id));
+}
+function scoreQuestion(question, selectedIds) {
+  const selected = selectedOptions(question, selectedIds);
+  if (!selected.length) return 0;
+  if (question.kind !== "multi") return Number(selected[0].score) || 0;
+  if (question.strategy === "task-breadth") {
+    return Math.min(3, selected.length * 0.5);
+  }
+  if (question.strategy === "tool-depth") {
+    const highest = Math.max(...selected.map((option) => Number(option.score) || 0));
+    const families = new Set(selected.map((option) => option.family));
+    return Math.min(3, highest + Math.min(0.4, Math.max(0, families.size - 1) * 0.1));
+  }
+  return Math.max(...selected.map((option) => Number(option.score) || 0));
+}
+function average(values) {
+  return values.reduce((sum, value) => sum + value, 0) / Math.max(values.length, 1);
+}
+function percent(value) {
+  return Math.round(value / 3 * 100);
+}
+function rubricPercent(rubric, key) {
+  const value = Math.min(3, Math.max(0, Number(rubric?.[key]) || 0));
+  return percent(value);
+}
+function projectResult(selectedIds) {
+  const bonuses = {
+    "f-q5-website-live": 3,
+    "f-q5-knowledge-active": 3,
+    "f-q5-automation-live": 4
   };
+  const projectBonus = Math.min(8, Object.entries(bonuses).filter(([id]) => selectedIds.includes(id)).reduce((sum, [, value]) => sum + value, 0));
+  const miniCore = selectedIds.includes("f-q5-mini-core");
+  const miniLive = selectedIds.includes("f-q5-mini-live");
+  return { projectBonus, miniCore, miniLive, eligible: miniCore && miniLive };
+}
+function scoreStyle(answers, questionList = questions) {
+  const selectedIds = normalizeAnswerIds(answers);
+  const totals = { explorationExecution: 0, assignCocreate: 0, fastVerify: 0 };
   const poles = {
     explorationExecution: ["E", "D"],
     assignCocreate: ["A", "C"],
     fastVerify: ["F", "V"]
   };
-  for (const question of items.filter((item) => item.kind === "style")) {
+  for (const question of questionList.filter((item) => item.kind === "style")) {
     const option = question.options.find((item) => selectedIds.includes(item.id));
     if (!option) continue;
     totals[question.axis] += option.pole === poles[question.axis][0] ? question.weight : -question.weight;
@@ -935,49 +797,68 @@ function scoreStyle(selectedIds, questionList) {
     Object.entries(totals).map(([axis, value]) => [axis, Math.abs(value) === 3 ? "\u660E\u663E" : "\u8F7B\u5FAE"])
   );
   const code = chars.join("");
-  return { code, ...styleProfiles[code] || styleProfiles.DCV, confidence, axes: totals };
+  const profile = styleProfiles[code] || styleProfiles.DCV;
+  const axisDetails = [
+    { axis: "explorationExecution", label: "\u63A2\u7D22 / \u6267\u884C", pole: chars[0], tendency: chars[0] === "E" ? "\u63A2\u7D22" : "\u6267\u884C", strength: confidence.explorationExecution },
+    { axis: "assignCocreate", label: "\u59D4\u6D3E / \u5171\u521B", pole: chars[1], tendency: chars[1] === "A" ? "\u59D4\u6D3E" : "\u5171\u521B", strength: confidence.assignCocreate },
+    { axis: "fastVerify", label: "\u654F\u6377 / \u5BA1\u614E", pole: chars[2], tendency: chars[2] === "F" ? "\u654F\u6377" : "\u5BA1\u614E", strength: confidence.fastVerify }
+  ];
+  return { code, ...profile, confidence, axes: totals, axisDetails };
 }
-var average = (values) => values.reduce((sum, value) => sum + value, 0) / Math.max(values.length, 1);
-var percent = (value) => Math.round(value / 3 * 100);
-var clampRubric = (rubric, key) => Math.min(3, Math.max(0, Number(rubric[key]) || 0));
-function scoreAssessment(selectedIds, rubric, questionList) {
-  const items = questionList || questions;
-  const selected = items.flatMap((question) => question.options).filter((option) => selectedIds.includes(option.id));
-  const choiceDimensions = Object.fromEntries(
-    dimensions.map((dimension) => {
-      const ids = items.filter((question) => question.kind === "ability" && question.dimension === dimension.id).flatMap((question) => question.options.map((option) => option.id));
-      const scores = selected.filter((option) => ids.includes(option.id)).map((option) => option.score);
-      return [dimension.id, percent(average(scores))];
-    })
+function scoreAssessment(answers, rubric, questionList = questions) {
+  const selectedIds = normalizeAnswerIds(answers);
+  const scoredQuestions = questionList.filter((question) => ["foundation", "application", "business"].includes(question.section));
+  const questionScores = new Map(scoredQuestions.map((question) => [question.id, scoreQuestion(question, selectedIds)]));
+  const sectionScore = (section) => percent(average(
+    scoredQuestions.filter((question) => question.section === section).map((question) => questionScores.get(question.id) || 0)
+  ));
+  const sectionScores = {
+    foundation: sectionScore("foundation"),
+    application: sectionScore("application"),
+    business: sectionScore("business")
+  };
+  const choiceScore = Math.round(
+    sectionScores.foundation * 0.3 + sectionScores.application * 0.45 + sectionScores.business * 0.25
   );
   const open = Object.fromEntries(
-    ["audience", "purpose", "inputs", "process", "output", "constraints", "acceptance"].map((key) => [
-      key,
-      percent(clampRubric(rubric, key))
-    ])
+    ["audience", "purpose", "inputs", "process", "output", "constraints", "acceptance"].map((key) => [key, rubricPercent(rubric, key)])
   );
   const openScore = Math.round(average(Object.values(open)));
-  const choiceScore = Math.round(
-    dimensions.reduce((sum, dimension) => sum + choiceDimensions[dimension.id] * (dimension.weight / 100), 0)
-  );
-  const finalDimensions = {
-    scene: Math.round(choiceDimensions.scene * 0.8 + average([open.audience, open.purpose]) * 0.2),
-    task: Math.round(choiceDimensions.task * 0.3 + average([open.audience, open.purpose, open.output]) * 0.7),
-    data: Math.round(choiceDimensions.data * 0.4 + open.inputs * 0.6),
-    collaboration: Math.round(choiceDimensions.collaboration * 0.4 + open.process * 0.6),
-    verification: Math.round(
-      choiceDimensions.verification * 0.75 + average([open.constraints, open.acceptance]) * 0.25
-    ),
+  const rawTotalScore = Math.round(choiceScore * 0.6 + openScore * 0.4);
+  const project = projectResult(selectedIds);
+  const totalScore = Math.min(100, rawTotalScore + project.projectBonus);
+  const baseLevel = levelForScore(totalScore);
+  const level = project.eligible ? nextLevel(baseLevel) : baseLevel;
+  const choiceDimensions = Object.fromEntries(dimensions.map((dimension) => {
+    const values = scoredQuestions.filter((question) => question.dimension === dimension.id).map((question) => questionScores.get(question.id) || 0);
+    return [dimension.id, percent(average(values))];
+  }));
+  const dimensionsResult = {
+    scene: Math.round(choiceDimensions.scene * 0.7 + average([open.audience, open.purpose]) * 0.3),
+    task: Math.round(choiceDimensions.task * 0.5 + average([open.audience, open.purpose, open.output]) * 0.5),
+    data: Math.round(choiceDimensions.data * 0.6 + open.inputs * 0.4),
+    collaboration: Math.round(choiceDimensions.collaboration * 0.6 + open.process * 0.4),
+    verification: Math.round(choiceDimensions.verification * 0.7 + average([open.constraints, open.acceptance]) * 0.3),
     agent: choiceDimensions.agent
   };
-  const totalScore = Math.round(choiceScore * 0.6 + openScore * 0.4);
   return {
     choiceScore,
     openScore,
+    rawTotalScore,
+    projectBonus: project.projectBonus,
     totalScore,
-    dimensions: finalDimensions,
-    level: levelForScore(totalScore),
-    style: scoreStyle(selectedIds, items)
+    projectUpgrade: {
+      applied: project.eligible && baseLevel.code !== "L4",
+      eligible: project.eligible,
+      levels: project.eligible && baseLevel.code !== "L4" ? 1 : 0,
+      miniCore: project.miniCore,
+      miniLive: project.miniLive,
+      baseLevelCode: baseLevel.code
+    },
+    sectionScores,
+    dimensions: dimensionsResult,
+    level,
+    style: scoreStyle(answers, questionList)
   };
 }
 function seededRandom(seed) {
@@ -1588,6 +1469,10 @@ function publicReport(submission, session) {
     scores: {
       choiceScore: submission.choiceScore,
       openScore: submission.openScore,
+      rawTotalScore: submission.rawTotalScore,
+      projectBonus: submission.projectBonus || 0,
+      projectUpgrade: submission.projectUpgrade || { applied: false, eligible: false, levels: 0 },
+      sectionScores: submission.sectionScores || {},
       totalScore: submission.totalScore,
       dimensions: submission.dimensionScores,
       level: { code: submission.levelCode, name: submission.levelName },
@@ -1595,21 +1480,27 @@ function publicReport(submission, session) {
     }
   };
 }
-function validateAnswerIds(answerIds, questionList) {
+function validateAnswerValues(answerValues, questionList) {
   const items = questionList || getQuestionsForRole("teacher");
-  if (!Array.isArray(answerIds) || answerIds.length !== items.length) {
+  if (!Array.isArray(answerValues) || answerValues.length !== items.length) {
     throw new Error(`\u8BF7\u5B8C\u6210\u5168\u90E8 ${items.length} \u9053\u9009\u62E9\u9898`);
   }
   for (let i = 0; i < items.length; i++) {
-    const q = items[i];
-    if (!q.options.some((opt) => opt.id === answerIds[i])) {
+    const question = items[i];
+    const value = answerValues[i];
+    const ids = Array.isArray(value) ? value : [value];
+    const invalid = ids.length === 0 || question.kind !== "multi" && ids.length !== 1 || ids.some((id) => typeof id !== "string" || !question.options.some((option) => option.id === id));
+    if (invalid) {
       throw new Error("\u7B54\u5377\u9009\u9879\u65E0\u6548\uFF0C\u8BF7\u5237\u65B0\u540E\u91CD\u65B0\u586B\u5199");
     }
   }
 }
 function assertSubmission(body) {
   const payload = body && typeof body === "object" ? body : {};
-  if (!Array.isArray(payload.answers) || payload.answers.length === 0 || payload.answers.some((a) => typeof a !== "string" || !a)) {
+  if (!Array.isArray(payload.answers) || payload.answers.length === 0 || payload.answers.some((answer) => {
+    if (Array.isArray(answer)) return answer.length === 0 || answer.some((id) => typeof id !== "string" || !id);
+    return typeof answer !== "string" || !answer;
+  })) {
     throw new Error("\u8BF7\u5B8C\u6210\u5168\u90E8\u9009\u62E9\u9898");
   }
   const openPrompt = String(payload.openPrompt || "").trim();
@@ -1694,6 +1585,10 @@ async function runAnalysis(submission) {
   submission.analysis = analysisResult;
   submission.choiceScore = scores.choiceScore;
   submission.openScore = scores.openScore;
+  submission.rawTotalScore = scores.rawTotalScore;
+  submission.projectBonus = scores.projectBonus;
+  submission.projectUpgrade = scores.projectUpgrade;
+  submission.sectionScores = scores.sectionScores;
   submission.totalScore = scores.totalScore;
   submission.levelCode = scores.level.code;
   submission.levelName = scores.level.name;
@@ -1730,7 +1625,7 @@ async function handleLocalApi(method, path, body = {}, headers = {}) {
       payload = assertSubmission(body);
       const role = String(body?.participantRoleKey || "teacher");
       const questionList2 = getQuestionsForRole(role);
-      validateAnswerIds(payload.answers, questionList2);
+      validateAnswerValues(payload.answers, questionList2);
     } catch (err) {
       return error(err instanceof Error ? err.message : "\u7B54\u5377\u65E0\u6548", 400);
     }
@@ -1987,7 +1882,56 @@ const {
   RadarChart,
   ResponsiveContainer
 } = {};
-const { Fragment, jsx, jsxs } = { jsx: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, jsxs: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, Fragment: React.Fragment };
+// app/components/StyleAtlas.tsx
+const { jsx, jsxs } = { jsx: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, jsxs: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, Fragment: React.Fragment };
+function StyleAtlas({ open, onClose, activeCode = "" }) {
+  if (!open) return null;
+  return /* @__PURE__ */ jsx("div", { className: "atlas-backdrop", role: "dialog", "aria-modal": "true", "aria-label": "AI\u4F7F\u7528\u98CE\u683C\u753B\u50CF\u5927\u5168", onMouseDown: (event) => {
+    if (event.currentTarget === event.target) onClose();
+  }, children: /* @__PURE__ */ jsxs("section", { className: "atlas-panel", children: [
+    /* @__PURE__ */ jsxs("header", { className: "atlas-header", children: [
+      /* @__PURE__ */ jsxs("div", { children: [
+        /* @__PURE__ */ jsx("p", { className: "eyebrow", children: "3 AXES \xB7 8 STYLES" }),
+        /* @__PURE__ */ jsx("h2", { children: "AI\u4F7F\u7528\u98CE\u683C\u753B\u50CF\u5927\u5168" }),
+        /* @__PURE__ */ jsx("p", { children: "\u98CE\u683C\u7531\u4E09\u6761\u503E\u5411\u8F74\u7EC4\u5408\u800C\u6210\uFF1A\u63A2\u7D22 E / \u6267\u884C D\u3001\u59D4\u6D3E A / \u5171\u521B C\u3001\u654F\u6377 F / \u5BA1\u614E V\u3002" })
+      ] }),
+      /* @__PURE__ */ jsx("button", { type: "button", className: "atlas-close", onClick: onClose, "aria-label": "\u5173\u95ED\u98CE\u683C\u753B\u50CF\u5927\u5168", children: "\xD7" })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "atlas-axis-legend", children: [
+      /* @__PURE__ */ jsx("span", { children: "\u63A2\u7D22 E / \u6267\u884C D" }),
+      /* @__PURE__ */ jsx("span", { children: "\u59D4\u6D3E A / \u5171\u521B C" }),
+      /* @__PURE__ */ jsx("span", { children: "\u654F\u6377 F / \u5BA1\u614E V" })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "atlas-grid", children: Object.entries(styleProfiles).map(([code, profile]) => /* @__PURE__ */ jsxs("article", { className: `atlas-card ${activeCode === code ? "active" : ""}`, children: [
+      /* @__PURE__ */ jsxs("div", { className: "atlas-card-title", children: [
+        /* @__PURE__ */ jsx("span", { children: code }),
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("h3", { children: profile.name }),
+          /* @__PURE__ */ jsx("p", { children: profile.tagline })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs("dl", { children: [
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("dt", { children: "\u64C5\u957F" }),
+          /* @__PURE__ */ jsx("dd", { children: profile.strengths.join(" \xB7 ") })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("dt", { children: "\u7559\u610F" }),
+          /* @__PURE__ */ jsx("dd", { children: profile.risks.join(" \xB7 ") })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("dt", { children: "\u9002\u5408" }),
+          /* @__PURE__ */ jsx("dd", { children: profile.bestTasks.join(" \xB7 ") })
+        ] })
+      ] }),
+      activeCode === code && /* @__PURE__ */ jsx("strong", { className: "atlas-current", children: "\u4F60\u7684\u5F53\u524D\u98CE\u683C" })
+    ] }, code)) }),
+    /* @__PURE__ */ jsx("footer", { className: "atlas-footer", children: "\u98CE\u683C\u6CA1\u6709\u9AD8\u4F4E\u4E4B\u5206\u3002\u5B83\u662F\u8BFE\u7A0B\u8D77\u70B9\u753B\u50CF\uFF0C\u4E0D\u662F\u6807\u51C6\u5316\u5FC3\u7406\u6D4B\u9A8C\u3002" })
+  ] }) });
+}
+
+// app/components/ReportView.tsx
+const { Fragment, jsx: jsx2, jsxs: jsxs2 } = { jsx: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, jsxs: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, Fragment: React.Fragment };
 var rubricLabels = {
   audience: "\u5BF9\u8C61",
   purpose: "\u76EE\u7684",
@@ -2000,6 +1944,7 @@ var rubricLabels = {
 function ReportView({ report, message = "" }) {
   const reportRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
+  const [showAtlas, setShowAtlas] = useState(false);
   const radarData = dimensions.map((dimension) => ({
     subject: dimension.label.replace("\u529B", ""),
     value: report.scores?.dimensions?.[dimension.id] || 0,
@@ -2025,133 +1970,207 @@ function ReportView({ report, message = "" }) {
     }
   }
   const analysis = report.analysis;
-  return /* @__PURE__ */ jsxs("main", { className: "report-page", children: [
-    /* @__PURE__ */ jsxs("div", { className: "report-toolbar", children: [
-      /* @__PURE__ */ jsxs("div", { children: [
-        /* @__PURE__ */ jsx("span", { className: "brand-mark", children: "AI" }),
-        /* @__PURE__ */ jsx("strong", { children: "\u4E2A\u4EBA\u6210\u957F\u753B\u50CF" })
+  const style = report.scores?.style || {};
+  const projectBonus = report.scores?.projectBonus || 0;
+  const projectUpgrade = report.scores?.projectUpgrade || {};
+  return /* @__PURE__ */ jsxs2("main", { className: "report-page", children: [
+    /* @__PURE__ */ jsxs2("div", { className: "report-toolbar", children: [
+      /* @__PURE__ */ jsxs2("div", { children: [
+        /* @__PURE__ */ jsx2("span", { className: "brand-mark", children: "AI" }),
+        /* @__PURE__ */ jsx2("strong", { children: "\u4E2A\u4EBA\u6210\u957F\u753B\u50CF" })
       ] }),
-      /* @__PURE__ */ jsx("button", { className: "primary-button small", onClick: () => void downloadReport(), disabled: downloading, children: downloading ? "\u6B63\u5728\u751F\u6210\u2026" : "\u4E0B\u8F7D\u62A5\u544A\u957F\u56FE" })
+      /* @__PURE__ */ jsxs2("div", { className: "report-toolbar-actions", children: [
+        /* @__PURE__ */ jsx2("button", { className: "text-button", onClick: () => setShowAtlas(true), children: "\u67E5\u770B8\u578B\u98CE\u683C\u5927\u5168" }),
+        /* @__PURE__ */ jsx2("button", { className: "primary-button small", onClick: () => void downloadReport(), disabled: downloading, children: downloading ? "\u6B63\u5728\u751F\u6210\u2026" : "\u4E0B\u8F7D\u62A5\u544A\u957F\u56FE" })
+      ] })
     ] }),
-    /* @__PURE__ */ jsxs("div", { className: "report-sheet", ref: reportRef, children: [
-      /* @__PURE__ */ jsxs("header", { className: "report-hero", children: [
-        /* @__PURE__ */ jsxs("div", { children: [
-          /* @__PURE__ */ jsxs("p", { className: "eyebrow", children: [
+    /* @__PURE__ */ jsxs2("div", { className: "report-sheet", ref: reportRef, children: [
+      /* @__PURE__ */ jsxs2("header", { className: "report-hero", children: [
+        /* @__PURE__ */ jsxs2("div", { children: [
+          /* @__PURE__ */ jsxs2("p", { className: "eyebrow", children: [
             "AI\u80FD\u529B\u4E0E\u98CE\u683C\u6D4B\u8BC4 \xB7 ",
             report.assessmentVersion || "ASSESSMENT-V1"
           ] }),
-          /* @__PURE__ */ jsxs("h1", { children: [
+          /* @__PURE__ */ jsxs2("h1", { children: [
             report.participant?.name,
             "\uFF0C\u4F60\u7684 AI \u5DE5\u4F5C\u65B9\u5F0F\u753B\u50CF"
           ] }),
-          /* @__PURE__ */ jsxs("p", { children: [
+          /* @__PURE__ */ jsxs2("p", { children: [
             report.session?.title,
             " \xB7 ",
             report.participant?.role
           ] })
         ] }),
-        /* @__PURE__ */ jsxs("div", { className: "score-ring", children: [
-          /* @__PURE__ */ jsx("strong", { children: report.scores?.totalScore ?? "\u2014" }),
-          /* @__PURE__ */ jsx("span", { children: "\u7EFC\u5408\u80FD\u529B" })
+        /* @__PURE__ */ jsxs2("div", { className: "score-ring", children: [
+          /* @__PURE__ */ jsx2("strong", { children: report.scores?.totalScore ?? "\u2014" }),
+          /* @__PURE__ */ jsx2("span", { children: "\u7EFC\u5408\u80FD\u529B" })
         ] })
       ] }),
-      /* @__PURE__ */ jsxs("section", { className: "report-summary-grid", children: [
-        /* @__PURE__ */ jsxs("article", { className: "level-panel", children: [
-          /* @__PURE__ */ jsx("p", { className: "panel-label", children: "\u5F53\u524D\u6210\u957F\u7B49\u7EA7" }),
-          /* @__PURE__ */ jsx("span", { className: "level-code", children: report.scores?.level?.code }),
-          /* @__PURE__ */ jsx("h2", { children: report.scores?.level?.name || "\u7ED3\u679C\u751F\u6210\u4E2D" }),
-          /* @__PURE__ */ jsx("p", { children: analysis?.summary || "\u5F00\u653E\u9898\u70B9\u8BC4\u6682\u672A\u751F\u6210\uFF0C\u4F60\u7684\u7B54\u5377\u5DF2\u7ECF\u4FDD\u5B58\uFF0C\u6559\u5E08\u53EF\u4EE5\u7A0D\u540E\u91CD\u65B0\u751F\u6210\u3002" })
+      /* @__PURE__ */ jsxs2("section", { className: "report-summary-grid", children: [
+        /* @__PURE__ */ jsxs2("article", { className: "level-panel", children: [
+          /* @__PURE__ */ jsx2("p", { className: "panel-label", children: "\u5F53\u524D\u6210\u957F\u7B49\u7EA7" }),
+          /* @__PURE__ */ jsx2("span", { className: "level-code", children: report.scores?.level?.code }),
+          /* @__PURE__ */ jsx2("h2", { children: report.scores?.level?.name || "\u7ED3\u679C\u751F\u6210\u4E2D" }),
+          /* @__PURE__ */ jsx2("p", { children: analysis?.summary || "\u5F00\u653E\u9898\u70B9\u8BC4\u6682\u672A\u751F\u6210\uFF0C\u4F60\u7684\u7B54\u5377\u5DF2\u7ECF\u4FDD\u5B58\uFF0C\u6559\u5E08\u53EF\u4EE5\u7A0D\u540E\u91CD\u65B0\u751F\u6210\u3002" })
         ] }),
-        /* @__PURE__ */ jsxs("article", { className: "style-panel", children: [
-          /* @__PURE__ */ jsx("p", { className: "panel-label", children: "AI \u4F7F\u7528\u98CE\u683C" }),
-          /* @__PURE__ */ jsx("span", { className: "style-code", children: report.scores?.style?.code }),
-          /* @__PURE__ */ jsx("h2", { children: report.scores?.style?.name }),
-          /* @__PURE__ */ jsx("p", { children: report.scores?.style?.strength }),
-          /* @__PURE__ */ jsx("div", { className: "style-axes", children: Object.entries(report.scores?.style?.confidence || {}).map(([axis, value]) => /* @__PURE__ */ jsxs("span", { children: [
-            String(value),
-            "\u503E\u5411"
-          ] }, axis)) })
+        /* @__PURE__ */ jsxs2("article", { className: "style-panel", children: [
+          /* @__PURE__ */ jsx2("p", { className: "panel-label", children: "AI \u4F7F\u7528\u98CE\u683C" }),
+          /* @__PURE__ */ jsx2("span", { className: "style-code", children: style.code }),
+          /* @__PURE__ */ jsx2("h2", { children: style.name }),
+          /* @__PURE__ */ jsx2("p", { children: style.tagline || style.strength }),
+          /* @__PURE__ */ jsx2("div", { className: "style-axes", children: (style.axisDetails || []).map((item) => /* @__PURE__ */ jsxs2("span", { children: [
+            item.tendency,
+            " \xB7 ",
+            item.strength
+          ] }, item.axis)) })
         ] })
       ] }),
-      /* @__PURE__ */ jsxs("section", { className: "report-section radar-section", children: [
-        /* @__PURE__ */ jsxs("div", { children: [
-          /* @__PURE__ */ jsx("p", { className: "panel-label", children: "\u516D\u7EF4\u80FD\u529B\u96F7\u8FBE" }),
-          /* @__PURE__ */ jsx("h2", { children: "\u4F60\u5DF2\u7ECF\u4F1A\u4EC0\u4E48\uFF0C\u4E0B\u4E00\u6B65\u8BE5\u8865\u4EC0\u4E48" })
+      (projectBonus > 0 || projectUpgrade.eligible) && /* @__PURE__ */ jsxs2("section", { className: "report-section score-notes", children: [
+        projectBonus > 0 && /* @__PURE__ */ jsxs2("article", { children: [
+          /* @__PURE__ */ jsxs2("span", { children: [
+            "\uFF0B",
+            projectBonus
+          ] }),
+          /* @__PURE__ */ jsxs2("div", { children: [
+            /* @__PURE__ */ jsx2("strong", { children: "\u9879\u76EE\u5B9E\u8DF5\u52A0\u5206" }),
+            /* @__PURE__ */ jsx2("p", { children: "\u771F\u5B9E\u5B8C\u6210\u4E2A\u4EBA\u7F51\u7AD9\u3001\u77E5\u8BC6\u5E93\u6216\u81EA\u52A8\u5316\u5DE5\u4F5C\u6D41\uFF0C\u5DF2\u8BA1\u5165\u7EFC\u5408\u5206\u3002" })
+          ] })
         ] }),
-        /* @__PURE__ */ jsx("div", { className: "radar-wrap", children: /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height: 330, children: /* @__PURE__ */ jsxs(RadarChart, { data: radarData, outerRadius: "72%", children: [
-          /* @__PURE__ */ jsx(PolarGrid, { stroke: "#c9c2b2" }),
-          /* @__PURE__ */ jsx(PolarAngleAxis, { dataKey: "subject", tick: { fill: "#201f1b", fontSize: 13 } }),
-          /* @__PURE__ */ jsx(Radar, { dataKey: "value", stroke: "#d7a900", fill: "#f2c94c", fillOpacity: 0.54, strokeWidth: 2 })
+        projectUpgrade.eligible && /* @__PURE__ */ jsxs2("article", { children: [
+          /* @__PURE__ */ jsx2("span", { children: "\u21911" }),
+          /* @__PURE__ */ jsxs2("div", { children: [
+            /* @__PURE__ */ jsx2("strong", { children: "\u5C0F\u7A0B\u5E8F\u5B9E\u6218\u5347\u7EA7" }),
+            /* @__PURE__ */ jsx2("p", { children: projectUpgrade.applied ? "\u6838\u5FC3\u53C2\u4E0E\u5F00\u53D1\u4E14\u6210\u529F\u8FD0\u884C\uFF0C\u6700\u7EC8\u7B49\u7EA7\u63D0\u5347\u4E00\u7EA7\u3002" : "\u5DF2\u6EE1\u8DB3\u5B9E\u6218\u6761\u4EF6\uFF1B\u5F53\u524D\u7B49\u7EA7\u5DF2\u8FBE\u6700\u9AD8\u7EA7\u3002" })
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs2("section", { className: "report-section personal-style-section", children: [
+        /* @__PURE__ */ jsx2("p", { className: "panel-label", children: "\u4E2A\u4EBA\u98CE\u683C\u6DF1\u5EA6\u5206\u6790" }),
+        /* @__PURE__ */ jsxs2("h2", { children: [
+          style.code,
+          " \xB7 ",
+          style.name,
+          "\uFF0C\u4F60\u66F4\u81EA\u7136\u7684 AI \u534F\u4F5C\u65B9\u5F0F"
+        ] }),
+        /* @__PURE__ */ jsxs2("div", { className: "style-analysis-grid", children: [
+          /* @__PURE__ */ jsxs2("article", { children: [
+            /* @__PURE__ */ jsx2("span", { children: "01" }),
+            /* @__PURE__ */ jsx2("h3", { children: "\u4F60\u5982\u4F55\u542F\u52A8\u4EFB\u52A1" }),
+            /* @__PURE__ */ jsx2("p", { children: style.startMode })
+          ] }),
+          /* @__PURE__ */ jsxs2("article", { children: [
+            /* @__PURE__ */ jsx2("span", { children: "02" }),
+            /* @__PURE__ */ jsx2("h3", { children: "\u4F60\u5982\u4F55\u4E0EAI\u5206\u5DE5" }),
+            /* @__PURE__ */ jsx2("p", { children: style.divisionMode })
+          ] }),
+          /* @__PURE__ */ jsxs2("article", { children: [
+            /* @__PURE__ */ jsx2("span", { children: "03" }),
+            /* @__PURE__ */ jsx2("h3", { children: "\u4F60\u5982\u4F55\u5904\u7406\u901F\u5EA6\u4E0E\u8D28\u91CF" }),
+            /* @__PURE__ */ jsx2("p", { children: style.speedQuality })
+          ] }),
+          /* @__PURE__ */ jsxs2("article", { children: [
+            /* @__PURE__ */ jsx2("span", { children: "04" }),
+            /* @__PURE__ */ jsx2("h3", { children: "\u4F60\u7684\u4E09\u9879\u4F18\u52BF" }),
+            /* @__PURE__ */ jsx2("ul", { children: style.strengths?.map((item) => /* @__PURE__ */ jsx2("li", { children: item }, item)) })
+          ] }),
+          /* @__PURE__ */ jsxs2("article", { children: [
+            /* @__PURE__ */ jsx2("span", { children: "05" }),
+            /* @__PURE__ */ jsx2("h3", { children: "\u9700\u8981\u7559\u610F\u7684\u4E24\u9879\u98CE\u9669" }),
+            /* @__PURE__ */ jsx2("ul", { children: style.risks?.map((item) => /* @__PURE__ */ jsx2("li", { children: item }, item)) })
+          ] }),
+          /* @__PURE__ */ jsxs2("article", { children: [
+            /* @__PURE__ */ jsx2("span", { children: "06" }),
+            /* @__PURE__ */ jsx2("h3", { children: "\u63A8\u8350\u7684AI\u5DE5\u4F5C\u6D41\u7A0B" }),
+            /* @__PURE__ */ jsx2("ol", { children: style.recommendedWorkflow?.map((item) => /* @__PURE__ */ jsx2("li", { children: item }, item)) })
+          ] }),
+          /* @__PURE__ */ jsxs2("article", { children: [
+            /* @__PURE__ */ jsx2("span", { children: "07" }),
+            /* @__PURE__ */ jsx2("h3", { children: "\u4E0B\u4E00\u6B65\u9002\u5408\u5C1D\u8BD5" }),
+            /* @__PURE__ */ jsx2("p", { children: style.nextProjects?.join("\u3001") }),
+            /* @__PURE__ */ jsx2("small", { children: style.upgrade })
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs2("section", { className: "report-section radar-section", children: [
+        /* @__PURE__ */ jsxs2("div", { children: [
+          /* @__PURE__ */ jsx2("p", { className: "panel-label", children: "\u516D\u7EF4\u80FD\u529B\u96F7\u8FBE" }),
+          /* @__PURE__ */ jsx2("h2", { children: "\u4F60\u5DF2\u7ECF\u4F1A\u4EC0\u4E48\uFF0C\u4E0B\u4E00\u6B65\u8BE5\u8865\u4EC0\u4E48" })
+        ] }),
+        /* @__PURE__ */ jsx2("div", { className: "radar-wrap", children: /* @__PURE__ */ jsx2(ResponsiveContainer, { width: "100%", height: 330, children: /* @__PURE__ */ jsxs2(RadarChart, { data: radarData, outerRadius: "72%", children: [
+          /* @__PURE__ */ jsx2(PolarGrid, { stroke: "#c9c2b2" }),
+          /* @__PURE__ */ jsx2(PolarAngleAxis, { dataKey: "subject", tick: { fill: "#201f1b", fontSize: 13 } }),
+          /* @__PURE__ */ jsx2(Radar, { dataKey: "value", stroke: "#d7a900", fill: "#f2c94c", fillOpacity: 0.54, strokeWidth: 2 })
         ] }) }) }),
-        /* @__PURE__ */ jsx("div", { className: "dimension-grid", children: radarData.map((item) => /* @__PURE__ */ jsxs("div", { children: [
-          /* @__PURE__ */ jsx("span", { children: item.subject }),
-          /* @__PURE__ */ jsx("strong", { children: item.value })
+        /* @__PURE__ */ jsx2("div", { className: "dimension-grid", children: radarData.map((item) => /* @__PURE__ */ jsxs2("div", { children: [
+          /* @__PURE__ */ jsx2("span", { children: item.subject }),
+          /* @__PURE__ */ jsx2("strong", { children: item.value })
         ] }, item.subject)) })
       ] }),
-      /* @__PURE__ */ jsxs("section", { className: "report-section", children: [
-        /* @__PURE__ */ jsx("p", { className: "panel-label", children: "\u63D0\u793A\u8BCD\u4E03\u9879\u62C6\u89E3" }),
-        /* @__PURE__ */ jsx("h2", { children: "\u4ECE\u201C\u60F3\u8BA9 AI \u505A\u201D\u5230\u201C\u8BA9 AI \u505A\u5BF9\u201D" }),
-        analysis ? /* @__PURE__ */ jsx("div", { className: "rubric-grid", children: Object.entries(analysis.rubric || {}).map(([key, value]) => /* @__PURE__ */ jsxs("article", { children: [
-          /* @__PURE__ */ jsxs("div", { children: [
-            /* @__PURE__ */ jsx("strong", { children: rubricLabels[key] }),
-            /* @__PURE__ */ jsxs("span", { children: [
+      /* @__PURE__ */ jsxs2("section", { className: "report-section", children: [
+        /* @__PURE__ */ jsx2("p", { className: "panel-label", children: "\u63D0\u793A\u8BCD\u4E03\u9879\u62C6\u89E3" }),
+        /* @__PURE__ */ jsx2("h2", { children: "\u4ECE\u201C\u60F3\u8BA9 AI \u505A\u201D\u5230\u201C\u8BA9 AI \u505A\u5BF9\u201D" }),
+        analysis ? /* @__PURE__ */ jsx2("div", { className: "rubric-grid", children: Object.entries(analysis.rubric || {}).map(([key, value]) => /* @__PURE__ */ jsxs2("article", { children: [
+          /* @__PURE__ */ jsxs2("div", { children: [
+            /* @__PURE__ */ jsx2("strong", { children: rubricLabels[key] }),
+            /* @__PURE__ */ jsxs2("span", { children: [
               value.score,
               " / 3"
             ] })
           ] }),
-          /* @__PURE__ */ jsx("p", { children: value.evidence })
-        ] }, key)) }) : /* @__PURE__ */ jsx("div", { className: "pending-panel", children: message || "DeepSeek\u70B9\u8BC4\u751F\u6210\u4E2D\uFF0C\u7A0D\u540E\u5237\u65B0\u5373\u53EF\u67E5\u770B\u3002" })
+          /* @__PURE__ */ jsx2("p", { children: value.evidence })
+        ] }, key)) }) : /* @__PURE__ */ jsx2("div", { className: "pending-panel", children: message || "DeepSeek\u70B9\u8BC4\u751F\u6210\u4E2D\uFF0C\u7A0D\u540E\u5237\u65B0\u5373\u53EF\u67E5\u770B\u3002" })
       ] }),
-      analysis && /* @__PURE__ */ jsxs(Fragment, { children: [
-        /* @__PURE__ */ jsxs("section", { className: "report-section two-column", children: [
-          /* @__PURE__ */ jsxs("article", { children: [
-            /* @__PURE__ */ jsx("p", { className: "panel-label", children: "\u4F60\u7684\u4F18\u52BF" }),
-            /* @__PURE__ */ jsx("ul", { children: analysis.strengths?.map((item) => /* @__PURE__ */ jsx("li", { children: item }, item)) })
+      analysis && /* @__PURE__ */ jsxs2(Fragment, { children: [
+        /* @__PURE__ */ jsxs2("section", { className: "report-section two-column", children: [
+          /* @__PURE__ */ jsxs2("article", { children: [
+            /* @__PURE__ */ jsx2("p", { className: "panel-label", children: "\u4F60\u7684\u4F18\u52BF" }),
+            /* @__PURE__ */ jsx2("ul", { children: analysis.strengths?.map((item) => /* @__PURE__ */ jsx2("li", { children: item }, item)) })
           ] }),
-          /* @__PURE__ */ jsxs("article", { children: [
-            /* @__PURE__ */ jsx("p", { className: "panel-label", children: "\u5BB9\u6613\u5FFD\u7565" }),
-            /* @__PURE__ */ jsx("ul", { children: analysis.risks?.map((item) => /* @__PURE__ */ jsx("li", { children: item }, item)) })
+          /* @__PURE__ */ jsxs2("article", { children: [
+            /* @__PURE__ */ jsx2("p", { className: "panel-label", children: "\u5BB9\u6613\u5FFD\u7565" }),
+            /* @__PURE__ */ jsx2("ul", { children: analysis.risks?.map((item) => /* @__PURE__ */ jsx2("li", { children: item }, item)) })
           ] })
         ] }),
-        analysis.improvements && analysis.improvements.length > 0 && /* @__PURE__ */ jsxs("section", { className: "report-section", children: [
-          /* @__PURE__ */ jsx("p", { className: "panel-label", children: "\u5177\u4F53\u6539\u8FDB\u70B9" }),
-          /* @__PURE__ */ jsx("h2", { children: "\u9010\u9879\u7ED9\u4F60\u63D0\u793A\uFF0C\u54EA\u91CC\u518D\u52A0\u4E00\u70B9" }),
-          /* @__PURE__ */ jsx("ul", { className: "improvement-list", children: analysis.improvements.map((item, index) => /* @__PURE__ */ jsx("li", { children: item }, index)) })
+        analysis.improvements && analysis.improvements.length > 0 && /* @__PURE__ */ jsxs2("section", { className: "report-section", children: [
+          /* @__PURE__ */ jsx2("p", { className: "panel-label", children: "\u5177\u4F53\u6539\u8FDB\u70B9" }),
+          /* @__PURE__ */ jsx2("h2", { children: "\u9010\u9879\u7ED9\u4F60\u63D0\u793A\uFF0C\u54EA\u91CC\u518D\u52A0\u4E00\u70B9" }),
+          /* @__PURE__ */ jsx2("ul", { className: "improvement-list", children: analysis.improvements.map((item, index) => /* @__PURE__ */ jsx2("li", { children: item }, index)) })
         ] }),
-        /* @__PURE__ */ jsxs("section", { className: "report-section upgraded-prompt", children: [
-          /* @__PURE__ */ jsx("p", { className: "panel-label", children: report.aiEngine === "deepseek" ? "DeepSeek \u5347\u7EA7\u7248\u63D0\u793A\u8BCD" : "AI \u5347\u7EA7\u7248\u63D0\u793A\u8BCD" }),
-          /* @__PURE__ */ jsx("h2", { children: "\u4FDD\u7559\u4F60\u7684\u539F\u610F\uFF0C\u8865\u9F50\u53EF\u6267\u884C\u4FE1\u606F" }),
-          /* @__PURE__ */ jsx("pre", { children: analysis.upgradedPrompt })
+        /* @__PURE__ */ jsxs2("section", { className: "report-section upgraded-prompt", children: [
+          /* @__PURE__ */ jsx2("p", { className: "panel-label", children: report.aiEngine === "deepseek" ? "DeepSeek \u5347\u7EA7\u7248\u63D0\u793A\u8BCD" : "AI \u5347\u7EA7\u7248\u63D0\u793A\u8BCD" }),
+          /* @__PURE__ */ jsx2("h2", { children: "\u4FDD\u7559\u4F60\u7684\u539F\u610F\uFF0C\u8865\u9F50\u53EF\u6267\u884C\u4FE1\u606F" }),
+          /* @__PURE__ */ jsx2("pre", { children: analysis.upgradedPrompt })
         ] }),
-        /* @__PURE__ */ jsxs("section", { className: "report-section", children: [
-          /* @__PURE__ */ jsx("p", { className: "panel-label", children: "\u4E0B\u4E00\u6B65\u8BAD\u7EC3" }),
-          /* @__PURE__ */ jsx("div", { className: "action-grid", children: analysis.nextActions?.map((item, index) => /* @__PURE__ */ jsxs("article", { children: [
-            /* @__PURE__ */ jsxs("span", { children: [
+        /* @__PURE__ */ jsxs2("section", { className: "report-section", children: [
+          /* @__PURE__ */ jsx2("p", { className: "panel-label", children: "\u4E0B\u4E00\u6B65\u8BAD\u7EC3" }),
+          /* @__PURE__ */ jsx2("div", { className: "action-grid", children: analysis.nextActions?.map((item, index) => /* @__PURE__ */ jsxs2("article", { children: [
+            /* @__PURE__ */ jsxs2("span", { children: [
               "0",
               index + 1
             ] }),
-            /* @__PURE__ */ jsx("p", { children: item })
+            /* @__PURE__ */ jsx2("p", { children: item })
           ] }, item)) })
         ] })
       ] }),
-      /* @__PURE__ */ jsxs("footer", { className: "report-footer", children: [
-        /* @__PURE__ */ jsx("span", { children: "AI\u80FD\u529B\u4E0E\u98CE\u683C\u6D4B\u8BC4" }),
-        /* @__PURE__ */ jsx("span", { children: "\u8BFE\u7A0B\u8D77\u70B9\u753B\u50CF\uFF0C\u4E0D\u662F\u6807\u51C6\u5316\u5FC3\u7406\u6D4B\u9A8C" })
+      /* @__PURE__ */ jsxs2("footer", { className: "report-footer", children: [
+        /* @__PURE__ */ jsx2("span", { children: "AI\u80FD\u529B\u4E0E\u98CE\u683C\u6D4B\u8BC4" }),
+        /* @__PURE__ */ jsx2("span", { children: "\u8BFE\u7A0B\u8D77\u70B9\u753B\u50CF\uFF0C\u4E0D\u662F\u6807\u51C6\u5316\u5FC3\u7406\u6D4B\u9A8C" })
       ] })
-    ] })
+    ] }),
+    /* @__PURE__ */ jsx2(StyleAtlas, { open: showAtlas, onClose: () => setShowAtlas(false), activeCode: style.code })
   ] });
 }
 
 // app/components/TeacherDashboard.tsx
 const { useEffect, useMemo, useState: useState2 } = window.React;
 const QRCode = window.QRCode || { toDataURL: function(t) { return Promise.resolve("https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=1&color=171713&bgcolor=ffffff&data=" + encodeURIComponent(t)); } };
-const { Fragment: Fragment2, jsx: jsx2, jsxs: jsxs2 } = { jsx: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, jsxs: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, Fragment: React.Fragment };
+const { Fragment: Fragment2, jsx: jsx3, jsxs: jsxs3 } = { jsx: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, jsxs: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, Fragment: React.Fragment };
 function QrImage({ url }) {
   const [src, setSrc] = useState2("");
   useEffect(() => {
     void QRCode.toDataURL(url, { width: 320, margin: 1, color: { dark: "#171713", light: "#ffffff" } }).then(setSrc);
   }, [url]);
-  return src ? /* @__PURE__ */ jsx2("img", { className: "qr-image", src, alt: "\u5B66\u5458\u626B\u7801\u8FDB\u5165\u672C\u573A\u6D4B\u8BC4" }) : /* @__PURE__ */ jsx2("div", { className: "qr-placeholder", children: "\u6B63\u5728\u751F\u6210\u4E8C\u7EF4\u7801" });
+  return src ? /* @__PURE__ */ jsx3("img", { className: "qr-image", src, alt: "\u5B66\u5458\u626B\u7801\u8FDB\u5165\u672C\u573A\u6D4B\u8BC4" }) : /* @__PURE__ */ jsx3("div", { className: "qr-placeholder", children: "\u6B63\u5728\u751F\u6210\u4E8C\u7EF4\u7801" });
 }
 function TeacherDashboard({ onExit }) {
   const [token, setToken] = useState2(() => typeof window === "undefined" ? "" : sessionStorage.getItem("ai-assessment-admin-token") || "");
@@ -2163,6 +2182,7 @@ function TeacherDashboard({ onExit }) {
   const [cohort, setCohort] = useState2("");
   const [filter, setFilter] = useState2({ level: "", style: "", role: "" });
   const [message, setMessage] = useState2("");
+  const [showAtlas, setShowAtlas] = useState2(false);
   useEffect(() => {
     if (token) void loadSessions();
   }, [token]);
@@ -2243,256 +2263,265 @@ function TeacherDashboard({ onExit }) {
   }
   const submissions = useMemo(() => (dashboard?.submissions || []).filter((item) => (!filter.level || item.levelCode === filter.level) && (!filter.style || item.styleCode === filter.style) && (!filter.role || item.participantRole === filter.role)), [dashboard, filter]);
   const publicUrl = dashboard ? `${window.location.origin}${window.location.pathname}?s=${dashboard.session.code}` : "";
-  if (!token) return /* @__PURE__ */ jsx2("main", { className: "center-page admin-login", children: /* @__PURE__ */ jsxs2("section", { className: "form-card", children: [
-    /* @__PURE__ */ jsx2("button", { className: "text-button back-link", onClick: onExit, children: "\u2190 \u8FD4\u56DE\u6D4B\u8BC4\u9996\u9875" }),
-    /* @__PURE__ */ jsx2("p", { className: "eyebrow", children: "\u6559\u5E08\u4E13\u5C5E\u5165\u53E3" }),
-    /* @__PURE__ */ jsx2("h1", { children: "\u7BA1\u7406\u8BFE\u5802\u6D4B\u8BC4" }),
-    /* @__PURE__ */ jsx2("p", { className: "muted", children: "\u521B\u5EFA\u573A\u6B21\u3001\u5C55\u793A\u533F\u540D\u73ED\u7EA7\u753B\u50CF\uFF0C\u5E76\u67E5\u770B\u9700\u8981\u8BFE\u540E\u6307\u5BFC\u7684\u4E2A\u4EBA\u62A5\u544A\u3002" }),
-    /* @__PURE__ */ jsxs2("form", { className: "stack-form", onSubmit: login, children: [
-      /* @__PURE__ */ jsxs2("label", { children: [
+  if (!token) return /* @__PURE__ */ jsx3("main", { className: "center-page admin-login", children: /* @__PURE__ */ jsxs3("section", { className: "form-card", children: [
+    /* @__PURE__ */ jsx3("button", { className: "text-button back-link", onClick: onExit, children: "\u2190 \u8FD4\u56DE\u6D4B\u8BC4\u9996\u9875" }),
+    /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "\u6559\u5E08\u4E13\u5C5E\u5165\u53E3" }),
+    /* @__PURE__ */ jsx3("h1", { children: "\u7BA1\u7406\u8BFE\u5802\u6D4B\u8BC4" }),
+    /* @__PURE__ */ jsx3("p", { className: "muted", children: "\u521B\u5EFA\u573A\u6B21\u3001\u5C55\u793A\u533F\u540D\u73ED\u7EA7\u753B\u50CF\uFF0C\u5E76\u67E5\u770B\u9700\u8981\u8BFE\u540E\u6307\u5BFC\u7684\u4E2A\u4EBA\u62A5\u544A\u3002" }),
+    /* @__PURE__ */ jsxs3("form", { className: "stack-form", onSubmit: login, children: [
+      /* @__PURE__ */ jsxs3("label", { children: [
         "\u6559\u5E08\u53E3\u4EE4",
-        /* @__PURE__ */ jsx2("input", { type: "password", value: accessCode, onChange: (e) => setAccessCode(e.target.value), placeholder: "\u8BF7\u8F93\u5165\u6559\u5E08\u53E3\u4EE4" })
+        /* @__PURE__ */ jsx3("input", { type: "password", value: accessCode, onChange: (e) => setAccessCode(e.target.value), placeholder: "\u8BF7\u8F93\u5165\u6559\u5E08\u53E3\u4EE4" })
       ] }),
-      message && /* @__PURE__ */ jsx2("p", { className: "error-text", children: message }),
-      /* @__PURE__ */ jsx2("button", { className: "primary-button", children: "\u767B\u5F55\u540E\u53F0" })
+      message && /* @__PURE__ */ jsx3("p", { className: "error-text", children: message }),
+      /* @__PURE__ */ jsx3("button", { className: "primary-button", children: "\u767B\u5F55\u540E\u53F0" })
     ] })
   ] }) });
-  return /* @__PURE__ */ jsxs2("main", { className: "admin-page", children: [
-    /* @__PURE__ */ jsxs2("aside", { className: "admin-sidebar", children: [
-      /* @__PURE__ */ jsxs2("div", { className: "admin-brand", children: [
-        /* @__PURE__ */ jsx2("span", { className: "brand-mark", children: "AI" }),
-        /* @__PURE__ */ jsxs2("div", { children: [
-          /* @__PURE__ */ jsx2("strong", { children: "\u6559\u5E08\u63A7\u5236\u53F0" }),
-          /* @__PURE__ */ jsx2("small", { children: "\u80FD\u529B\u4E0E\u98CE\u683C\u6D4B\u8BC4" })
+  return /* @__PURE__ */ jsxs3("main", { className: "admin-page", children: [
+    /* @__PURE__ */ jsxs3("aside", { className: "admin-sidebar", children: [
+      /* @__PURE__ */ jsxs3("div", { className: "admin-brand", children: [
+        /* @__PURE__ */ jsx3("span", { className: "brand-mark", children: "AI" }),
+        /* @__PURE__ */ jsxs3("div", { children: [
+          /* @__PURE__ */ jsx3("strong", { children: "\u6559\u5E08\u63A7\u5236\u53F0" }),
+          /* @__PURE__ */ jsx3("small", { children: "\u80FD\u529B\u4E0E\u98CE\u683C\u6D4B\u8BC4" })
         ] })
       ] }),
-      /* @__PURE__ */ jsx2("button", { className: "new-session-button", onClick: () => setSelectedId("new"), children: "\uFF0B \u521B\u5EFA\u65B0\u573A\u6B21" }),
-      /* @__PURE__ */ jsx2("p", { className: "side-label", children: "\u6D4B\u8BC4\u573A\u6B21" }),
-      /* @__PURE__ */ jsx2("div", { className: "session-list", children: sessions.map((item) => /* @__PURE__ */ jsxs2("button", { className: selectedId === item.id ? "active" : "", onClick: () => setSelectedId(item.id), children: [
-        /* @__PURE__ */ jsx2("span", { children: item.title }),
-        /* @__PURE__ */ jsxs2("small", { children: [
+      /* @__PURE__ */ jsx3("button", { className: "new-session-button", onClick: () => setSelectedId("new"), children: "\uFF0B \u521B\u5EFA\u65B0\u573A\u6B21" }),
+      /* @__PURE__ */ jsx3("p", { className: "side-label", children: "\u6D4B\u8BC4\u573A\u6B21" }),
+      /* @__PURE__ */ jsx3("div", { className: "session-list", children: sessions.map((item) => /* @__PURE__ */ jsxs3("button", { className: selectedId === item.id ? "active" : "", onClick: () => setSelectedId(item.id), children: [
+        /* @__PURE__ */ jsx3("span", { children: item.title }),
+        /* @__PURE__ */ jsxs3("small", { children: [
           item.cohort || item.code,
           " \xB7 ",
           item.submissionCount || 0,
           "\u4EBA"
         ] })
       ] }, item.id)) }),
-      /* @__PURE__ */ jsx2("p", { className: "side-label", children: "AI \u70B9\u8BC4\u5F15\u64CE" }),
-      /* @__PURE__ */ jsxs2("div", { className: "ai-engine-card", children: [
-        /* @__PURE__ */ jsxs2("div", { className: "ai-engine-status", children: [
-          /* @__PURE__ */ jsx2("span", { className: "ai-dot deepseek" }),
-          /* @__PURE__ */ jsx2("strong", { children: "DeepSeek \xB7 \u670D\u52A1\u7AEF\u6258\u7BA1" })
+      /* @__PURE__ */ jsx3("p", { className: "side-label", children: "AI \u70B9\u8BC4\u5F15\u64CE" }),
+      /* @__PURE__ */ jsxs3("div", { className: "ai-engine-card", children: [
+        /* @__PURE__ */ jsxs3("div", { className: "ai-engine-status", children: [
+          /* @__PURE__ */ jsx3("span", { className: "ai-dot deepseek" }),
+          /* @__PURE__ */ jsx3("strong", { children: "DeepSeek \xB7 \u670D\u52A1\u7AEF\u6258\u7BA1" })
         ] }),
-        /* @__PURE__ */ jsxs2("p", { className: "ai-engine-meta", children: [
+        /* @__PURE__ */ jsxs3("p", { className: "ai-engine-meta", children: [
           "\u6D4B\u8BC4\u5B8C\u6210\u540E\u81EA\u52A8\u751F\u6210\u4E03\u9879\u63D0\u793A\u8BCD\u5206\u6790",
-          /* @__PURE__ */ jsx2("br", {}),
+          /* @__PURE__ */ jsx3("br", {}),
           "\u670D\u52A1\u5F02\u5E38\u65F6\u81EA\u52A8\u56DE\u9000\u5230\u672C\u5730\u542F\u53D1\u5F0F\u5206\u6790"
         ] })
       ] }),
-      /* @__PURE__ */ jsxs2("div", { className: "sidebar-footer", children: [
-        /* @__PURE__ */ jsx2("button", { onClick: onExit, children: "\u6D4B\u8BC4\u9996\u9875" }),
-        /* @__PURE__ */ jsx2("button", { onClick: logout, children: "\u9000\u51FA\u767B\u5F55" })
+      /* @__PURE__ */ jsx3("button", { className: "atlas-sidebar-button", onClick: () => setShowAtlas(true), children: "\u67E5\u770B8\u578B\u98CE\u683C\u5927\u5168" }),
+      /* @__PURE__ */ jsxs3("div", { className: "sidebar-footer", children: [
+        /* @__PURE__ */ jsx3("button", { onClick: onExit, children: "\u6D4B\u8BC4\u9996\u9875" }),
+        /* @__PURE__ */ jsx3("button", { onClick: logout, children: "\u9000\u51FA\u767B\u5F55" })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs2("section", { className: "admin-content", children: [
-      selectedId === "new" ? /* @__PURE__ */ jsxs2("div", { className: "admin-section narrow", children: [
-        /* @__PURE__ */ jsx2("p", { className: "eyebrow", children: "NEW SESSION" }),
-        /* @__PURE__ */ jsx2("h1", { children: "\u521B\u5EFA\u4E00\u573A\u6D4B\u8BC4" }),
-        /* @__PURE__ */ jsxs2("form", { className: "stack-form", onSubmit: createSession, children: [
-          /* @__PURE__ */ jsxs2("label", { children: [
+    /* @__PURE__ */ jsxs3("section", { className: "admin-content", children: [
+      selectedId === "new" ? /* @__PURE__ */ jsxs3("div", { className: "admin-section narrow", children: [
+        /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "NEW SESSION" }),
+        /* @__PURE__ */ jsx3("h1", { children: "\u521B\u5EFA\u4E00\u573A\u6D4B\u8BC4" }),
+        /* @__PURE__ */ jsxs3("form", { className: "stack-form", onSubmit: createSession, children: [
+          /* @__PURE__ */ jsxs3("label", { children: [
             "\u573A\u6B21\u540D\u79F0",
-            /* @__PURE__ */ jsx2("input", { value: title, onChange: (e) => setTitle(e.target.value), maxLength: 60 })
+            /* @__PURE__ */ jsx3("input", { value: title, onChange: (e) => setTitle(e.target.value), maxLength: 60 })
           ] }),
-          /* @__PURE__ */ jsxs2("label", { children: [
+          /* @__PURE__ */ jsxs3("label", { children: [
             "\u73ED\u7EA7 / \u6279\u6B21",
-            /* @__PURE__ */ jsx2("input", { value: cohort, onChange: (e) => setCohort(e.target.value), placeholder: "\u4F8B\u5982\uFF1A2026\u65B0\u5175\u8425\u7B2C1\u671F", maxLength: 60 })
+            /* @__PURE__ */ jsx3("input", { value: cohort, onChange: (e) => setCohort(e.target.value), placeholder: "\u4F8B\u5982\uFF1A2026\u65B0\u5175\u8425\u7B2C1\u671F", maxLength: 60 })
           ] }),
-          /* @__PURE__ */ jsx2("button", { className: "primary-button", children: "\u521B\u5EFA\u5E76\u751F\u6210\u4E8C\u7EF4\u7801" })
+          /* @__PURE__ */ jsx3("button", { className: "primary-button", children: "\u521B\u5EFA\u5E76\u751F\u6210\u4E8C\u7EF4\u7801" })
         ] })
-      ] }) : dashboard ? /* @__PURE__ */ jsxs2(Fragment2, { children: [
-        /* @__PURE__ */ jsxs2("header", { className: "admin-header", children: [
-          /* @__PURE__ */ jsxs2("div", { children: [
-            /* @__PURE__ */ jsx2("p", { className: "eyebrow", children: dashboard.session.cohort || "\u8BFE\u5802\u6D4B\u8BC4" }),
-            /* @__PURE__ */ jsx2("h1", { children: dashboard.session.title }),
-            /* @__PURE__ */ jsxs2("p", { children: [
+      ] }) : dashboard ? /* @__PURE__ */ jsxs3(Fragment2, { children: [
+        /* @__PURE__ */ jsxs3("header", { className: "admin-header", children: [
+          /* @__PURE__ */ jsxs3("div", { children: [
+            /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: dashboard.session.cohort || "\u8BFE\u5802\u6D4B\u8BC4" }),
+            /* @__PURE__ */ jsx3("h1", { children: dashboard.session.title }),
+            /* @__PURE__ */ jsxs3("p", { children: [
               "\u573A\u6B21\u7801 ",
               dashboard.session.code,
               " \xB7 ",
               dashboard.session.status === "open" ? "\u6B63\u5728\u6536\u96C6" : "\u5DF2\u5173\u95ED"
             ] })
           ] }),
-          /* @__PURE__ */ jsxs2("div", { className: "admin-actions", children: [
-            /* @__PURE__ */ jsx2("button", { onClick: () => void navigator.clipboard.writeText(publicUrl), children: "\u590D\u5236\u5B66\u5458\u94FE\u63A5" }),
-            /* @__PURE__ */ jsx2("button", { onClick: () => void downloadCsv(`/admin/sessions/${selectedId}/export`, `${dashboard.session.title}.csv`), children: "\u5BFC\u51FACSV" }),
-            dashboard.session.status === "open" ? /* @__PURE__ */ jsx2("button", { onClick: () => void updateSession("closed"), children: "\u5173\u95ED\u573A\u6B21" }) : /* @__PURE__ */ jsx2("button", { onClick: () => void updateSession("open"), children: "\u91CD\u65B0\u5F00\u542F" }),
-            /* @__PURE__ */ jsx2("button", { className: "danger", onClick: () => void deleteSession(), children: "\u5220\u9664" })
+          /* @__PURE__ */ jsxs3("div", { className: "admin-actions", children: [
+            /* @__PURE__ */ jsx3("button", { onClick: () => void navigator.clipboard.writeText(publicUrl), children: "\u590D\u5236\u5B66\u5458\u94FE\u63A5" }),
+            /* @__PURE__ */ jsx3("button", { onClick: () => void downloadCsv(`/admin/sessions/${selectedId}/export`, `${dashboard.session.title}.csv`), children: "\u5BFC\u51FACSV" }),
+            dashboard.session.status === "open" ? /* @__PURE__ */ jsx3("button", { onClick: () => void updateSession("closed"), children: "\u5173\u95ED\u573A\u6B21" }) : /* @__PURE__ */ jsx3("button", { onClick: () => void updateSession("open"), children: "\u91CD\u65B0\u5F00\u542F" }),
+            /* @__PURE__ */ jsx3("button", { className: "danger", onClick: () => void deleteSession(), children: "\u5220\u9664" })
           ] })
         ] }),
-        /* @__PURE__ */ jsxs2("div", { className: "stat-grid", children: [
-          /* @__PURE__ */ jsxs2("article", { children: [
-            /* @__PURE__ */ jsx2("span", { children: "\u5DF2\u63D0\u4EA4" }),
-            /* @__PURE__ */ jsx2("strong", { children: dashboard.summary.total }),
-            /* @__PURE__ */ jsx2("small", { children: "\u4EFD\u6709\u6548\u7B54\u5377" })
+        /* @__PURE__ */ jsxs3("div", { className: "stat-grid", children: [
+          /* @__PURE__ */ jsxs3("article", { children: [
+            /* @__PURE__ */ jsx3("span", { children: "\u5DF2\u63D0\u4EA4" }),
+            /* @__PURE__ */ jsx3("strong", { children: dashboard.summary.total }),
+            /* @__PURE__ */ jsx3("small", { children: "\u4EFD\u6709\u6548\u7B54\u5377" })
           ] }),
-          /* @__PURE__ */ jsxs2("article", { children: [
-            /* @__PURE__ */ jsx2("span", { children: "\u7EFC\u5408\u5747\u503C" }),
-            /* @__PURE__ */ jsx2("strong", { children: dashboard.summary.averageScore || "\u2014" }),
-            /* @__PURE__ */ jsx2("small", { children: "\u4E0D\u7528\u4E8E\u6392\u540D" })
+          /* @__PURE__ */ jsxs3("article", { children: [
+            /* @__PURE__ */ jsx3("span", { children: "\u7EFC\u5408\u5747\u503C" }),
+            /* @__PURE__ */ jsx3("strong", { children: dashboard.summary.averageScore || "\u2014" }),
+            /* @__PURE__ */ jsx3("small", { children: "\u4E0D\u7528\u4E8E\u6392\u540D" })
           ] }),
-          /* @__PURE__ */ jsxs2("article", { children: [
-            /* @__PURE__ */ jsx2("span", { children: "\u4E3B\u6D41\u7B49\u7EA7" }),
-            /* @__PURE__ */ jsx2("strong", { children: dashboard.summary.dominantLevel || "\u2014" }),
-            /* @__PURE__ */ jsx2("small", { children: "\u73ED\u7EA7\u6210\u957F\u8D77\u70B9" })
+          /* @__PURE__ */ jsxs3("article", { children: [
+            /* @__PURE__ */ jsx3("span", { children: "\u4E3B\u6D41\u7B49\u7EA7" }),
+            /* @__PURE__ */ jsx3("strong", { children: dashboard.summary.dominantLevel || "\u2014" }),
+            /* @__PURE__ */ jsx3("small", { children: "\u73ED\u7EA7\u6210\u957F\u8D77\u70B9" })
           ] }),
-          /* @__PURE__ */ jsxs2("article", { children: [
-            /* @__PURE__ */ jsx2("span", { children: "\u4E3B\u6D41\u98CE\u683C" }),
-            /* @__PURE__ */ jsx2("strong", { children: dashboard.summary.dominantStyle || "\u2014" }),
-            /* @__PURE__ */ jsx2("small", { children: "\u73ED\u7EA7\u534F\u4F5C\u504F\u597D" })
+          /* @__PURE__ */ jsxs3("article", { children: [
+            /* @__PURE__ */ jsx3("span", { children: "\u4E3B\u6D41\u98CE\u683C" }),
+            /* @__PURE__ */ jsx3("strong", { children: dashboard.summary.dominantStyle || "\u2014" }),
+            /* @__PURE__ */ jsx3("small", { children: "\u73ED\u7EA7\u534F\u4F5C\u504F\u597D" })
           ] })
         ] }),
-        /* @__PURE__ */ jsxs2("div", { className: "dashboard-grid", children: [
-          /* @__PURE__ */ jsxs2("article", { className: "chart-card", children: [
-            /* @__PURE__ */ jsx2("div", { className: "card-heading", children: /* @__PURE__ */ jsxs2("div", { children: [
-              /* @__PURE__ */ jsx2("p", { className: "eyebrow", children: "\u533F\u540D\u73ED\u7EA7\u753B\u50CF" }),
-              /* @__PURE__ */ jsx2("h2", { children: "\u516D\u7EF4\u80FD\u529B\u5747\u503C" })
+        /* @__PURE__ */ jsxs3("div", { className: "dashboard-grid", children: [
+          /* @__PURE__ */ jsxs3("article", { className: "chart-card", children: [
+            /* @__PURE__ */ jsx3("div", { className: "card-heading", children: /* @__PURE__ */ jsxs3("div", { children: [
+              /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "\u533F\u540D\u73ED\u7EA7\u753B\u50CF" }),
+              /* @__PURE__ */ jsx3("h2", { children: "\u516D\u7EF4\u80FD\u529B\u5747\u503C" })
             ] }) }),
-            /* @__PURE__ */ jsx2("div", { className: "bar-chart", children: dimensions.map((dimension) => /* @__PURE__ */ jsxs2("div", { children: [
-              /* @__PURE__ */ jsx2("span", { children: dimension.label }),
-              /* @__PURE__ */ jsx2("div", { children: /* @__PURE__ */ jsx2("i", { style: { width: `${dashboard.summary.dimensionAverages?.[dimension.id] || 0}%` } }) }),
-              /* @__PURE__ */ jsx2("strong", { children: dashboard.summary.dimensionAverages?.[dimension.id] || 0 })
+            /* @__PURE__ */ jsx3("div", { className: "bar-chart", children: dimensions.map((dimension) => /* @__PURE__ */ jsxs3("div", { children: [
+              /* @__PURE__ */ jsx3("span", { children: dimension.label }),
+              /* @__PURE__ */ jsx3("div", { children: /* @__PURE__ */ jsx3("i", { style: { width: `${dashboard.summary.dimensionAverages?.[dimension.id] || 0}%` } }) }),
+              /* @__PURE__ */ jsx3("strong", { children: dashboard.summary.dimensionAverages?.[dimension.id] || 0 })
             ] }, dimension.id)) })
           ] }),
-          /* @__PURE__ */ jsxs2("article", { className: "qr-card", children: [
-            /* @__PURE__ */ jsx2("p", { className: "eyebrow", children: "\u5B66\u5458\u5165\u53E3" }),
-            /* @__PURE__ */ jsx2("h2", { children: "\u626B\u7801\u5F00\u59CB\u6D4B\u8BC4" }),
-            /* @__PURE__ */ jsx2(QrImage, { url: publicUrl }),
-            /* @__PURE__ */ jsx2("strong", { children: dashboard.session.code }),
-            /* @__PURE__ */ jsx2("p", { children: "\u6295\u5C4F\u65F6\u53EA\u5C55\u793A\u672C\u4E8C\u7EF4\u7801\u548C\u533F\u540D\u7EDF\u8BA1" })
+          /* @__PURE__ */ jsxs3("article", { className: "qr-card", children: [
+            /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "\u5B66\u5458\u5165\u53E3" }),
+            /* @__PURE__ */ jsx3("h2", { children: "\u626B\u7801\u5F00\u59CB\u6D4B\u8BC4" }),
+            /* @__PURE__ */ jsx3(QrImage, { url: publicUrl }),
+            /* @__PURE__ */ jsx3("strong", { children: dashboard.session.code }),
+            /* @__PURE__ */ jsx3("p", { children: "\u6295\u5C4F\u65F6\u53EA\u5C55\u793A\u672C\u4E8C\u7EF4\u7801\u548C\u533F\u540D\u7EDF\u8BA1" })
           ] })
         ] }),
-        /* @__PURE__ */ jsxs2("div", { className: "distribution-grid", children: [
-          /* @__PURE__ */ jsxs2("article", { className: "chart-card", children: [
-            /* @__PURE__ */ jsx2("p", { className: "eyebrow", children: "\u6210\u957F\u7B49\u7EA7" }),
-            /* @__PURE__ */ jsx2("h2", { children: "\u56DB\u7EA7\u5206\u5E03" }),
-            /* @__PURE__ */ jsx2("div", { className: "distribution-list", children: Object.entries(dashboard.summary.levelDistribution || {}).map(([key, value]) => /* @__PURE__ */ jsxs2("div", { children: [
-              /* @__PURE__ */ jsx2("span", { children: key }),
-              /* @__PURE__ */ jsxs2("strong", { children: [
+        /* @__PURE__ */ jsxs3("div", { className: "distribution-grid", children: [
+          /* @__PURE__ */ jsxs3("article", { className: "chart-card", children: [
+            /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "\u6210\u957F\u7B49\u7EA7" }),
+            /* @__PURE__ */ jsx3("h2", { children: "\u56DB\u7EA7\u5206\u5E03" }),
+            /* @__PURE__ */ jsx3("div", { className: "distribution-list", children: Object.entries(dashboard.summary.levelDistribution || {}).map(([key, value]) => /* @__PURE__ */ jsxs3("div", { children: [
+              /* @__PURE__ */ jsx3("span", { children: key }),
+              /* @__PURE__ */ jsxs3("strong", { children: [
                 String(value),
                 "\u4EBA"
               ] })
             ] }, key)) })
           ] }),
-          /* @__PURE__ */ jsxs2("article", { className: "chart-card", children: [
-            /* @__PURE__ */ jsx2("p", { className: "eyebrow", children: "AI\u4F7F\u7528\u98CE\u683C" }),
-            /* @__PURE__ */ jsx2("h2", { children: "8\u578B\u5206\u5E03" }),
-            /* @__PURE__ */ jsx2("div", { className: "distribution-list compact", children: Object.entries(dashboard.summary.styleDistribution || {}).map(([key, value]) => /* @__PURE__ */ jsxs2("div", { children: [
-              /* @__PURE__ */ jsx2("span", { children: key }),
-              /* @__PURE__ */ jsxs2("strong", { children: [
+          /* @__PURE__ */ jsxs3("article", { className: "chart-card", children: [
+            /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "AI\u4F7F\u7528\u98CE\u683C" }),
+            /* @__PURE__ */ jsx3("h2", { children: "8\u578B\u5206\u5E03" }),
+            /* @__PURE__ */ jsx3("div", { className: "distribution-list compact", children: Object.entries(dashboard.summary.styleDistribution || {}).map(([key, value]) => /* @__PURE__ */ jsxs3("div", { children: [
+              /* @__PURE__ */ jsx3("span", { children: key }),
+              /* @__PURE__ */ jsxs3("strong", { children: [
                 String(value),
                 "\u4EBA"
               ] })
             ] }, key)) })
           ] })
         ] }),
-        dashboard.summary.scoredTotal > 0 && /* @__PURE__ */ jsxs2("div", { className: "distribution-grid", children: [
-          /* @__PURE__ */ jsxs2("article", { className: "chart-card", children: [
-            /* @__PURE__ */ jsx2("p", { className: "eyebrow", children: "\u5171\u540C\u4F18\u52BF" }),
-            /* @__PURE__ */ jsx2("h2", { children: "\u73ED\u7EA7\u5F53\u524D\u8F83\u5F3A\u7EF4\u5EA6" }),
-            /* @__PURE__ */ jsx2("div", { className: "distribution-list", children: dashboard.summary.commonStrengths?.map((item) => /* @__PURE__ */ jsxs2("div", { children: [
-              /* @__PURE__ */ jsx2("span", { children: item.label }),
-              /* @__PURE__ */ jsx2("strong", { children: item.score })
+        dashboard.summary.scoredTotal > 0 && /* @__PURE__ */ jsxs3("div", { className: "distribution-grid", children: [
+          /* @__PURE__ */ jsxs3("article", { className: "chart-card", children: [
+            /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "\u5171\u540C\u4F18\u52BF" }),
+            /* @__PURE__ */ jsx3("h2", { children: "\u73ED\u7EA7\u5F53\u524D\u8F83\u5F3A\u7EF4\u5EA6" }),
+            /* @__PURE__ */ jsx3("div", { className: "distribution-list", children: dashboard.summary.commonStrengths?.map((item) => /* @__PURE__ */ jsxs3("div", { children: [
+              /* @__PURE__ */ jsx3("span", { children: item.label }),
+              /* @__PURE__ */ jsx3("strong", { children: item.score })
             ] }, item.label)) })
           ] }),
-          /* @__PURE__ */ jsxs2("article", { className: "chart-card", children: [
-            /* @__PURE__ */ jsx2("p", { className: "eyebrow", children: "\u5171\u540C\u77ED\u677F" }),
-            /* @__PURE__ */ jsx2("h2", { children: "\u8BFE\u5802\u4F18\u5148\u8BAD\u7EC3\u7EF4\u5EA6" }),
-            /* @__PURE__ */ jsx2("div", { className: "distribution-list", children: dashboard.summary.commonGaps?.map((item) => /* @__PURE__ */ jsxs2("div", { children: [
-              /* @__PURE__ */ jsx2("span", { children: item.label }),
-              /* @__PURE__ */ jsx2("strong", { children: item.score })
+          /* @__PURE__ */ jsxs3("article", { className: "chart-card", children: [
+            /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "\u5171\u540C\u77ED\u677F" }),
+            /* @__PURE__ */ jsx3("h2", { children: "\u8BFE\u5802\u4F18\u5148\u8BAD\u7EC3\u7EF4\u5EA6" }),
+            /* @__PURE__ */ jsx3("div", { className: "distribution-list", children: dashboard.summary.commonGaps?.map((item) => /* @__PURE__ */ jsxs3("div", { children: [
+              /* @__PURE__ */ jsx3("span", { children: item.label }),
+              /* @__PURE__ */ jsx3("strong", { children: item.score })
             ] }, item.label)) })
           ] })
         ] }),
-        /* @__PURE__ */ jsxs2("article", { className: "submission-card", children: [
-          /* @__PURE__ */ jsxs2("div", { className: "card-heading", children: [
-            /* @__PURE__ */ jsxs2("div", { children: [
-              /* @__PURE__ */ jsx2("p", { className: "eyebrow", children: "\u4EC5\u6559\u5E08\u53EF\u89C1" }),
-              /* @__PURE__ */ jsx2("h2", { children: "\u4E2A\u4EBA\u62A5\u544A" })
+        /* @__PURE__ */ jsxs3("article", { className: "submission-card", children: [
+          /* @__PURE__ */ jsxs3("div", { className: "card-heading", children: [
+            /* @__PURE__ */ jsxs3("div", { children: [
+              /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "\u4EC5\u6559\u5E08\u53EF\u89C1" }),
+              /* @__PURE__ */ jsx3("h2", { children: "\u4E2A\u4EBA\u62A5\u544A" })
             ] }),
-            /* @__PURE__ */ jsxs2("div", { className: "filters", children: [
-              /* @__PURE__ */ jsxs2("select", { value: filter.level, onChange: (e) => setFilter({ ...filter, level: e.target.value }), children: [
-                /* @__PURE__ */ jsx2("option", { value: "", children: "\u5168\u90E8\u7B49\u7EA7" }),
-                /* @__PURE__ */ jsx2("option", { children: "L1" }),
-                /* @__PURE__ */ jsx2("option", { children: "L2" }),
-                /* @__PURE__ */ jsx2("option", { children: "L3" }),
-                /* @__PURE__ */ jsx2("option", { children: "L4" })
+            /* @__PURE__ */ jsxs3("div", { className: "filters", children: [
+              /* @__PURE__ */ jsxs3("select", { value: filter.level, onChange: (e) => setFilter({ ...filter, level: e.target.value }), children: [
+                /* @__PURE__ */ jsx3("option", { value: "", children: "\u5168\u90E8\u7B49\u7EA7" }),
+                /* @__PURE__ */ jsx3("option", { children: "L1" }),
+                /* @__PURE__ */ jsx3("option", { children: "L2" }),
+                /* @__PURE__ */ jsx3("option", { children: "L3" }),
+                /* @__PURE__ */ jsx3("option", { children: "L4" })
               ] }),
-              /* @__PURE__ */ jsxs2("select", { value: filter.style, onChange: (e) => setFilter({ ...filter, style: e.target.value }), children: [
-                /* @__PURE__ */ jsx2("option", { value: "", children: "\u5168\u90E8\u98CE\u683C" }),
-                ["EAF", "EAV", "ECF", "ECV", "DAF", "DAV", "DCF", "DCV"].map((code) => /* @__PURE__ */ jsx2("option", { children: code }, code))
+              /* @__PURE__ */ jsxs3("select", { value: filter.style, onChange: (e) => setFilter({ ...filter, style: e.target.value }), children: [
+                /* @__PURE__ */ jsx3("option", { value: "", children: "\u5168\u90E8\u98CE\u683C" }),
+                ["EAF", "EAV", "ECF", "ECV", "DAF", "DAV", "DCF", "DCV"].map((code) => /* @__PURE__ */ jsx3("option", { children: code }, code))
               ] }),
-              /* @__PURE__ */ jsxs2("select", { value: filter.role, onChange: (e) => setFilter({ ...filter, role: e.target.value }), children: [
-                /* @__PURE__ */ jsx2("option", { value: "", children: "\u5168\u90E8\u5C97\u4F4D" }),
-                [...new Set((dashboard.submissions || []).map((item) => item.participantRole))].map((role) => /* @__PURE__ */ jsx2("option", { children: role }, role))
+              /* @__PURE__ */ jsxs3("select", { value: filter.role, onChange: (e) => setFilter({ ...filter, role: e.target.value }), children: [
+                /* @__PURE__ */ jsx3("option", { value: "", children: "\u5168\u90E8\u5C97\u4F4D" }),
+                [...new Set((dashboard.submissions || []).map((item) => item.participantRole))].map((role) => /* @__PURE__ */ jsx3("option", { children: role }, role))
               ] })
             ] })
           ] }),
-          /* @__PURE__ */ jsx2("div", { className: "table-wrap", children: /* @__PURE__ */ jsxs2("table", { children: [
-            /* @__PURE__ */ jsx2("thead", { children: /* @__PURE__ */ jsxs2("tr", { children: [
-              /* @__PURE__ */ jsx2("th", { children: "\u5B66\u5458" }),
-              /* @__PURE__ */ jsx2("th", { children: "\u5C97\u4F4D" }),
-              /* @__PURE__ */ jsx2("th", { children: "\u7B49\u7EA7" }),
-              /* @__PURE__ */ jsx2("th", { children: "\u98CE\u683C" }),
-              /* @__PURE__ */ jsx2("th", { children: "AI\u70B9\u8BC4" }),
-              /* @__PURE__ */ jsx2("th", { children: "\u63D0\u4EA4\u65F6\u95F4" }),
-              /* @__PURE__ */ jsx2("th", {})
+          /* @__PURE__ */ jsx3("div", { className: "table-wrap", children: /* @__PURE__ */ jsxs3("table", { children: [
+            /* @__PURE__ */ jsx3("thead", { children: /* @__PURE__ */ jsxs3("tr", { children: [
+              /* @__PURE__ */ jsx3("th", { children: "\u5B66\u5458" }),
+              /* @__PURE__ */ jsx3("th", { children: "\u5C97\u4F4D" }),
+              /* @__PURE__ */ jsx3("th", { children: "\u7B49\u7EA7" }),
+              /* @__PURE__ */ jsx3("th", { children: "\u98CE\u683C" }),
+              /* @__PURE__ */ jsx3("th", { children: "AI\u70B9\u8BC4" }),
+              /* @__PURE__ */ jsx3("th", { children: "\u63D0\u4EA4\u65F6\u95F4" }),
+              /* @__PURE__ */ jsx3("th", {})
             ] }) }),
-            /* @__PURE__ */ jsx2("tbody", { children: submissions.map((item) => /* @__PURE__ */ jsxs2("tr", { children: [
-              /* @__PURE__ */ jsx2("td", { children: /* @__PURE__ */ jsx2("strong", { children: item.participantName }) }),
-              /* @__PURE__ */ jsx2("td", { children: item.participantRole }),
-              /* @__PURE__ */ jsx2("td", { children: item.levelCode ? `${item.levelCode} \xB7 ${item.levelName}` : "\u751F\u6210\u4E2D" }),
-              /* @__PURE__ */ jsxs2("td", { children: [
+            /* @__PURE__ */ jsx3("tbody", { children: submissions.map((item) => /* @__PURE__ */ jsxs3("tr", { children: [
+              /* @__PURE__ */ jsx3("td", { children: /* @__PURE__ */ jsx3("strong", { children: item.participantName }) }),
+              /* @__PURE__ */ jsx3("td", { children: item.participantRole }),
+              /* @__PURE__ */ jsx3("td", { children: item.levelCode ? `${item.levelCode} \xB7 ${item.levelName}` : "\u751F\u6210\u4E2D" }),
+              /* @__PURE__ */ jsxs3("td", { children: [
                 item.styleCode,
                 " \xB7 ",
                 item.styleName
               ] }),
-              /* @__PURE__ */ jsxs2("td", { children: [
-                /* @__PURE__ */ jsx2("span", { className: `status ${item.aiStatus}`, children: item.aiStatus === "complete" ? "\u5DF2\u751F\u6210" : item.aiStatus === "processing" ? "\u751F\u6210\u4E2D" : "\u5F85\u91CD\u8BD5" }),
-                item.aiStatus === "complete" && item.aiEngine && /* @__PURE__ */ jsx2("small", { className: "engine-tag", children: item.aiEngine === "deepseek" ? "DS" : "\u672C\u5730" })
+              /* @__PURE__ */ jsxs3("td", { children: [
+                /* @__PURE__ */ jsx3("span", { className: `status ${item.aiStatus}`, children: item.aiStatus === "complete" ? "\u5DF2\u751F\u6210" : item.aiStatus === "processing" ? "\u751F\u6210\u4E2D" : "\u5F85\u91CD\u8BD5" }),
+                item.aiStatus === "complete" && item.aiEngine && /* @__PURE__ */ jsx3("small", { className: "engine-tag", children: item.aiEngine === "deepseek" ? "DS" : "\u672C\u5730" })
               ] }),
-              /* @__PURE__ */ jsx2("td", { children: new Date(item.submittedAt).toLocaleString("zh-CN") }),
-              /* @__PURE__ */ jsx2("td", { children: item.aiStatus === "failed" ? /* @__PURE__ */ jsx2("button", { className: "text-button", onClick: () => void retrySubmission(item.id), children: "\u91CD\u65B0\u751F\u6210" }) : /* @__PURE__ */ jsx2("a", { href: `?report=${item.reportToken}`, target: "_blank", children: "\u67E5\u770B\u62A5\u544A" }) })
+              /* @__PURE__ */ jsx3("td", { children: new Date(item.submittedAt).toLocaleString("zh-CN") }),
+              /* @__PURE__ */ jsx3("td", { children: item.aiStatus === "failed" ? /* @__PURE__ */ jsx3("button", { className: "text-button", onClick: () => void retrySubmission(item.id), children: "\u91CD\u65B0\u751F\u6210" }) : /* @__PURE__ */ jsx3("a", { href: `?report=${item.reportToken}`, target: "_blank", children: "\u67E5\u770B\u62A5\u544A" }) })
             ] }, item.id)) })
           ] }) })
         ] })
-      ] }) : /* @__PURE__ */ jsxs2("div", { className: "empty-admin", children: [
-        /* @__PURE__ */ jsx2("h2", { children: "\u9009\u62E9\u4E00\u573A\u6D4B\u8BC4" }),
-        /* @__PURE__ */ jsx2("p", { children: "\u67E5\u770B\u5B9E\u65F6\u73ED\u7EA7\u753B\u50CF\uFF0C\u6216\u521B\u5EFA\u65B0\u7684\u8BFE\u5802\u573A\u6B21\u3002" })
+      ] }) : /* @__PURE__ */ jsxs3("div", { className: "empty-admin", children: [
+        /* @__PURE__ */ jsx3("h2", { children: "\u9009\u62E9\u4E00\u573A\u6D4B\u8BC4" }),
+        /* @__PURE__ */ jsx3("p", { children: "\u67E5\u770B\u5B9E\u65F6\u73ED\u7EA7\u753B\u50CF\uFF0C\u6216\u521B\u5EFA\u65B0\u7684\u8BFE\u5802\u573A\u6B21\u3002" })
       ] }),
-      message && /* @__PURE__ */ jsx2("p", { className: "admin-message", children: message })
-    ] })
+      message && /* @__PURE__ */ jsx3("p", { className: "admin-message", children: message })
+    ] }),
+    /* @__PURE__ */ jsx3(StyleAtlas, { open: showAtlas, onClose: () => setShowAtlas(false) })
   ] });
 }
 
 // app/AssessmentApp.tsx
-const { jsx: jsx3, jsxs: jsxs3 } = { jsx: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, jsxs: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, Fragment: React.Fragment };
+const { jsx: jsx4, jsxs: jsxs4 } = { jsx: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, jsxs: function(type, props, key) { if (key !== undefined) { props = Object.assign({}, props, { key: String(key) }); } return React.createElement(type, props); }, Fragment: React.Fragment };
+var sectionLabels = {
+  foundation: "\u57FA\u7840AI\u80FD\u529B\u63A2\u7A76",
+  application: "AI\u5B9E\u9645\u5E94\u7528",
+  style: "AI\u4F7F\u7528\u98CE\u683C",
+  business: "\u5C97\u4F4D\u4E1A\u52A1\u573A\u666F"
+};
 function makeIdempotencyKey() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 function findRoleKey(label) {
   const match = roles.find((r) => r.label === label);
-  return match ? match.id : "teacher";
+  return match ? match.id : "general";
 }
 function AssessmentApp() {
   const [mode, setMode] = useState3("landing");
   const [sessionCode, setSessionCode] = useState3("");
   const [session, setSession] = useState3(null);
-  const [profile, setProfile] = useState3({ name: "", role: "", roleKey: "teacher" });
+  const [profile, setProfile] = useState3({ name: "", role: "", roleKey: "general" });
   const [answers, setAnswers] = useState3({});
   const [openPrompt, setOpenPrompt] = useState3("");
   const [current, setCurrent] = useState3(0);
   const [report, setReport] = useState3(null);
   const [message, setMessage] = useState3("");
   const [loading, setLoading] = useState3(false);
+  const [showAtlas, setShowAtlas] = useState3(false);
   const [seed] = useState3(() => Math.floor(Math.random() * 1e5));
   const [idempotencyKey, setIdempotencyKey] = useState3(() => makeIdempotencyKey());
   useEffect2(() => {
@@ -2597,6 +2626,19 @@ function AssessmentApp() {
     if (!question) return;
     setAnswers((value) => ({ ...value, [question.id]: optionId }));
   }
+  function toggleMultiOption(optionId) {
+    if (!question || question.kind !== "multi") return;
+    setAnswers((value) => {
+      const currentValue = value[question.id];
+      const selected = Array.isArray(currentValue) ? currentValue : [];
+      if (question.id === "f-q5" && optionId === "f-q5-none") {
+        return { ...value, [question.id]: selected.includes(optionId) ? [] : [optionId] };
+      }
+      const withoutNone = question.id === "f-q5" ? selected.filter((id) => id !== "f-q5-none") : selected;
+      const next = withoutNone.includes(optionId) ? withoutNone.filter((id) => id !== optionId) : [...withoutNone, optionId];
+      return { ...value, [question.id]: next };
+    });
+  }
   async function submitAssessment() {
     if (openPrompt.trim().length < 30) return setMessage("\u8BF7\u5199\u51FA\u81F3\u5C1130\u5B57\u7684\u5B8C\u6574\u63D0\u793A\u8BCD");
     if (!session) return;
@@ -2610,7 +2652,7 @@ function AssessmentApp() {
           participantName: profile.name.trim(),
           participantRole: profile.role,
           participantRoleKey: profile.roleKey,
-          answers: questionList.map((item) => answers[item.id] || ""),
+          answers: questionList.map((item) => answers[item.id] || (item.kind === "multi" ? [] : "")),
           openPrompt: openPrompt.trim(),
           idempotencyKey
         })
@@ -2623,161 +2665,172 @@ function AssessmentApp() {
       setMode("assessment");
     }
   }
-  if (mode === "teacher") return /* @__PURE__ */ jsx3(TeacherDashboard, { onExit: () => {
+  if (mode === "teacher") return /* @__PURE__ */ jsx4(TeacherDashboard, { onExit: () => {
     history.replaceState({}, "", window.location.pathname);
     setMode("landing");
   } });
-  if (mode === "report" && report) return /* @__PURE__ */ jsx3(ReportView, { report, message });
+  if (mode === "report" && report) return /* @__PURE__ */ jsx4(ReportView, { report, message });
   if (mode === "generating") {
-    return /* @__PURE__ */ jsx3("main", { className: "center-page", children: /* @__PURE__ */ jsxs3("section", { className: "generating-card", children: [
-      /* @__PURE__ */ jsx3("div", { className: "pulse-mark", children: "AI" }),
-      /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "DeepSeek \u6B63\u5728\u751F\u6210" }),
-      /* @__PURE__ */ jsx3("h1", { children: "\u7B54\u5377\u5DF2\u7ECF\u5B89\u5168\u4FDD\u5B58" }),
-      /* @__PURE__ */ jsx3("p", { children: "DeepSeek \u6B63\u5728\u6309\u4E03\u9879\u56FA\u5B9A\u91CF\u8868\u5206\u6790\u4F60\u7684\u63D0\u793A\u8BCD\uFF1B\u670D\u52A1\u5F02\u5E38\u65F6\u81EA\u52A8\u56DE\u9000\u5230\u672C\u5730\u542F\u53D1\u5F0F\u5206\u6790\u3002" }),
-      /* @__PURE__ */ jsx3("div", { className: "loading-line", children: /* @__PURE__ */ jsx3("span", {}) })
+    return /* @__PURE__ */ jsx4("main", { className: "center-page", children: /* @__PURE__ */ jsxs4("section", { className: "generating-card", children: [
+      /* @__PURE__ */ jsx4("div", { className: "pulse-mark", children: "AI" }),
+      /* @__PURE__ */ jsx4("p", { className: "eyebrow", children: "DeepSeek \u6B63\u5728\u751F\u6210" }),
+      /* @__PURE__ */ jsx4("h1", { children: "\u7B54\u5377\u5DF2\u7ECF\u5B89\u5168\u4FDD\u5B58" }),
+      /* @__PURE__ */ jsx4("p", { children: "DeepSeek \u6B63\u5728\u6309\u4E03\u9879\u56FA\u5B9A\u91CF\u8868\u5206\u6790\u4F60\u7684\u63D0\u793A\u8BCD\uFF1B\u670D\u52A1\u5F02\u5E38\u65F6\u81EA\u52A8\u56DE\u9000\u5230\u672C\u5730\u542F\u53D1\u5F0F\u5206\u6790\u3002" }),
+      /* @__PURE__ */ jsx4("div", { className: "loading-line", children: /* @__PURE__ */ jsx4("span", {}) })
     ] }) });
   }
   if (mode === "profile" && session) {
-    return /* @__PURE__ */ jsx3("main", { className: "center-page", children: /* @__PURE__ */ jsxs3("section", { className: "form-card", children: [
-      /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: session.cohort || "\u73B0\u573A\u6D4B\u8BC4" }),
-      /* @__PURE__ */ jsx3("h1", { children: session.title }),
-      /* @__PURE__ */ jsx3("p", { className: "muted", children: "\u586B\u5199\u771F\u5B9E\u4FE1\u606F\u3002\u6211\u4EEC\u4F1A\u6839\u636E\u4F60\u7684\u5C97\u4F4D\u51FA\u9488\u5BF9\u6027\u9898\u76EE\uFF0C\u4E2A\u4EBA\u7ED3\u679C\u4EC5\u6559\u5E08\u540E\u53F0\u53EF\u89C1\uFF1B\u8BFE\u5802\u6295\u5C4F\u53EA\u5C55\u793A\u533F\u540D\u5206\u5E03\u3002" }),
-      /* @__PURE__ */ jsxs3("form", { onSubmit: beginAssessment, className: "stack-form", children: [
-        /* @__PURE__ */ jsxs3("label", { children: [
+    return /* @__PURE__ */ jsx4("main", { className: "center-page", children: /* @__PURE__ */ jsxs4("section", { className: "form-card", children: [
+      /* @__PURE__ */ jsx4("p", { className: "eyebrow", children: session.cohort || "\u73B0\u573A\u6D4B\u8BC4" }),
+      /* @__PURE__ */ jsx4("h1", { children: session.title }),
+      /* @__PURE__ */ jsx4("p", { className: "muted", children: "\u586B\u5199\u771F\u5B9E\u4FE1\u606F\u3002\u6211\u4EEC\u4F1A\u6839\u636E\u4F60\u7684\u5C97\u4F4D\u51FA\u9488\u5BF9\u6027\u9898\u76EE\uFF0C\u4E2A\u4EBA\u7ED3\u679C\u4EC5\u6559\u5E08\u540E\u53F0\u53EF\u89C1\uFF1B\u8BFE\u5802\u6295\u5C4F\u53EA\u5C55\u793A\u533F\u540D\u5206\u5E03\u3002" }),
+      /* @__PURE__ */ jsxs4("form", { onSubmit: beginAssessment, className: "stack-form", children: [
+        /* @__PURE__ */ jsxs4("label", { children: [
           "\u59D3\u540D",
-          /* @__PURE__ */ jsx3("input", { value: profile.name, maxLength: 30, onChange: (e) => setProfile({ ...profile, name: e.target.value }), placeholder: "\u8BF7\u8F93\u5165\u59D3\u540D" })
+          /* @__PURE__ */ jsx4("input", { value: profile.name, maxLength: 30, onChange: (e) => setProfile({ ...profile, name: e.target.value }), placeholder: "\u8BF7\u8F93\u5165\u59D3\u540D" })
         ] }),
-        /* @__PURE__ */ jsxs3("label", { children: [
+        /* @__PURE__ */ jsxs4("label", { children: [
           "\u5C97\u4F4D",
-          /* @__PURE__ */ jsxs3("select", { value: profile.role, onChange: (e) => {
+          /* @__PURE__ */ jsxs4("select", { value: profile.role, onChange: (e) => {
             const label = e.target.value;
             setProfile({ ...profile, role: label, roleKey: findRoleKey(label) });
           }, children: [
-            /* @__PURE__ */ jsx3("option", { value: "", children: "\u8BF7\u9009\u62E9\u5C97\u4F4D\uFF08\u4E0D\u540C\u5C97\u4F4D\u4F1A\u51FA\u4E0D\u540C\u9898\uFF09" }),
-            roles.map((r) => /* @__PURE__ */ jsx3("option", { value: r.label, children: r.label }, r.id))
+            /* @__PURE__ */ jsx4("option", { value: "", children: "\u8BF7\u9009\u62E9\u5C97\u4F4D\uFF08\u4E0D\u540C\u5C97\u4F4D\u4F1A\u51FA\u4E0D\u540C\u9898\uFF09" }),
+            roles.map((r) => /* @__PURE__ */ jsxs4("option", { value: r.label, children: [
+              r.label,
+              "\uFF5C",
+              r.description
+            ] }, r.id))
           ] })
         ] }),
-        profile.role && /* @__PURE__ */ jsxs3("div", { className: "role-hint", children: [
+        profile.role && /* @__PURE__ */ jsxs4("div", { className: "role-hint", children: [
           "\u4F60\u5C06\u770B\u5230\u9488\u5BF9\u3010",
           profile.role,
           "\u3011\u7684 ",
           totalQuestions,
-          " \u9053\u9898 \uFF0CAI \u70B9\u8BC4\u5C06\u7531 DeepSeek \u5206\u6790\uFF0C\u670D\u52A1\u5F02\u5E38\u65F6\u81EA\u52A8\u56DE\u9000"
+          " \u9053\u9009\u62E9\u9898\u548C 1 \u9053\u771F\u5B9E\u63D0\u793A\u8BCD\u4EFB\u52A1 \uFF0CAI \u70B9\u8BC4\u5C06\u7531 DeepSeek \u5206\u6790\uFF0C\u670D\u52A1\u5F02\u5E38\u65F6\u81EA\u52A8\u56DE\u9000"
         ] }),
-        message && /* @__PURE__ */ jsx3("p", { className: "error-text", children: message }),
-        /* @__PURE__ */ jsx3("button", { className: "primary-button", type: "submit", children: "\u5F00\u59CB\u6D4B\u8BC4" })
+        message && /* @__PURE__ */ jsx4("p", { className: "error-text", children: message }),
+        /* @__PURE__ */ jsx4("button", { className: "primary-button", type: "submit", children: "\u5F00\u59CB\u6D4B\u8BC4" })
       ] })
     ] }) });
   }
   if (mode === "assessment" && question) {
     const selected = answers[question.id];
+    const selectedIds = Array.isArray(selected) ? selected : selected ? [selected] : [];
+    const hasSelection = selectedIds.length > 0;
     const progress = Math.round((current + 1) / totalQuestions * 100);
-    return /* @__PURE__ */ jsxs3("main", { className: "assessment-page", children: [
-      /* @__PURE__ */ jsxs3("header", { className: "assessment-header", children: [
-        /* @__PURE__ */ jsxs3("div", { children: [
-          /* @__PURE__ */ jsx3("span", { className: "brand-mark", children: "AI" }),
-          /* @__PURE__ */ jsxs3("span", { children: [
+    return /* @__PURE__ */ jsxs4("main", { className: "assessment-page", children: [
+      /* @__PURE__ */ jsxs4("header", { className: "assessment-header", children: [
+        /* @__PURE__ */ jsxs4("div", { children: [
+          /* @__PURE__ */ jsx4("span", { className: "brand-mark", children: "AI" }),
+          /* @__PURE__ */ jsxs4("span", { children: [
             session?.title,
             " \xB7 ",
             profile.role
           ] })
         ] }),
-        /* @__PURE__ */ jsxs3("span", { children: [
+        /* @__PURE__ */ jsxs4("span", { children: [
           current + 1,
           " / ",
           totalQuestions
         ] })
       ] }),
-      /* @__PURE__ */ jsx3("div", { className: "progress-track", children: /* @__PURE__ */ jsx3("span", { style: { width: `${progress}%` } }) }),
-      /* @__PURE__ */ jsxs3("section", { className: "question-card", children: [
-        /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: question.kind === "ability" ? "\u80FD\u529B\u60C5\u5883\u9898" : "\u4F7F\u7528\u504F\u597D\u9898 \xB7 \u6CA1\u6709\u6807\u51C6\u7B54\u6848" }),
-        /* @__PURE__ */ jsx3("h1", { children: question.prompt }),
-        /* @__PURE__ */ jsx3("div", { className: "option-list", children: displayedOptions.map((option, index) => /* @__PURE__ */ jsxs3("button", { type: "button", className: `option-button ${selected === option.id ? "selected" : ""}`, onClick: () => chooseAnswer(option.id), children: [
-          /* @__PURE__ */ jsx3("span", { children: String.fromCharCode(65 + index) }),
+      /* @__PURE__ */ jsx4("div", { className: "progress-track", children: /* @__PURE__ */ jsx4("span", { style: { width: `${progress}%` } }) }),
+      /* @__PURE__ */ jsxs4("section", { className: "question-card", children: [
+        /* @__PURE__ */ jsxs4("p", { className: "eyebrow", children: [
+          sectionLabels[question.section],
+          question.kind === "style" ? " \xB7 \u6CA1\u6709\u6807\u51C6\u7B54\u6848" : ""
+        ] }),
+        /* @__PURE__ */ jsx4("h1", { children: question.prompt }),
+        question.kind === "multi" && /* @__PURE__ */ jsx4("p", { className: "multi-hint", children: "\u53EF\u591A\u9009\uFF0C\u8BF7\u6309\u771F\u5B9E\u4F7F\u7528\u60C5\u51B5\u9009\u62E9" }),
+        /* @__PURE__ */ jsx4("div", { className: "option-list", children: displayedOptions.map((option, index) => /* @__PURE__ */ jsxs4("button", { type: "button", className: `option-button ${selectedIds.includes(option.id) ? "selected" : ""}`, onClick: () => question.kind === "multi" ? toggleMultiOption(option.id) : chooseAnswer(option.id), children: [
+          /* @__PURE__ */ jsx4("span", { children: question.kind === "multi" && selectedIds.includes(option.id) ? "\u2713" : String.fromCharCode(65 + index) }),
           option.text
         ] }, option.id)) }),
-        /* @__PURE__ */ jsxs3("div", { className: "question-actions", children: [
-          /* @__PURE__ */ jsx3("button", { type: "button", className: "text-button", disabled: current === 0, onClick: () => setCurrent((value) => value - 1), children: "\u4E0A\u4E00\u9898" }),
-          /* @__PURE__ */ jsx3("button", { type: "button", className: "primary-button", disabled: !selected, onClick: () => setCurrent((value) => value + 1), children: "\u4E0B\u4E00\u9898" })
+        /* @__PURE__ */ jsxs4("div", { className: "question-actions", children: [
+          /* @__PURE__ */ jsx4("button", { type: "button", className: "text-button", disabled: current === 0, onClick: () => setCurrent((value) => value - 1), children: "\u4E0A\u4E00\u9898" }),
+          /* @__PURE__ */ jsx4("button", { type: "button", className: "primary-button", disabled: !hasSelection, onClick: () => setCurrent((value) => value + 1), children: "\u4E0B\u4E00\u9898" })
         ] })
       ] })
     ] });
   }
   if (mode === "assessment" && current === totalQuestions) {
-    return /* @__PURE__ */ jsxs3("main", { className: "assessment-page", children: [
-      /* @__PURE__ */ jsxs3("header", { className: "assessment-header", children: [
-        /* @__PURE__ */ jsxs3("div", { children: [
-          /* @__PURE__ */ jsx3("span", { className: "brand-mark", children: "AI" }),
-          /* @__PURE__ */ jsx3("span", { children: "\u771F\u5B9E\u63D0\u793A\u8BCD\u4EFB\u52A1" })
+    return /* @__PURE__ */ jsxs4("main", { className: "assessment-page", children: [
+      /* @__PURE__ */ jsxs4("header", { className: "assessment-header", children: [
+        /* @__PURE__ */ jsxs4("div", { children: [
+          /* @__PURE__ */ jsx4("span", { className: "brand-mark", children: "AI" }),
+          /* @__PURE__ */ jsx4("span", { children: "\u771F\u5B9E\u63D0\u793A\u8BCD\u4EFB\u52A1" })
         ] }),
-        /* @__PURE__ */ jsxs3("span", { children: [
+        /* @__PURE__ */ jsxs4("span", { children: [
           totalQuestions,
           " / ",
           totalQuestions
         ] })
       ] }),
-      /* @__PURE__ */ jsx3("div", { className: "progress-track", children: /* @__PURE__ */ jsx3("span", { style: { width: "100%" } }) }),
-      /* @__PURE__ */ jsxs3("section", { className: "question-card open-card", children: [
-        /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "\u5F00\u653E\u9898 \xB7 \u6309\u4F60\u771F\u5B9E\u4F1A\u4F7F\u7528\u7684\u65B9\u5F0F\u4F5C\u7B54" }),
-        /* @__PURE__ */ jsx3("h1", { children: "\u8BF7\u5199\u51FA\u4E00\u6BB5\u4F60\u4F1A\u76F4\u63A5\u4EA4\u7ED9 AI \u7684\u5B8C\u6574\u63D0\u793A\u8BCD" }),
-        /* @__PURE__ */ jsx3("div", { className: "scenario-box", children: getOpenPromptForRole(profile.roleKey) }),
-        /* @__PURE__ */ jsx3("textarea", { value: openPrompt, onChange: (e) => setOpenPrompt(e.target.value), maxLength: 2e3, placeholder: "\u8BF7\u5728\u8FD9\u91CC\u5199\u4E0B\u5B8C\u6574\u63D0\u793A\u8BCD\u2026\u2026" }),
-        /* @__PURE__ */ jsxs3("div", { className: "textarea-meta", children: [
-          /* @__PURE__ */ jsx3("span", { children: "\u81F3\u5C1130\u5B57" }),
-          /* @__PURE__ */ jsxs3("span", { children: [
+      /* @__PURE__ */ jsx4("div", { className: "progress-track", children: /* @__PURE__ */ jsx4("span", { style: { width: "100%" } }) }),
+      /* @__PURE__ */ jsxs4("section", { className: "question-card open-card", children: [
+        /* @__PURE__ */ jsx4("p", { className: "eyebrow", children: "\u5F00\u653E\u9898 \xB7 \u6309\u4F60\u771F\u5B9E\u4F1A\u4F7F\u7528\u7684\u65B9\u5F0F\u4F5C\u7B54" }),
+        /* @__PURE__ */ jsx4("h1", { children: "\u8BF7\u5199\u51FA\u4E00\u6BB5\u4F60\u4F1A\u76F4\u63A5\u4EA4\u7ED9 AI \u7684\u5B8C\u6574\u63D0\u793A\u8BCD" }),
+        /* @__PURE__ */ jsx4("div", { className: "scenario-box", children: getOpenPromptForRole(profile.roleKey) }),
+        /* @__PURE__ */ jsx4("textarea", { value: openPrompt, onChange: (e) => setOpenPrompt(e.target.value), maxLength: 2e3, placeholder: "\u8BF7\u5728\u8FD9\u91CC\u5199\u4E0B\u5B8C\u6574\u63D0\u793A\u8BCD\u2026\u2026" }),
+        /* @__PURE__ */ jsxs4("div", { className: "textarea-meta", children: [
+          /* @__PURE__ */ jsx4("span", { children: "\u81F3\u5C1130\u5B57" }),
+          /* @__PURE__ */ jsxs4("span", { children: [
             openPrompt.length,
             " / 2000"
           ] })
         ] }),
-        message && /* @__PURE__ */ jsx3("p", { className: "error-text", children: message }),
-        /* @__PURE__ */ jsxs3("div", { className: "question-actions", children: [
-          /* @__PURE__ */ jsx3("button", { className: "text-button", onClick: () => setCurrent(totalQuestions - 1), children: "\u4E0A\u4E00\u9898" }),
-          /* @__PURE__ */ jsx3("button", { className: "primary-button", onClick: () => void submitAssessment(), children: "\u63D0\u4EA4\u5E76\u751F\u6210\u753B\u50CF" })
+        message && /* @__PURE__ */ jsx4("p", { className: "error-text", children: message }),
+        /* @__PURE__ */ jsxs4("div", { className: "question-actions", children: [
+          /* @__PURE__ */ jsx4("button", { className: "text-button", onClick: () => setCurrent(totalQuestions - 1), children: "\u4E0A\u4E00\u9898" }),
+          /* @__PURE__ */ jsx4("button", { className: "primary-button", onClick: () => void submitAssessment(), children: "\u63D0\u4EA4\u5E76\u751F\u6210\u753B\u50CF" })
         ] })
       ] })
     ] });
   }
-  return /* @__PURE__ */ jsxs3("main", { className: "landing-page", children: [
-    /* @__PURE__ */ jsxs3("nav", { className: "top-nav", children: [
-      /* @__PURE__ */ jsxs3("div", { children: [
-        /* @__PURE__ */ jsx3("span", { className: "brand-mark", children: "AI" }),
-        /* @__PURE__ */ jsx3("strong", { children: "\u975E\u51E1 \xB7 AI\u5B66\u4E60\u5B9E\u9A8C\u5BA4" })
+  return /* @__PURE__ */ jsxs4("main", { className: "landing-page", children: [
+    /* @__PURE__ */ jsxs4("nav", { className: "top-nav", children: [
+      /* @__PURE__ */ jsxs4("div", { children: [
+        /* @__PURE__ */ jsx4("span", { className: "brand-mark", children: "AI" }),
+        /* @__PURE__ */ jsx4("strong", { children: "\u975E\u51E1 \xB7 AI\u5B66\u4E60\u5B9E\u9A8C\u5BA4" })
       ] }),
-      /* @__PURE__ */ jsx3("button", { className: "text-button", onClick: () => {
+      /* @__PURE__ */ jsx4("button", { className: "text-button", onClick: () => {
         history.replaceState({}, "", "?teacher=1");
         setMode("teacher");
       }, children: "\u6559\u5E08\u540E\u53F0" })
     ] }),
-    /* @__PURE__ */ jsxs3("section", { className: "hero-grid", children: [
-      /* @__PURE__ */ jsxs3("div", { className: "hero-copy", children: [
-        /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "AI\u80FD\u529B\u4E0E\u98CE\u683C\u6D4B\u8BC4 \xB7 ASSESSMENT V2" }),
-        /* @__PURE__ */ jsxs3("h1", { children: [
+    /* @__PURE__ */ jsxs4("section", { className: "hero-grid", children: [
+      /* @__PURE__ */ jsxs4("div", { className: "hero-copy", children: [
+        /* @__PURE__ */ jsx4("p", { className: "eyebrow", children: "AI\u80FD\u529B\u4E0E\u98CE\u683C\u6D4B\u8BC4 \xB7 ASSESSMENT V3" }),
+        /* @__PURE__ */ jsxs4("h1", { children: [
           "\u770B\u89C1\u4F60\u7684",
-          /* @__PURE__ */ jsx3("br", {}),
-          /* @__PURE__ */ jsx3("em", { children: "AI \u5DE5\u4F5C\u65B9\u5F0F" })
+          /* @__PURE__ */ jsx4("br", {}),
+          /* @__PURE__ */ jsx4("em", { children: "AI \u5DE5\u4F5C\u65B9\u5F0F" })
         ] }),
-        /* @__PURE__ */ jsx3("p", { className: "hero-description", children: "\u6839\u636E\u4F60\u7684\u5C97\u4F4D\uFF08\u6559\u5E08 / \u987E\u95EE / \u73ED\u4E3B\u4EFB / \u7BA1\u57F9\u751F / \u6559\u5B66\u7BA1\u7406\uFF09\u51FA 22 \u9053\u9488\u5BF9\u6027\u9898\uFF0C\u52A0\u4E0A\u4E00\u6BB5\u771F\u5B9E\u63D0\u793A\u8BCD\u4EFB\u52A1\u3002\u7EA610\u5206\u949F\uFF0C\u83B7\u5F97\u516D\u7EF4\u80FD\u529B\u3001\u6210\u957F\u7B49\u7EA7\u4E0EAI\u4F7F\u7528\u98CE\u683C\u753B\u50CF\u3002" }),
-        /* @__PURE__ */ jsxs3("div", { className: "feature-row", children: [
-          /* @__PURE__ */ jsx3("span", { children: "\u6309\u5C97\u4F4D\u51FA\u9898" }),
-          /* @__PURE__ */ jsx3("span", { children: "\u516D\u7EF4\u80FD\u529B\u96F7\u8FBE" }),
-          /* @__PURE__ */ jsx3("span", { children: "\u4E09\u8F748\u578B\u98CE\u683C" }),
-          /* @__PURE__ */ jsx3("span", { children: "\u63D0\u793A\u8BCD\u5347\u7EA7\u5EFA\u8BAE" })
+        /* @__PURE__ */ jsx4("p", { className: "hero-description", children: "\u56DB\u7C7B\u5C97\u4F4D \xB7 18\u9053\u9009\u62E9\u9898 \xB7 1\u9053\u771F\u5B9E\u63D0\u793A\u8BCD\u4EFB\u52A1\u3002\u9762\u5411\u987E\u95EE\u3001\u6559\u7EC3\u3001\u6559\u5E08\u4E0E\u901A\u7528\u6D4B\u8BC4\uFF0C\u7EA68\u201310\u5206\u949F\uFF0C\u83B7\u5F97\u516D\u7EF4\u80FD\u529B\u3001\u6210\u957F\u7B49\u7EA7\u4E0EAI\u4F7F\u7528\u98CE\u683C\u753B\u50CF\u3002" }),
+        /* @__PURE__ */ jsxs4("div", { className: "feature-row", children: [
+          /* @__PURE__ */ jsx4("span", { children: "\u6309\u5C97\u4F4D\u51FA\u9898" }),
+          /* @__PURE__ */ jsx4("span", { children: "\u516D\u7EF4\u80FD\u529B\u96F7\u8FBE" }),
+          /* @__PURE__ */ jsx4("button", { type: "button", onClick: () => setShowAtlas(true), children: "\u67E5\u770B8\u578B\u98CE\u683C\u5927\u5168" }),
+          /* @__PURE__ */ jsx4("span", { children: "\u63D0\u793A\u8BCD\u5347\u7EA7\u5EFA\u8BAE" })
         ] })
       ] }),
-      /* @__PURE__ */ jsxs3("form", { className: "join-card", onSubmit: enterSession, children: [
-        /* @__PURE__ */ jsx3("div", { className: "join-number", children: "01" }),
-        /* @__PURE__ */ jsx3("p", { className: "eyebrow", children: "\u52A0\u5165\u8BFE\u5802\u6D4B\u8BC4" }),
-        /* @__PURE__ */ jsx3("h2", { children: "\u8F93\u5165\u573A\u6B21\u7801" }),
-        /* @__PURE__ */ jsx3("input", { value: sessionCode, onChange: (e) => setSessionCode(e.target.value.toUpperCase()), placeholder: "\u4F8B\u5982 A7K9Q2", maxLength: 8, autoCapitalize: "characters" }),
-        message && /* @__PURE__ */ jsx3("p", { className: "error-text", children: message }),
-        /* @__PURE__ */ jsx3("button", { className: "primary-button", type: "submit", disabled: loading, children: loading ? "\u6B63\u5728\u8FDE\u63A5\u2026" : "\u8FDB\u5165\u6D4B\u8BC4" }),
-        /* @__PURE__ */ jsx3("p", { className: "privacy-note", children: "\u59D3\u540D\u4EC5\u7528\u4E8E\u6559\u5E08\u8BFE\u540E\u6307\u5BFC\uFF0C\u4E0D\u53C2\u4E0E\u516C\u5F00\u6392\u540D\u3002" })
+      /* @__PURE__ */ jsxs4("form", { className: "join-card", onSubmit: enterSession, children: [
+        /* @__PURE__ */ jsx4("div", { className: "join-number", children: "01" }),
+        /* @__PURE__ */ jsx4("p", { className: "eyebrow", children: "\u52A0\u5165\u8BFE\u5802\u6D4B\u8BC4" }),
+        /* @__PURE__ */ jsx4("h2", { children: "\u8F93\u5165\u573A\u6B21\u7801" }),
+        /* @__PURE__ */ jsx4("input", { value: sessionCode, onChange: (e) => setSessionCode(e.target.value.toUpperCase()), placeholder: "\u4F8B\u5982 A7K9Q2", maxLength: 8, autoCapitalize: "characters" }),
+        message && /* @__PURE__ */ jsx4("p", { className: "error-text", children: message }),
+        /* @__PURE__ */ jsx4("button", { className: "primary-button", type: "submit", disabled: loading, children: loading ? "\u6B63\u5728\u8FDE\u63A5\u2026" : "\u8FDB\u5165\u6D4B\u8BC4" }),
+        /* @__PURE__ */ jsx4("p", { className: "privacy-note", children: "\u59D3\u540D\u4EC5\u7528\u4E8E\u6559\u5E08\u8BFE\u540E\u6307\u5BFC\uFF0C\u4E0D\u53C2\u4E0E\u516C\u5F00\u6392\u540D\u3002" })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs3("footer", { className: "landing-footer", children: [
-      /* @__PURE__ */ jsx3("span", { children: "\u8BFE\u7A0B\u8D77\u70B9\u753B\u50CF\uFF0C\u4E0D\u662F\u6807\u51C6\u5316\u5FC3\u7406\u6D4B\u9A8C" }),
-      /* @__PURE__ */ jsx3("span", { children: "\u7EA6 10\u201312 \u5206\u949F" })
-    ] })
+    /* @__PURE__ */ jsxs4("footer", { className: "landing-footer", children: [
+      /* @__PURE__ */ jsx4("span", { children: "\u8BFE\u7A0B\u8D77\u70B9\u753B\u50CF\uFF0C\u4E0D\u662F\u6807\u51C6\u5316\u5FC3\u7406\u6D4B\u9A8C" }),
+      /* @__PURE__ */ jsx4("span", { children: "\u7EA68\u201310\u5206\u949F" })
+    ] }),
+    /* @__PURE__ */ jsx4(StyleAtlas, { open: showAtlas, onClose: () => setShowAtlas(false) })
   ] });
 }
 
