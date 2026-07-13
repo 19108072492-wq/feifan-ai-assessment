@@ -23,15 +23,15 @@ function makeIdempotencyKey() {
 
 function findRoleKey(label) {
   const match = roleOptions.find((r) => r.label === label);
-  return match ? match.id : "teacher";
+  return match ? match.id : "general";
 }
 
 export function AssessmentApp() {
   const [mode, setMode] = useState<"landing" | "profile" | "assessment" | "generating" | "report" | "teacher">("landing");
   const [sessionCode, setSessionCode] = useState("");
   const [session, setSession] = useState<SessionInfo | null>(null);
-  const [profile, setProfile] = useState<Profile>({ name: "", role: "", roleKey: "teacher" });
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [profile, setProfile] = useState<Profile>({ name: "", role: "", roleKey: "general" });
+  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [openPrompt, setOpenPrompt] = useState("");
   const [current, setCurrent] = useState(0);
   const [report, setReport] = useState<any>(null);
@@ -152,6 +152,22 @@ export function AssessmentApp() {
     setAnswers((value) => ({ ...value, [question.id]: optionId }));
   }
 
+  function toggleMultiOption(optionId: string) {
+    if (!question || question.kind !== "multi") return;
+    setAnswers((value) => {
+      const currentValue = value[question.id];
+      const selected = Array.isArray(currentValue) ? currentValue : [];
+      if (question.id === "f-q5" && optionId === "f-q5-none") {
+        return { ...value, [question.id]: selected.includes(optionId) ? [] : [optionId] };
+      }
+      const withoutNone = question.id === "f-q5" ? selected.filter((id) => id !== "f-q5-none") : selected;
+      const next = withoutNone.includes(optionId)
+        ? withoutNone.filter((id) => id !== optionId)
+        : [...withoutNone, optionId];
+      return { ...value, [question.id]: next };
+    });
+  }
+
   async function submitAssessment() {
     if (openPrompt.trim().length < 30) return setMessage("请写出至少30字的完整提示词");
     if (!session) return;
@@ -165,7 +181,7 @@ export function AssessmentApp() {
           participantName: profile.name.trim(),
           participantRole: profile.role,
           participantRoleKey: profile.roleKey,
-          answers: questionList.map((item) => answers[item.id] || ""),
+          answers: questionList.map((item) => answers[item.id] || (item.kind === "multi" ? [] : "")),
           openPrompt: openPrompt.trim(),
           idempotencyKey,
         }),
@@ -224,6 +240,8 @@ export function AssessmentApp() {
 
   if (mode === "assessment" && question) {
     const selected = answers[question.id];
+    const selectedIds = Array.isArray(selected) ? selected : selected ? [selected] : [];
+    const hasSelection = selectedIds.length > 0;
     const progress = Math.round(((current + 1) / totalQuestions) * 100);
     return (
       <main className="assessment-page">
@@ -233,18 +251,19 @@ export function AssessmentApp() {
         </header>
         <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
         <section className="question-card">
-          <p className="eyebrow">{question.kind === "ability" ? "能力情境题" : "使用偏好题 · 没有标准答案"}</p>
+          <p className="eyebrow">{question.kind === "style" ? "使用偏好题 · 没有标准答案" : "AI能力探究"}</p>
           <h1>{question.prompt}</h1>
+          {question.kind === "multi" && <p className="multi-hint">可多选，请按真实使用情况选择</p>}
           <div className="option-list">
             {displayedOptions.map((option, index) => (
-              <button key={option.id} type="button" className={`option-button ${selected === option.id ? "selected" : ""}`} onClick={() => chooseAnswer(option.id)}>
-                <span>{String.fromCharCode(65 + index)}</span>{option.text}
+              <button key={option.id} type="button" className={`option-button ${selectedIds.includes(option.id) ? "selected" : ""}`} onClick={() => question.kind === "multi" ? toggleMultiOption(option.id) : chooseAnswer(option.id)}>
+                <span>{question.kind === "multi" && selectedIds.includes(option.id) ? "✓" : String.fromCharCode(65 + index)}</span>{option.text}
               </button>
             ))}
           </div>
           <div className="question-actions">
             <button type="button" className="text-button" disabled={current === 0} onClick={() => setCurrent((value) => value - 1)}>上一题</button>
-            <button type="button" className="primary-button" disabled={!selected} onClick={() => setCurrent((value) => value + 1)}>下一题</button>
+            <button type="button" className="primary-button" disabled={!hasSelection} onClick={() => setCurrent((value) => value + 1)}>下一题</button>
           </div>
         </section>
       </main>
