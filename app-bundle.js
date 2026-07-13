@@ -1,6 +1,6 @@
 /* ============================================================
  * AI 能力与风格测评 — app-bundle.js
- * 自动构建于 2026-07-13T08:02:04.984Z
+ * 自动构建于 2026-07-13T08:17:47.337Z
  * ============================================================ */
 
 /* React 18.3.1 UMD */
@@ -320,7 +320,6 @@ if (!window.recharts) { window.recharts = {}; }
 // app/AssessmentApp.tsx
 const { useEffect: useEffect2, useMemo: useMemo2, useState: useState3 } = window.React;
 // lib/assessment-v3.mjs
-var ASSESSMENT_VERSION = "assessment-v3";
 var dimensions = [
   { id: "scene", label: "\u573A\u666F\u5E94\u7528\u529B", weight: 15 },
   { id: "task", label: "\u4EFB\u52A1\u5B9A\u4E49\u529B", weight: 20 },
@@ -721,146 +720,6 @@ var styleProfiles = {
     blindSpot: "\u8D28\u91CF\u8981\u6C42\u8F83\u9AD8\u65F6\u53EF\u80FD\u964D\u4F4E\u8BD5\u9519\u901F\u5EA6"
   }
 };
-var levelForScore = (score) => {
-  if (score >= 80) return { code: "L4", name: "Agent\u63A8\u52A8\u8005", range: "80\u2013100" };
-  if (score >= 60) return { code: "L3", name: "\u534F\u540C\u4EA4\u4ED8\u8005", range: "60\u201379" };
-  if (score >= 40) return { code: "L2", name: "\u4EFB\u52A1\u8868\u8FBE\u8005", range: "40\u201359" };
-  return { code: "L1", name: "AI\u4F53\u9A8C\u8005", range: "0\u201339" };
-};
-var LEVELS = [
-  { code: "L1", name: "AI\u4F53\u9A8C\u8005", range: "0\u201339" },
-  { code: "L2", name: "\u4EFB\u52A1\u8868\u8FBE\u8005", range: "40\u201359" },
-  { code: "L3", name: "\u534F\u540C\u4EA4\u4ED8\u8005", range: "60\u201379" },
-  { code: "L4", name: "Agent\u63A8\u52A8\u8005", range: "80\u2013100" }
-];
-function nextLevel(level) {
-  const index = LEVELS.findIndex((item) => item.code === level.code);
-  return LEVELS[Math.min(LEVELS.length - 1, index + 1)];
-}
-function normalizeAnswerIds(answers) {
-  if (!Array.isArray(answers)) return [];
-  return [...new Set(answers.flatMap((value) => Array.isArray(value) ? value : [value]).filter(Boolean))];
-}
-function selectedOptions(question, selectedIds) {
-  return question.options.filter((option) => selectedIds.includes(option.id));
-}
-function scoreQuestion(question, selectedIds) {
-  const selected = selectedOptions(question, selectedIds);
-  if (!selected.length) return 0;
-  if (question.kind !== "multi") return Number(selected[0].score) || 0;
-  if (question.strategy === "task-breadth") {
-    return Math.min(3, selected.length * 0.5);
-  }
-  if (question.strategy === "tool-depth") {
-    const highest = Math.max(...selected.map((option) => Number(option.score) || 0));
-    const families = new Set(selected.map((option) => option.family));
-    return Math.min(3, highest + Math.min(0.4, Math.max(0, families.size - 1) * 0.1));
-  }
-  return Math.max(...selected.map((option) => Number(option.score) || 0));
-}
-function average(values) {
-  return values.reduce((sum, value) => sum + value, 0) / Math.max(values.length, 1);
-}
-function percent(value) {
-  return Math.round(value / 3 * 100);
-}
-function rubricPercent(rubric, key) {
-  const value = Math.min(3, Math.max(0, Number(rubric?.[key]) || 0));
-  return percent(value);
-}
-function projectResult(selectedIds) {
-  const bonuses = {
-    "f-q5-website-live": 3,
-    "f-q5-knowledge-active": 3,
-    "f-q5-automation-live": 4
-  };
-  const projectBonus = Math.min(8, Object.entries(bonuses).filter(([id]) => selectedIds.includes(id)).reduce((sum, [, value]) => sum + value, 0));
-  const miniCore = selectedIds.includes("f-q5-mini-core");
-  const miniLive = selectedIds.includes("f-q5-mini-live");
-  return { projectBonus, miniCore, miniLive, eligible: miniCore && miniLive };
-}
-function scoreStyle(answers, questionList = questions) {
-  const selectedIds = normalizeAnswerIds(answers);
-  const totals = { explorationExecution: 0, assignCocreate: 0, fastVerify: 0 };
-  const poles = {
-    explorationExecution: ["E", "D"],
-    assignCocreate: ["A", "C"],
-    fastVerify: ["F", "V"]
-  };
-  for (const question of questionList.filter((item) => item.kind === "style")) {
-    const option = question.options.find((item) => selectedIds.includes(item.id));
-    if (!option) continue;
-    totals[question.axis] += option.pole === poles[question.axis][0] ? question.weight : -question.weight;
-  }
-  const chars = Object.entries(totals).map(([axis, value]) => poles[axis][value > 0 ? 0 : 1]);
-  const confidence = Object.fromEntries(
-    Object.entries(totals).map(([axis, value]) => [axis, Math.abs(value) === 3 ? "\u660E\u663E" : "\u8F7B\u5FAE"])
-  );
-  const code = chars.join("");
-  const profile = styleProfiles[code] || styleProfiles.DCV;
-  const axisDetails = [
-    { axis: "explorationExecution", label: "\u63A2\u7D22 / \u6267\u884C", pole: chars[0], tendency: chars[0] === "E" ? "\u63A2\u7D22" : "\u6267\u884C", strength: confidence.explorationExecution },
-    { axis: "assignCocreate", label: "\u59D4\u6D3E / \u5171\u521B", pole: chars[1], tendency: chars[1] === "A" ? "\u59D4\u6D3E" : "\u5171\u521B", strength: confidence.assignCocreate },
-    { axis: "fastVerify", label: "\u654F\u6377 / \u5BA1\u614E", pole: chars[2], tendency: chars[2] === "F" ? "\u654F\u6377" : "\u5BA1\u614E", strength: confidence.fastVerify }
-  ];
-  return { code, ...profile, confidence, axes: totals, axisDetails };
-}
-function scoreAssessment(answers, rubric, questionList = questions) {
-  const selectedIds = normalizeAnswerIds(answers);
-  const scoredQuestions = questionList.filter((question) => ["foundation", "application", "business"].includes(question.section));
-  const questionScores = new Map(scoredQuestions.map((question) => [question.id, scoreQuestion(question, selectedIds)]));
-  const sectionScore = (section) => percent(average(
-    scoredQuestions.filter((question) => question.section === section).map((question) => questionScores.get(question.id) || 0)
-  ));
-  const sectionScores = {
-    foundation: sectionScore("foundation"),
-    application: sectionScore("application"),
-    business: sectionScore("business")
-  };
-  const choiceScore = Math.round(
-    sectionScores.foundation * 0.3 + sectionScores.application * 0.45 + sectionScores.business * 0.25
-  );
-  const open = Object.fromEntries(
-    ["audience", "purpose", "inputs", "process", "output", "constraints", "acceptance"].map((key) => [key, rubricPercent(rubric, key)])
-  );
-  const openScore = Math.round(average(Object.values(open)));
-  const rawTotalScore = Math.round(choiceScore * 0.6 + openScore * 0.4);
-  const project = projectResult(selectedIds);
-  const totalScore = Math.min(100, rawTotalScore + project.projectBonus);
-  const baseLevel = levelForScore(totalScore);
-  const level = project.eligible ? nextLevel(baseLevel) : baseLevel;
-  const choiceDimensions = Object.fromEntries(dimensions.map((dimension) => {
-    const values = scoredQuestions.filter((question) => question.dimension === dimension.id).map((question) => questionScores.get(question.id) || 0);
-    return [dimension.id, percent(average(values))];
-  }));
-  const dimensionsResult = {
-    scene: Math.round(choiceDimensions.scene * 0.7 + average([open.audience, open.purpose]) * 0.3),
-    task: Math.round(choiceDimensions.task * 0.5 + average([open.audience, open.purpose, open.output]) * 0.5),
-    data: Math.round(choiceDimensions.data * 0.6 + open.inputs * 0.4),
-    collaboration: Math.round(choiceDimensions.collaboration * 0.6 + open.process * 0.4),
-    verification: Math.round(choiceDimensions.verification * 0.7 + average([open.constraints, open.acceptance]) * 0.3),
-    agent: choiceDimensions.agent
-  };
-  return {
-    choiceScore,
-    openScore,
-    rawTotalScore,
-    projectBonus: project.projectBonus,
-    totalScore,
-    projectUpgrade: {
-      applied: project.eligible && baseLevel.code !== "L4",
-      eligible: project.eligible,
-      levels: project.eligible && baseLevel.code !== "L4" ? 1 : 0,
-      miniCore: project.miniCore,
-      miniLive: project.miniLive,
-      baseLevelCode: baseLevel.code
-    },
-    sectionScores,
-    dimensions: dimensionsResult,
-    level,
-    style: scoreStyle(answers, questionList)
-  };
-}
 function seededRandom(seed) {
   let value = seed >>> 0;
   return () => {
@@ -881,979 +740,29 @@ function shuffledOptions(question, seed) {
   return output;
 }
 
-// lib/heuristic-analysis.mjs
-var RUBRIC_KEYS = [
-  "audience",
-  "purpose",
-  "inputs",
-  "process",
-  "output",
-  "constraints",
-  "acceptance"
-];
-var DIMENSION_CONFIG = {
-  audience: {
-    label: "\u5BF9\u8C61",
-    keywords: ["\u5BB6\u957F", "\u5B66\u751F", "\u6559\u5E08", "\u5458\u5DE5", "\u53D7\u4F17", "\u7528\u6237", "\u8BFB\u8005", "\u542C\u4F17", "\u5BF9\u8C61", "\u9762\u5411", "\u9AD8\u4E00", "\u9AD8\u4E8C", "\u9AD8\u4E09", "\u65B0\u4EBA", "\u7BA1\u57F9\u751F", "\u987E\u95EE", "\u73ED\u4E3B\u4EFB", "\u6821\u957F", "\u9886\u5BFC", "\u5BA2\u6237", "\u56E2\u961F", "\u5B66\u5458", "\u8BB2\u5E08", "\u540C\u4E8B", "\u4E3B\u7BA1"],
-    qualityKeywords: ["\u7B2C\u4E00\u6B21", "\u9996\u6B21", "\u65B0\u624B", "\u96F6\u57FA\u7840", "\u521D\u5B66\u8005", "\u6709\u7ECF\u9A8C", "\u65B0\u5165\u804C", "\u65E0\u57FA\u7840", "\u9AD8\u654F\u611F", "\u6311\u5254", "\u79EF\u6781", "\u4FDD\u5B88", "\u4E13\u4E1A", "\u975E\u4E13\u4E1A", "\u96F6\u57FA\u7840", "\u6709\u7F8E\u672F\u57FA\u7840", "\u65E0\u7F8E\u672F\u57FA\u7840"],
-    evidenceHints: ["\u5BB6\u957F", "\u5B66\u751F", "\u5BF9\u8C61", "\u9762\u5411", "\u53D7\u4F17", "\u7ED9", "\u542C\u4F17", "\u65B0\u4EBA", "\u6559\u5E08", "\u987E\u95EE", "\u5BA2\u6237", "\u56E2\u961F", "\u7BA1\u57F9\u751F"],
-    specificSignals: ["\u5C81", "\u5E74\u7EA7", "\u5E74\u7EA7", "\u7C7B", "\u6279", "\u540D", "\u4F4D", "\u7ECF\u9A8C", "\u57FA\u7840", "\u80CC\u666F", "\u7279\u5F81", "\u753B\u50CF", "\u60C5\u51B5"]
-  },
-  purpose: {
-    label: "\u76EE\u7684",
-    keywords: ["\u76EE\u6807", "\u76EE\u7684", "\u7406\u89E3", "\u638C\u63E1", "\u5E2E\u52A9", "\u7528\u4E8E", "\u4E3A\u4E86", "\u5B8C\u6210", "\u8FBE\u5230", "\u5B66\u4F1A", "\u4E86\u89E3", "\u77E5\u9053", "\u8BA4\u8BC6", "\u80FD\u591F", "\u5B9E\u73B0", "\u63D0\u5347", "\u57F9\u517B", "\u8BAD\u7EC3", "\u6559\u4F1A", "\u8BA9", "\u8BF4\u670D", "\u63A8\u52A8", "\u4FC3\u6210"],
-    qualityKeywords: ["\u5E73\u8861", "\u914D\u5408", "\u91CD\u70B9", "\u9636\u6BB5", "\u7B56\u7565", "\u65B9\u6848", "\u6D41\u7A0B", "\u65B9\u6CD5", "\u6280\u5DE7", "\u89C4\u5212", "\u5B9A\u4F4D", "\u5356\u70B9", "\u5DEE\u5F02", "\u533A\u5206", "\u6F84\u6E05", "\u6D88\u9664", "\u8986\u76D6", "\u5BF9\u9F50", "\u8FBE\u6210"],
-    evidenceHints: ["\u76EE\u6807", "\u76EE\u7684", "\u4E3A\u4E86", "\u5E2E\u52A9", "\u8BA9", "\u7406\u89E3", "\u638C\u63E1", "\u5B66\u4F1A", "\u8BF4\u670D", "\u4FC3\u6210", "\u8FBE\u6210", "\u5B9E\u73B0", "\u8986\u76D6"],
-    specificSignals: ["\u6210", "\u7387", "\u5206", "\u9879", "\u6B65", "\u79CD", "\u4E2A", "\u4F4D", "\u6761", "\u8F6E", "\u7EA7", "\u7C7B"]
-  },
-  inputs: {
-    label: "\u8F93\u5165\u8D44\u6599",
-    keywords: ["\u8D44\u6599", "\u6587\u4EF6", "\u6570\u636E", "\u6765\u6E90", "\u653F\u7B56", "\u8BFE\u7A0B", "\u5B89\u6392", "\u6848\u4F8B", "\u5F80\u5C4A", "\u53C2\u8003", "\u6750\u6599", "\u6587\u6863", "\u8868\u683C", "\u8BB0\u5F55", "\u4FE1\u606F", "\u6E05\u5355", "\u6A21\u677F", "\u80CC\u666F", "\u5386\u53F2", "\u9644\u4EF6", "\u8BFE\u4EF6", "\u6559\u6848", "\u8BDD\u672F", "\u811A\u672C", "\u95EE\u5377", "\u753B\u50CF"],
-    qualityKeywords: ["\u6807\u6CE8", "\u6765\u6E90", "\u65E5\u671F", "\u7248\u672C", "\u9002\u7528", "\u6574\u7406", "\u5206\u7C7B", "\u533F\u540D", "\u8131\u654F", "\u6392\u5E8F", "\u4F18\u5148\u7EA7", "\u66F4\u65B0", "\u65F6\u95F4", "\u8FD1\u4E09\u5E74", "\u672C\u6821", "\u672C\u6821\u8BFE\u7A0B"],
-    evidenceHints: ["\u8D44\u6599", "\u6587\u4EF6", "\u653F\u7B56", "\u8BFE\u7A0B", "\u6848\u4F8B", "\u53C2\u8003", "\u6750\u6599", "\u6570\u636E", "\u8BFE\u4EF6", "\u8BDD\u672F", "\u95EE\u5377", "\u753B\u50CF", "\u811A\u672C"],
-    specificSignals: ["\u4EFD", "\u5F20", "\u9875", "\u4EFD", "\u6761", "\u5E74", "\u6708", "\u5468", "\u7248", "\u53F7", "\u8282", "\u6B21", "\u6BB5"]
-  },
-  process: {
-    label: "\u6267\u884C\u65B9\u5F0F",
-    keywords: ["\u6B65\u9AA4", "\u6D41\u7A0B", "\u5148", "\u518D", "\u7136\u540E", "\u7B2C\u4E00\u6B65", "\u9996\u5148", "\u63A5\u7740", "\u6700\u540E", "\u68C0\u67E5\u70B9", "\u5206\u6B65", "\u8F6E\u6B21", "\u8FED\u4EE3", "\u4FEE\u6539", "\u8C03\u6574", "\u9010\u9879", "\u4F9D\u6B21", "\u9636\u6BB5", "\u73AF\u8282", "\u987A\u5E8F", "\u6309", "\u6D41\u7A0B", "\u6B65\u9AA4"],
-    qualityKeywords: ["\u68C0\u67E5\u70B9", "\u9A8C\u6536", "\u5206\u8F6E", "\u8FED\u4EE3", "\u590D\u6838", "\u786E\u8BA4", "\u5BA1\u6838", "\u53CD\u9988", "\u4FEE\u6539", "\u4F18\u5316", "\u6821\u5BF9", "\u4EA4\u53C9", "\u62BD\u6837", "\u56DE\u8BBF", "\u5BF9\u8BDD", "\u6F14\u7EC3", "\u8BD5\u8BB2", "\u8BA8\u8BBA", "\u8BC4\u5BA1"],
-    evidenceHints: ["\u6B65\u9AA4", "\u6D41\u7A0B", "\u5148", "\u518D", "\u7136\u540E", "\u5206\u6B65", "\u68C0\u67E5", "\u4FEE\u6539", "\u6F14\u7EC3", "\u8BD5\u8BB2", "\u8BC4\u5BA1", "\u62BD\u6837", "\u590D\u6838", "\u4EA4\u53C9", "\u8BA8\u8BBA"],
-    specificSignals: ["\u6B21", "\u8F6E", "\u6B65", "\u6BB5", "\u5206", "5", "3", "10", "\u4E00", "\u4E8C", "\u4E09", "\u4E24"]
-  },
-  output: {
-    label: "\u8F93\u51FA\u683C\u5F0F",
-    keywords: ["PPT", "ppt", "\u6F14\u793A", "\u5927\u7EB2", "\u683C\u5F0F", "\u9875\u6570", "\u7ED3\u6784", "\u6A21\u677F", "\u6587\u6863", "\u8868\u683C", "\u56FE\u8868", "\u5E7B\u706F\u7247", "\u9875\u9762", "\u7AE0\u8282", "\u76EE\u5F55", "\u6392\u7248", "\u8BBE\u8BA1", "\u98CE\u683C", "\u8272\u8C03", "\u5B57\u4F53", "PDF", "doc", "word", "\u90AE\u4EF6", "\u4FE1", "\u901A\u77E5", "\u7A3F", "\u603B\u7ED3", "\u65B9\u6848", "\u5468\u62A5", "\u6708\u62A5", "\u7B80\u5386"],
-    qualityKeywords: ["\u9875", "\u5206\u949F", "\u5B57\u6570", "\u7AE0\u8282", "\u76EE\u5F55", "\u5C01\u9762", "\u5C01\u5E95", "\u52A8\u753B", "\u8FC7\u6E21", "\u5907\u6CE8", "\u8BB2\u7A3F", "\u5B57\u53F7", "\u6BB5\u8DDD", "\u8272", "logo", "\u56FE\u8868", "\u8868\u683C", "\u63D0\u7EB2", "\u7ED3\u6784", "\u5B57\u53F7", "\u683C\u5F0F", "\u6BB5\u8DDD"],
-    evidenceHints: ["PPT", "\u5927\u7EB2", "\u683C\u5F0F", "\u9875", "\u7ED3\u6784", "\u6A21\u677F", "\u6F14\u793A", "\u5E7B\u706F\u7247", "\u6587\u6863", "\u90AE\u4EF6", "\u4FE1", "\u7A3F", "\u5468\u62A5", "\u6708\u62A5", "PDF", "\u603B\u7ED3", "\u65B9\u6848", "\u7B80\u5386"],
-    specificSignals: ["\u9875", "\u5206\u949F", "\u5B57", "\u8282", "\u7AE0", "\u6BB5", "\u5E45", "\u79CD", "\u4E2A", "5", "3", "10", "15", "20", "30", "40"]
-  },
-  constraints: {
-    label: "\u9650\u5236\u8FB9\u754C",
-    keywords: ["\u4E0D\u8981", "\u7981\u6B62", "\u907F\u514D", "\u65F6\u957F", "\u9650\u5236", "\u8303\u56F4", "\u8FB9\u754C", "\u5B57\u6570", "\u65F6\u95F4", "\u6CE8\u610F", "\u5FC5\u987B", "\u4E0D\u5F97", "\u4E0D\u80FD", "\u907F\u514D", "\u786E\u4FDD", "\u4FDD\u8BC1", "\u4E0D\u8D85\u8FC7", "\u81F3\u5C11", "\u6700\u5C11", "\u6700\u591A", "\u5E94\u8BE5", "\u4E0D\u80FD"],
-    qualityKeywords: ["\u4E0D\u8981", "\u7981\u6B62", "\u4E0D\u5F97", "\u4E0D\u80FD", "\u907F\u514D", "\u5FC5\u987B", "\u786E\u4FDD", "\u4FDD\u8BC1", "\u4E8B\u5B9E", "\u51C6\u786E", "\u771F\u5B9E", "\u9690\u79C1", "\u654F\u611F", "\u8131\u654F", "\u7248\u6743", "\u5408\u89C4", "\u552F\u4E00", "\u9996\u5BB6", "\u6700", "\u7EDD\u5BF9", "\u672A\u6210\u5E74", "\u672A\u63D0\u4F9B", "\u672A\u6838\u5B9E"],
-    evidenceHints: ["\u4E0D\u8981", "\u7981\u6B62", "\u907F\u514D", "\u65F6\u957F", "\u9650\u5236", "\u5FC5\u987B", "\u4E0D\u5F97", "\u4E0D\u80FD", "\u786E\u4FDD", "\u4FDD\u8BC1", "\u5408\u89C4", "\u654F\u611F", "\u9690\u79C1", "\u8131\u654F", "\u4E8B\u5B9E", "\u51C6\u786E", "\u7248\u6743", "\u672A\u6210\u5E74"],
-    specificSignals: ["\u5206\u949F", "\u5B57", "\u9875", "\u5C81", "\u5E74", "\u6708", "\u6761", "\u9879", "\u4EFD", "\u5185", "\u5916", "\u524D", "\u540E"]
-  },
-  acceptance: {
-    label: "\u9A8C\u6536\u6807\u51C6",
-    keywords: ["\u9A8C\u6536", "\u6807\u51C6", "\u68C0\u67E5", "\u786E\u8BA4", "\u5408\u683C", "\u5B8C\u6210", "\u6EE1\u8DB3", "\u8981\u6C42", "\u8FBE\u5230", "\u9A8C\u8BC1", "\u6838\u5BF9", "\u6D4B\u8BD5", "\u5BA1\u6838", "\u901A\u8FC7", "\u4EA4\u4ED8", "\u68C0\u67E5\u6E05\u5355", "\u51C6\u5219", "\u8BC4\u5206", "\u6838\u5BF9", "\u590D\u8BC4", "\u590D\u5BA1", "\u901A\u8FC7", "\u8BC4\u4EF7"],
-    qualityKeywords: ["\u9A8C\u6536", "\u6807\u51C6", "\u6838\u5BF9", "\u9A8C\u8BC1", "\u6D4B\u8BD5", "\u68C0\u67E5\u6E05\u5355", "\u5408\u683C", "\u901A\u8FC7", "\u4EA4\u4ED8", "\u786E\u8BA4", "\u8BC4\u5206", "\u590D\u8BC4", "\u590D\u5BA1", "\u5B9E\u6D4B", "\u53EF\u8FFD\u6EAF", "\u53EF\u6838\u5BF9", "\u53EF\u9A8C\u8BC1", "\u53EF\u8861\u91CF", "\u53EF\u91CF\u5316"],
-    evidenceHints: ["\u9A8C\u6536", "\u6807\u51C6", "\u68C0\u67E5", "\u786E\u8BA4", "\u5408\u683C", "\u6EE1\u8DB3", "\u9A8C\u8BC1", "\u6838\u5BF9", "\u590D\u8BC4", "\u590D\u5BA1", "\u53EF\u8FFD\u6EAF", "\u53EF\u6838\u5BF9", "\u8BC4\u5206"],
-    specificSignals: ["\u5206", "\u6761", "\u9879", "\u6B21", "\u8F6E", "\u7EA7", "5", "3", "10", "\u4E00", "\u4E8C", "\u4E09", "\u4E24"]
-  }
-};
-function splitAtomicSentences(text) {
-  const raw = text.replace(/[\r\t]+/g, " ").split(/[。\n；;！!？?]/).map((s) => s.trim()).filter((s) => s.length >= 4);
-  const atoms = [];
-  for (const s of raw) {
-    const parts = s.split(/(?<=[，,；;])\s*(?=先|再|然后|接着|最后|其次|第一|第二步|第三步)/).map((p) => p.trim()).filter((p) => p.length >= 4);
-    atoms.push(...parts);
-  }
-  return atoms.length > 0 ? atoms : raw;
-}
-function countMatches(text, keywords) {
-  let count = 0;
-  for (const keyword of keywords) {
-    const regex = new RegExp(escapeRegExp(keyword), "gi");
-    const matches = text.match(regex);
-    if (matches) count += matches.length;
-  }
-  return count;
-}
-function escapeRegExp(string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-function evaluateDimension(text, config) {
-  const baseCount = countMatches(text, config.keywords);
-  const qualityCount = countMatches(text, config.qualityKeywords);
-  const specificCount = countMatches(text, config.specificSignals);
-  const atomicSentences = splitAtomicSentences(text);
-  let bestSentence = "";
-  let bestScore = 0;
-  const seen = /* @__PURE__ */ new Set();
-  for (const sentence of atomicSentences) {
-    let score2 = 0;
-    for (const hint of config.evidenceHints) {
-      if (sentence.includes(hint)) score2 += 2;
-    }
-    for (const kw of config.qualityKeywords) {
-      if (sentence.includes(kw)) score2 += 1;
-    }
-    if (score2 > 0 && !seen.has(sentence)) {
-      seen.add(sentence);
-      if (score2 > bestScore) {
-        bestScore = score2;
-        bestSentence = sentence;
-      }
-    }
-  }
-  let base = 0;
-  if (baseCount >= 3) base = 2;
-  else if (baseCount >= 1) base = 1;
-  let quality = 0;
-  if (qualityCount >= 2 && specificCount >= 1) quality = 1;
-  else if (qualityCount >= 1 || specificCount >= 2) quality = 1;
-  else if (specificCount >= 1) quality = 0;
-  const score = Math.min(3, base + quality);
-  const suggestions = [];
-  if (base === 0) suggestions.push(`\u5B8C\u5168\u6CA1\u6709\u63D0\u5230"${config.label}"\u76F8\u5173\u7684\u5185\u5BB9\uFF0C\u9700\u8981\u8865\u4E00\u6BB5`);
-  else if (base === 1) suggestions.push(`"${config.label}"\u53EA\u7B3C\u7EDF\u63D0\u4E86\u4E00\u4E0B\uFF0C\u5EFA\u8BAE\u66F4\u5177\u4F53\u5730\u63CF\u8FF0`);
-  if (base >= 1 && quality === 0) suggestions.push(`"${config.label}"\u6CA1\u6709\u6570\u5B57\u3001\u793A\u4F8B\u6216\u53EF\u6D4B\u91CF\u6807\u51C6\uFF0C\u5EFA\u8BAE\u8865\u5145`);
-  if (base >= 1 && qualityCount === 0) suggestions.push(`"${config.label}"\u7F3A\u5C11\u8FB9\u754C/\u8303\u56F4/\u65B9\u6CD5\u63CF\u8FF0\uFF0C\u53EF\u4EE5\u66F4\u5177\u4F53`);
-  return {
-    score,
-    evidence: bestSentence.slice(0, 100) || "\u672A\u5728\u539F\u6587\u4E2D\u627E\u5230\u660E\u786E\u8BC1\u636E",
-    suggestions: suggestions.slice(0, 2)
-  };
-}
-function buildUpgradedPrompt(original, evaluations, role) {
-  const safeRole = role || "teacher";
-  const taskMap = {
-    teacher: "\u9762\u5411\u540C\u7EC4\u6559\u5E08\u4E0E\u6559\u5B66\u4E3B\u4EFB\u7684\u516C\u5F00\u8BFE",
-    consultant: "\u9AD8\u4E00\u5BB6\u957F\u9996\u6B21\u54A8\u8BE2\u540E\u7684\u8DDF\u8FDB\u6C9F\u901A",
-    headteacher: "\u9AD8\u4E00\u65B0\u73ED\u7EA7\u7684\u5BB6\u957F\u4F1A\u5F00\u573A\u53D1\u8A00",
-    trainee: "\u5165\u804C\u7B2C\u4E00\u4E2A\u6708\u7684\u4E2A\u4EBA\u603B\u7ED3",
-    admin: "\u4E0B\u5B66\u671F\u6559\u7814\u7EC4\u8C03\u6574\u5EFA\u8BAE"
-  };
-  const taskDesc = taskMap[safeRole] || taskMap.teacher;
-  const sections = [];
-  sections.push(`\u8BF7\u6309\u4EE5\u4E0B\u5B8C\u6574\u7ED3\u6784\u51C6\u5907\u3010${taskDesc}\u3011\uFF0C\u6BCF\u6BB5\u90FD\u57FA\u4E8E\u6211\u63D0\u4F9B\u7684\u4E8B\u5B9E\uFF0C\u7F3A\u4EC0\u4E48\u76F4\u63A5\u544A\u8BC9\u6211\uFF0C\u4E0D\u8981\u81EA\u5DF1\u7F16\u3002
-`);
-  sections.push(
-    `\u3010\u5BF9\u8C61\u3011\u8BF7\u660E\u786E\uFF1A\u662F\u8C01\u3001\u6709\u4EC0\u4E48\u7ECF\u9A8C\u6216\u57FA\u7840\u3001\u53EF\u80FD\u6709\u54EA\u4E9B\u987E\u8651\u3002
-` + (evaluations.audience.score >= 2 ? `\u53EF\u53C2\u8003\u6211\u539F\u8BDD\uFF1A${evaluations.audience.evidence}` : `\u793A\u4F8B\uFF1A\u7B2C\u4E00\u6B21\u63A5\u89E6\u827A\u8003\u7684\u9AD8\u4E8C\u5BB6\u957F\uFF0C\u5B69\u5B50\u6210\u7EE9\u4E2D\u7B49\u3001\u5BB6\u5EAD\u5BF9\u827A\u8003\u8D39\u7528\u6709\u987E\u8651\u3002`)
-  );
-  sections.push(
-    `\u3010\u76EE\u7684\u3011\u8BF7\u8BF4\u660E\uFF1A\u8981\u8BA9\u8C01\u7406\u89E3/\u63A5\u53D7/\u505A\u5230\u4EC0\u4E48\uFF0C\u8FBE\u5230\u4EC0\u4E48\u53EF\u89C2\u5BDF\u7684\u6548\u679C\u3002
-` + (evaluations.purpose.score >= 2 ? `\u53EF\u53C2\u8003\u6211\u539F\u8BDD\uFF1A${evaluations.purpose.evidence}` : `\u793A\u4F8B\uFF1A\u8BA9\u5BB6\u957F\u7406\u89E3\u4E09\u4E2A\u6838\u5FC3\u8981\u70B9\uFF08\u5907\u8003\u9636\u6BB5\u3001\u6587\u5316\u4E0E\u4E13\u4E1A\u5E73\u8861\u3001\u5BB6\u957F\u914D\u5408\u91CD\u70B9\uFF09\uFF0C\u5E76\u80FD\u5728\u8BB2\u5EA7\u540E\u51C6\u786E\u56DE\u7B54\u5176\u4ED6\u5BB6\u957F\u7684\u63D0\u95EE\u3002`)
-  );
-  sections.push(
-    `\u3010\u8F93\u5165\u8D44\u6599\u3011\u8BF7\u5217\u51FA\u6211\u63D0\u4F9B\u7684\u8D44\u6599\uFF0C\u5E76\u6807\u6CE8\u6765\u6E90/\u65E5\u671F/\u7248\u672C/\u9002\u7528\u8303\u56F4\uFF0C\u672A\u63D0\u4F9B\u7684\u8D44\u6599\u4E0D\u8981\u7528\u3002
-` + (evaluations.inputs.score >= 2 ? `\u53EF\u53C2\u8003\u6211\u539F\u8BDD\uFF1A${evaluations.inputs.evidence}` : `\u793A\u4F8B\uFF1A
-- \u672C\u6821\u8BFE\u7A0B\u5B89\u6392\uFF08\u6765\u6E90\uFF1A\u6559\u52A1\u5904 2026 \u6625\uFF0C\u7248\u672C V3\uFF09
-- \u8FD1\u4E09\u5E74\u7F8E\u672F\u827A\u8003\u653F\u7B56\u6587\u4EF6\uFF08\u6765\u6E90\uFF1A\u7701\u8003\u8BD5\u9662 2024-2026\uFF09
-- \u5F80\u5C4A\u5BB6\u957F\u5E38\u89C1\u95EE\u9898\u6C47\u603B\uFF08\u6765\u6E90\uFF1A\u62DB\u751F\u529E 2025\uFF09`)
-  );
-  sections.push(
-    `\u3010\u6267\u884C\u6B65\u9AA4\u3011\u8BF7\u6309\u987A\u5E8F\u8BF4\u660E\u4F60\u8981\u600E\u4E48\u5B8C\u6210\uFF1A\u5148\u505A\u4EC0\u4E48 \u2192 \u4E2D\u95F4\u68C0\u67E5\u70B9 \u2192 \u518D\u505A\u4EC0\u4E48 \u2192 \u600E\u4E48\u8BA9\u6211\u786E\u8BA4\u3002
-` + (evaluations.process.score >= 2 ? `\u53EF\u53C2\u8003\u6211\u539F\u8BDD\uFF1A${evaluations.process.evidence}` : `\u793A\u4F8B\uFF1A
-1. \u5148\u5217\u5927\u7EB2\u53D1\u6211\u786E\u8BA4
-2. \u6309\u7AE0\u8282\u586B\u5145\u5185\u5BB9
-3. \u6BCF\u5B8C\u6210 5 \u9875\u7ED9\u6211\u68C0\u67E5\u4E00\u6B21
-4. \u5168\u90E8\u5B8C\u6210\u540E\u505A\u6574\u4F53\u6838\u5BF9`)
-  );
-  sections.push(
-    `\u3010\u8F93\u51FA\u683C\u5F0F\u3011\u8BF7\u660E\u786E\uFF1A\u7528\u4EC0\u4E48\u683C\u5F0F\u3001\u591A\u5C11\u9875/\u591A\u5C11\u5B57\u3001\u4EC0\u4E48\u7ED3\u6784\u3001\u662F\u5426\u8981\u5907\u6CE8\u8BB2\u7A3F\u3002
-` + (evaluations.output.score >= 2 ? `\u53EF\u53C2\u8003\u6211\u539F\u8BDD\uFF1A${evaluations.output.evidence}` : `\u793A\u4F8B\uFF1A40 \u5206\u949F\u8BB2\u5EA7 PPT\uFF0C30-35 \u9875\uFF0C\u5305\u542B\u5C01\u9762\u3001\u76EE\u5F55\u30014 \u7AE0\u6B63\u6587\uFF08\u6BCF\u7AE0 6-8 \u9875\uFF09\u3001\u5C01\u5E95\uFF0C\u6BCF\u9875\u53F3\u4E0B\u89D2\u9644\u8BB2\u7A3F\u5907\u6CE8\u3002`)
-  );
-  sections.push(
-    `\u3010\u9650\u5236\u8FB9\u754C\u3011\u8BF7\u660E\u786E\uFF1A\u54EA\u4E9B\u4E8B\u4E0D\u80FD\u505A\u3001\u4E0D\u80FD\u7F16\u9020\u4EC0\u4E48\u3001\u5B57\u6570/\u65F6\u957F/\u9875\u6570\u9650\u5236\u3001\u98CE\u683C\u8981\u6C42\u3002
-` + (evaluations.constraints.score >= 2 ? `\u53EF\u53C2\u8003\u6211\u539F\u8BDD\uFF1A${evaluations.constraints.evidence}` : `\u793A\u4F8B\uFF1A
-- \u4E0D\u5F97\u7F16\u9020\u672A\u63D0\u4F9B\u7684\u653F\u7B56\u4FE1\u606F
-- \u4E0D\u5F97\u4F7F\u7528"\u552F\u4E00/\u9996\u5BB6/\u6700"\u7B49\u7EDD\u5BF9\u5316\u8868\u8FF0
-- \u65F6\u957F\u4E0D\u8D85\u8FC7 40 \u5206\u949F
-- \u8BED\u8A00\u901A\u4FD7\u6613\u61C2\uFF0C\u907F\u514D\u4E13\u4E1A\u672F\u8BED
-- \u6D89\u53CA\u5B66\u751F\u59D3\u540D/\u5BB6\u5EAD\u4FE1\u606F\u8981\u8131\u654F`)
-  );
-  sections.push(
-    `\u3010\u9A8C\u6536\u6807\u51C6\u3011\u8BF7\u660E\u786E\uFF1A\u5B8C\u6210\u540E\u6211\u600E\u4E48\u5224\u65AD\u5408\u683C\uFF0C\u81F3\u5C11\u7ED9 3 \u6761\u53EF\u6838\u5BF9\u7684\u6807\u51C6\u3002
-` + (evaluations.acceptance.score >= 2 ? `\u53EF\u53C2\u8003\u6211\u539F\u8BDD\uFF1A${evaluations.acceptance.evidence}` : `\u793A\u4F8B\uFF1A
-1. \u653F\u7B56\u6570\u5B57\u4E0E\u539F\u59CB\u6587\u4EF6 100% \u4E00\u81F4\uFF0C\u53EF\u9010\u6761\u5BF9\u7167
-2. \u65F6\u957F\u63A7\u5236\u5728 40 \u5206\u949F\u4EE5\u5185\uFF0CPPT 30-35 \u9875
-3. \u5BB6\u957F\u80FD\u542C\u61C2\u5E76\u51C6\u786E\u56DE\u7B54\u5176\u4ED6\u5BB6\u957F 3 \u4E2A\u5E38\u89C1\u95EE\u9898`)
-  );
-  sections.push(
-    `
-\u8BF7\u5148\u8F93\u51FA\u5927\u7EB2\u8BA9\u6211\u786E\u8BA4\uFF0C\u518D\u6309\u7AE0\u8282\u5236\u4F5C\u3002\u6BCF\u5B8C\u6210 5 \u9875\u8BA9\u6211\u68C0\u67E5\u4E00\u6B21\u3002\u5982\u679C\u6709\u4FE1\u606F\u7F3A\u5931\uFF0C\u660E\u786E\u544A\u8BC9\u6211\u7F3A\u4EC0\u4E48\uFF0C\u4E0D\u8981\u81EA\u5DF1\u7F16\u3002`
-  );
-  return sections.join("\n\n");
-}
-function generateStrengths(evaluations) {
-  const strengths = [];
-  for (const key of RUBRIC_KEYS) {
-    if (evaluations[key].score >= 2 && evaluations[key].evidence !== "\u672A\u5728\u539F\u6587\u4E2D\u627E\u5230\u660E\u786E\u8BC1\u636E") {
-      const qualityWord = evaluations[key].score === 3 ? "\u5177\u4F53\u53EF\u6267\u884C" : "\u6BD4\u8F83\u6E05\u695A";
-      strengths.push(
-        `${DIMENSION_CONFIG[key].label}\u63CF\u8FF0${qualityWord}\uFF1A"${evaluations[key].evidence}"`
-      );
-    }
-  }
-  if (strengths.length === 0) {
-    strengths.push("\u5DF2\u7ECF\u5C1D\u8BD5\u8868\u8FBE\u4EFB\u52A1\u610F\u56FE\uFF0C\u53EF\u4EE5\u5728\u6B64\u57FA\u7840\u4E0A\u8865\u5145\u7ED3\u6784\u5316\u8981\u7D20");
-  }
-  return strengths.slice(0, 3);
-}
-function generateImprovements(evaluations) {
-  const improvements = [];
-  for (const key of RUBRIC_KEYS) {
-    if (evaluations[key].score <= 1) {
-      for (const s of evaluations[key].suggestions) {
-        improvements.push(s);
-      }
-    }
-  }
-  if (improvements.length === 0) {
-    improvements.push("\u6574\u4F53\u7ED3\u6784\u8F83\u5B8C\u6574\uFF0C\u53EF\u8FDB\u4E00\u6B65\u8865\u5145\u53EF\u91CF\u5316\u7684\u9A8C\u6536\u6807\u51C6");
-  }
-  return improvements.slice(0, 5);
-}
-function generateRisks(evaluations) {
-  const risks = [];
-  for (const key of RUBRIC_KEYS) {
-    if (evaluations[key].score <= 1) {
-      const riskMap = {
-        audience: "AI \u53EF\u80FD\u9ED8\u8BA4\u901A\u7528\u8868\u8FBE\uFF0C\u65E0\u6CD5\u9488\u5BF9\u4F60\u9762\u5411\u7684\u7279\u5B9A\u4EBA\u7FA4\u8C03\u6574\u6DF1\u5EA6",
-        purpose: "AI \u53EF\u80FD\u8F93\u51FA\u5F62\u5F0F\u4E0A\u5B8C\u6574\u4F46\u504F\u79BB\u4F60\u771F\u6B63\u60F3\u8981\u7684\u7ED3\u679C",
-        inputs: "AI \u53EF\u80FD\u4F9D\u8D56\u5E38\u8BC6\u7F16\u9020\u5185\u5BB9\uFF0C\u5F15\u5165\u672A\u6838\u5B9E\u7684\u653F\u7B56\u6216\u6570\u636E",
-        process: "AI \u53EF\u80FD\u4E00\u6B21\u6027\u8F93\u51FA\u5927\u91CF\u5185\u5BB9\uFF0C\u4E0D\u7ED9\u4F60\u4E2D\u95F4\u8C03\u6574\u7684\u673A\u4F1A",
-        output: "AI \u53EF\u80FD\u4EA7\u51FA\u4E0D\u7B26\u5408\u4F7F\u7528\u573A\u666F\u7684\u683C\u5F0F\uFF08\u6BD4\u5982\u5BB6\u957F\u60F3\u770B\u7684\u662F\u6848\u4F8B\uFF0C\u4F60\u7ED9\u4E86\u4E00\u5806\u7406\u8BBA\uFF09",
-        constraints: "AI \u53EF\u80FD\u4F7F\u7528\u7EDD\u5BF9\u5316\u8868\u8FF0\u3001\u7F16\u9020\u4E8B\u5B9E\u6216\u5FFD\u7565\u654F\u611F\u4FE1\u606F",
-        acceptance: "\u4F60\u65E0\u6CD5\u5224\u65AD AI \u7684\u4EA7\u51FA\u662F\u5426\u8FBE\u6807\uFF0C\u6700\u540E\u8981\u8FD4\u5DE5"
-      };
-      risks.push(riskMap[key]);
-    }
-  }
-  if (risks.length === 0) {
-    risks.push("\u63D0\u793A\u8BCD\u5DF2\u8F83\u5B8C\u6574\uFF0C\u53EF\u8FDB\u4E00\u6B65\u52A0\u5165\u53EF\u91CF\u5316\u9A8C\u6536\u6807\u51C6");
-  }
-  return risks.slice(0, 3);
-}
-function generateNextActions(evaluations) {
-  const sorted = RUBRIC_KEYS.map((k) => ({ key: k, score: evaluations[k].score })).sort((a, b) => a.score - b.score);
-  const actionMap = {
-    audience: "\u7EC3\u4E60\u5728\u6BCF\u6B21\u63D0\u793A\u8BCD\u5F00\u5934\u660E\u786E\u5199\u51FA\u9762\u5411\u5BF9\u8C61\u7684\u7279\u5F81\uFF1A\u8EAB\u4EFD\u3001\u7ECF\u9A8C\u3001\u57FA\u7840\u3001\u53EF\u80FD\u7684\u987E\u8651",
-    purpose: "\u8BAD\u7EC3\u7528\u4E00\u53E5\u8BDD\u5199\u51FA\u4EFB\u52A1\u76EE\u6807\uFF1A\u8BA9\u8C01\u3001\u505A\u4EC0\u4E48\u3001\u8FBE\u5230\u4EC0\u4E48\u53EF\u89C2\u5BDF\u6548\u679C",
-    inputs: "\u7EC3\u4E60\u6574\u7406\u8D44\u6599\u6E05\u5355\u5E76\u6807\u6CE8\u6765\u6E90\u3001\u65E5\u671F\u548C\u7248\u672C\uFF0C\u517B\u6210\u5148\u7ED9\u8D44\u6599\u518D\u63D0\u8981\u6C42\u7684\u4E60\u60EF",
-    process: "\u7EC3\u4E60\u628A\u4EFB\u52A1\u62C6\u6210 3-5 \u4E2A\u6B65\u9AA4\uFF0C\u8BBE\u5B9A\u68C0\u67E5\u70B9\uFF0C\u8BA9 AI \u5206\u6B65\u4EA4\u4ED8",
-    output: "\u8BAD\u7EC3\u660E\u786E\u6307\u5B9A\u8F93\u51FA\u683C\u5F0F\u3001\u9875\u6570/\u5B57\u6570\u3001\u7ED3\u6784\u548C\u98CE\u683C",
-    constraints: "\u7EC3\u4E60\u8BBE\u5B9A\u4E8B\u5B9E\u8FB9\u754C\u3001\u8BED\u8A00\u98CE\u683C\u3001\u7EDD\u5BF9\u5316\u8868\u8FF0\u7981\u533A",
-    acceptance: "\u8BAD\u7EC3\u5728\u6BCF\u6B21\u4EFB\u52A1\u524D\u5199\u51FA 2-3 \u6761\u53EF\u6838\u5BF9\u7684\u9A8C\u6536\u6807\u51C6"
-  };
-  return sorted.slice(0, 3).map(({ key }) => actionMap[key]);
-}
-function generateSummary(evaluations) {
-  const total = RUBRIC_KEYS.reduce((s, k) => s + evaluations[k].score, 0);
-  const maxScore = RUBRIC_KEYS.length * 3;
-  if (total >= maxScore * 0.75) {
-    return "\u63D0\u793A\u8BCD\u7ED3\u6784\u5B8C\u6574\uFF0C\u4E3B\u8981\u8981\u7D20\u9F50\u5168\u4E14\u8F83\u5177\u4F53\uFF0C\u5C5E\u4E8E\u9AD8\u8D28\u91CF\u4EFB\u52A1\u8BF4\u660E\uFF0C\u53EF\u76F4\u63A5\u4EA4\u7ED9 AI \u63A8\u8FDB\u3002";
-  }
-  if (total >= maxScore * 0.5) {
-    return "\u63D0\u793A\u8BCD\u6709\u57FA\u672C\u6846\u67B6\uFF0C\u4F46\u90E8\u5206\u5173\u952E\u8981\u7D20\uFF08\u8D44\u6599\u8FB9\u754C/\u9A8C\u6536\u6807\u51C6\uFF09\u4E0D\u591F\u5177\u4F53\uFF0C\u5EFA\u8BAE\u6309\u4E03\u9879\u91CF\u8868\u9010\u6761\u8865\u5168\u3002";
-  }
-  if (total >= maxScore * 0.25) {
-    return "\u63D0\u793A\u8BCD\u53EA\u8986\u76D6\u5C11\u91CF\u8981\u7D20\uFF0CAI \u5927\u6982\u7387\u9700\u8981\u5927\u91CF\u731C\u6D4B\uFF0C\u5EFA\u8BAE\u91CD\u65B0\u7EC4\u7EC7\uFF0C\u6309\u4E03\u9879\u91CF\u8868\u91CD\u5199\u3002";
-  }
-  return "\u63D0\u793A\u8BCD\u8FC7\u4E8E\u7B3C\u7EDF\uFF0C\u7F3A\u5C11\u4EFB\u52A1\u8BF4\u660E\u7684\u6838\u5FC3\u8981\u7D20\uFF0C\u5EFA\u8BAE\u5148\u7528\u4E03\u9879\u91CF\u8868\u642D\u9AA8\u67B6\u518D\u586B\u5145\u3002";
-}
-function analyzePrompt(promptText, role) {
-  const text = String(promptText || "").trim();
-  if (text.length < 30) throw new Error("\u63D0\u793A\u8BCD\u957F\u5EA6\u4E0D\u8DB330\u5B57");
-  const evaluations = {};
-  const scores = {};
-  const evidence = {};
-  const suggestions = {};
-  for (const key of RUBRIC_KEYS) {
-    const config = DIMENSION_CONFIG[key];
-    const result = evaluateDimension(text, config);
-    evaluations[key] = result;
-    scores[key] = result.score;
-    evidence[key] = { score: result.score, evidence: result.evidence };
-    suggestions[key] = result.suggestions;
-  }
-  return {
-    rubric: evaluations,
-    scores,
-    summary: generateSummary(evaluations),
-    strengths: generateStrengths(evaluations),
-    risks: generateRisks(evaluations),
-    improvements: generateImprovements(evaluations),
-    upgradedPrompt: buildUpgradedPrompt(text, evaluations, role),
-    nextActions: generateNextActions(evaluations)
-  };
-}
-
-// lib/deepseek.mjs
-var RUBRIC_KEYS2 = [
-  "audience",
-  "purpose",
-  "inputs",
-  "process",
-  "output",
-  "constraints",
-  "acceptance"
-];
-function extractJson(text) {
-  if (!text) throw new Error("empty model output");
-  try {
-    return JSON.parse(text);
-  } catch {
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error("invalid JSON output");
-    return JSON.parse(match[0]);
-  }
-}
-function parseDeepSeekAnalysis(text) {
-  const parsed = extractJson(text);
-  const rubric = parsed?.rubric;
-  if (!rubric || typeof rubric !== "object") throw new Error("invalid rubric");
-  const scores = {};
-  const normalizedRubric = {};
-  for (const key of RUBRIC_KEYS2) {
-    const item = rubric[key];
-    const score = Number(item?.score);
-    if (!item || !Number.isInteger(score) || score < 0 || score > 3) {
-      throw new Error(`invalid rubric: ${key}`);
-    }
-    scores[key] = score;
-    normalizedRubric[key] = {
-      score,
-      evidence: String(item.evidence || "\u672A\u5728\u539F\u6587\u4E2D\u627E\u5230\u660E\u786E\u8BC1\u636E").slice(0, 160)
-    };
-  }
-  const strengths = Array.isArray(parsed.strengths) ? parsed.strengths.map(String).slice(0, 3) : [];
-  const risks = Array.isArray(parsed.risks) ? parsed.risks.map(String).slice(0, 3) : [];
-  const nextActions = Array.isArray(parsed.nextActions) ? parsed.nextActions.map(String).slice(0, 3) : [];
-  if (!String(parsed.upgradedPrompt || "").trim()) throw new Error("invalid upgraded prompt");
-  return {
-    rubric: normalizedRubric,
-    scores,
-    summary: String(parsed.summary || "\u5DF2\u5B8C\u6210\u63D0\u793A\u8BCD\u7ED3\u6784\u5206\u6790").slice(0, 240),
-    strengths,
-    risks,
-    upgradedPrompt: String(parsed.upgradedPrompt).slice(0, 4e3),
-    nextActions
-  };
-}
-
-// lib/remote-analysis.mjs
-var ANALYSIS_ENDPOINT = "https://eyzcleghbczxxptdwlkq.supabase.co/functions/v1/ai-assessment-analyze";
-var CLIENT_ID_KEY = "ai-assessment:analysis-client-id";
-function randomClientId() {
-  return globalThis.crypto.randomUUID().replaceAll("-", "");
-}
-function getOrCreateAnalysisClientId(storage, createId = randomClientId) {
-  const current = String(storage?.getItem?.(CLIENT_ID_KEY) || "");
-  if (/^[a-z0-9_-]{16,80}$/i.test(current)) return current;
-  const created = String(createId());
-  if (!/^[a-z0-9_-]{16,80}$/i.test(created)) {
-    throw new Error("invalid analysis client identifier");
-  }
-  storage?.setItem?.(CLIENT_ID_KEY, created);
-  return created;
-}
-async function analyzePromptRemotely({
-  promptText,
-  clientId,
-  endpoint = ANALYSIS_ENDPOINT,
-  fetcher = fetch
-}) {
-  try {
-    const normalizedPrompt = String(promptText || "").trim();
-    if (normalizedPrompt.length < 30 || normalizedPrompt.length > 2e3) {
-      throw new Error("invalid prompt length");
-    }
-    if (!/^[a-z0-9_-]{16,80}$/i.test(String(clientId || ""))) {
-      throw new Error("invalid client identifier");
-    }
-    const response = await fetcher(endpoint, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-assessment-client": clientId
-      },
-      body: JSON.stringify({ promptText: normalizedPrompt })
-    });
-    if (!response.ok) throw new Error(`analysis endpoint ${response.status}`);
-    const payload = await response.json();
-    if (!payload?.ok || !payload?.analysis) throw new Error("invalid analysis response");
-    return {
-      status: "complete",
-      attempts: Number(payload.attempts) || 1,
-      analysis: parseDeepSeekAnalysis(JSON.stringify(payload.analysis))
-    };
-  } catch {
-    return {
-      status: "failed",
-      attempts: 1,
-      error: "AI analysis is temporarily unavailable"
-    };
-  }
-}
-
-// lib/local-store.mjs
-var STORAGE_KEYS = {
-  sessions: "ai-assessment:sessions",
-  submissions: "ai-assessment:submissions",
-  loginAttempts: "ai-assessment:login-attempts",
-  adminToken: "ai-assessment-admin-token",
-  adminCode: "ai-assessment:admin-code"
-};
-var DEFAULT_ADMIN_CODE = "teacher2026";
-function read(key) {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-function write(key, value) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(key, JSON.stringify(value));
-}
-function getSessions() {
-  return read(STORAGE_KEYS.sessions);
-}
-function getSessionById(id) {
-  return getSessions().find((s) => s.id === id) || null;
-}
-function getSessionByCode(code) {
-  return getSessions().find((s) => s.code === code.toUpperCase()) || null;
-}
-function saveSession(session) {
-  const sessions = getSessions();
-  const index = sessions.findIndex((s) => s.id === session.id);
-  if (index >= 0) {
-    sessions[index] = { ...sessions[index], ...session };
-  } else {
-    sessions.unshift(session);
-  }
-  write(STORAGE_KEYS.sessions, sessions);
-  return session;
-}
-function deleteSessionById(id) {
-  const sessions = getSessions().filter((s) => s.id !== id);
-  write(STORAGE_KEYS.sessions, sessions);
-  const submissions = getSubmissions().filter((s) => s.sessionId !== id);
-  write(STORAGE_KEYS.submissions, submissions);
-}
-function getSubmissions() {
-  return read(STORAGE_KEYS.submissions);
-}
-function getSubmissionsBySession(sessionId) {
-  return getSubmissions().filter((s) => s.sessionId === sessionId).sort((a, b) => new Date(a.submittedAt) - new Date(b.submittedAt));
-}
-function getSubmissionByToken(token) {
-  return getSubmissions().find((s) => s.reportToken === token) || null;
-}
-function getSubmissionById(id) {
-  return getSubmissions().find((s) => s.id === id) || null;
-}
-function saveSubmission(submission) {
-  const submissions = getSubmissions();
-  const index = submissions.findIndex((s) => s.id === submission.id);
-  if (index >= 0) {
-    submissions[index] = { ...submissions[index], ...submission };
-  } else {
-    submissions.unshift(submission);
-  }
-  write(STORAGE_KEYS.submissions, submissions);
-  return submission;
-}
-function findSubmissionByIdempotency(sessionId, idempotencyKey) {
-  return getSubmissions().find(
-    (s) => s.sessionId === sessionId && s.idempotencyKey === idempotencyKey
-  ) || null;
-}
-function getLoginAttempt(ipHash) {
-  return read(STORAGE_KEYS.loginAttempts).find((a) => a.ipHash === ipHash) || null;
-}
-function saveLoginAttempt(attempt) {
-  const attempts = read(STORAGE_KEYS.loginAttempts);
-  const index = attempts.findIndex((a) => a.ipHash === attempt.ipHash);
-  if (index >= 0) {
-    attempts[index] = attempt;
-  } else {
-    attempts.push(attempt);
-  }
-  write(STORAGE_KEYS.loginAttempts, attempts);
-}
-function clearLoginAttempt(ipHash) {
-  const attempts = read(STORAGE_KEYS.loginAttempts).filter((a) => a.ipHash !== ipHash);
-  write(STORAGE_KEYS.loginAttempts, attempts);
-}
-function getAdminCode() {
-  if (typeof window === "undefined") return DEFAULT_ADMIN_CODE;
-  return window.localStorage.getItem(STORAGE_KEYS.adminCode) || DEFAULT_ADMIN_CODE;
-}
-function generateId() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-}
-function generateSessionCode() {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const bytes = typeof crypto !== "undefined" && "getRandomValues" in crypto ? crypto.getRandomValues(new Uint8Array(6)) : Array.from({ length: 6 }, () => Math.floor(Math.random() * 256));
-  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
-}
-function generateReportToken() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "").slice(0, 43);
-  }
-  return Array.from(
-    { length: 43 },
-    () => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".charAt(
-      Math.floor(Math.random() * 64)
-    )
-  ).join("");
-}
-
-// supabase/functions/ai-assessment-api/_shared/core.mjs
-var encoder = new TextEncoder();
-function countBy(rows, codeKey, nameKey) {
-  const counts = /* @__PURE__ */ new Map();
-  for (const row of rows) {
-    const code = String(row[codeKey] || "");
-    if (!code) continue;
-    const key = `${code} ${String(row[nameKey] || "")}`.trim();
-    counts.set(key, (counts.get(key) || 0) + 1);
-  }
-  return Object.fromEntries(counts);
-}
-function dominant(distribution) {
-  return Object.entries(distribution).reduce((winner, entry) => entry[1] > (winner?.[1] || 0) ? entry : winner, null)?.[0] || "";
-}
-function summarizeDashboard(rows) {
-  const total = rows.length;
-  const scoredRows = rows.filter((row) => row.total_score !== null && row.total_score !== void 0);
-  const scoredTotal = scoredRows.length;
-  const dimensionIds = ["scene", "task", "data", "collaboration", "verification", "agent"];
-  const levelDistribution = countBy(scoredRows, "level_code", "level_name");
-  const styleDistribution = countBy(rows, "style_code", "style_name");
-  const dimensionAverages = Object.fromEntries(dimensionIds.map((id) => [id, scoredTotal ? Math.round(scoredRows.reduce((sum, row) => sum + Number(row.dimension_scores?.[id] || 0), 0) / scoredTotal) : 0]));
-  return {
-    total,
-    scoredTotal,
-    averageScore: scoredTotal ? Math.round(scoredRows.reduce((sum, row) => sum + Number(row.total_score), 0) / scoredTotal) : 0,
-    dominantLevel: dominant(levelDistribution),
-    dominantStyle: dominant(styleDistribution),
-    dimensionAverages,
-    levelDistribution,
-    styleDistribution
-  };
-}
-function csvCell(value) {
-  const text = String(value ?? "");
-  return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-}
-function buildCsv(rows) {
-  const headers = ["\u59D3\u540D", "\u5C97\u4F4D", "\u7EFC\u5408\u5206", "\u6210\u957F\u7B49\u7EA7", "\u98CE\u683C\u4EE3\u7801", "\u98CE\u683C\u540D\u79F0", "AI\u70B9\u8BC4\u72B6\u6001", "\u5F00\u653E\u9898\u539F\u6587", "\u63D0\u4EA4\u65F6\u95F4"];
-  const lines = rows.map((row) => [row.participant_name, row.participant_role, row.total_score, row.level_name, row.style_code, row.style_name, row.ai_status, row.open_prompt, row.submitted_at].map(csvCell).join(","));
-  return `\uFEFF${[headers.join(","), ...lines].join("\r\n")}`;
-}
-
-// lib/local-api.mjs
-function sessionJson(session) {
-  const submissions = getSubmissionsBySession(session.id);
-  return {
-    id: session.id,
-    code: session.code,
-    title: session.title,
-    cohort: session.cohort,
-    status: session.status,
-    assessmentVersion: session.assessmentVersion || ASSESSMENT_VERSION,
-    createdAt: session.createdAt,
-    submissionCount: submissions.length
-  };
-}
-function publicReport(submission, session) {
-  return {
-    assessmentVersion: session.assessmentVersion || ASSESSMENT_VERSION,
-    participant: { name: submission.participantName, role: submission.participantRole },
-    session: { title: session.title, cohort: session.cohort },
-    aiStatus: submission.aiStatus,
-    aiEngine: submission.aiEngine || "heuristic",
-    analysis: submission.analysis,
-    scores: {
-      choiceScore: submission.choiceScore,
-      openScore: submission.openScore,
-      rawTotalScore: submission.rawTotalScore,
-      projectBonus: submission.projectBonus || 0,
-      projectUpgrade: submission.projectUpgrade || { applied: false, eligible: false, levels: 0 },
-      sectionScores: submission.sectionScores || {},
-      totalScore: submission.totalScore,
-      dimensions: submission.dimensionScores,
-      level: { code: submission.levelCode, name: submission.levelName },
-      style: submission.styleData
-    }
-  };
-}
-function validateAnswerValues(answerValues, questionList) {
-  const items = questionList || getQuestionsForRole("teacher");
-  if (!Array.isArray(answerValues) || answerValues.length !== items.length) {
-    throw new Error(`\u8BF7\u5B8C\u6210\u5168\u90E8 ${items.length} \u9053\u9009\u62E9\u9898`);
-  }
-  for (let i = 0; i < items.length; i++) {
-    const question = items[i];
-    const value = answerValues[i];
-    const ids = Array.isArray(value) ? value : [value];
-    const invalid = ids.length === 0 || question.kind !== "multi" && ids.length !== 1 || ids.some((id) => typeof id !== "string" || !question.options.some((option) => option.id === id));
-    if (invalid) {
-      throw new Error("\u7B54\u5377\u9009\u9879\u65E0\u6548\uFF0C\u8BF7\u5237\u65B0\u540E\u91CD\u65B0\u586B\u5199");
-    }
-  }
-}
-function assertSubmission(body) {
-  const payload = body && typeof body === "object" ? body : {};
-  if (!Array.isArray(payload.answers) || payload.answers.length === 0 || payload.answers.some((answer) => {
-    if (Array.isArray(answer)) return answer.length === 0 || answer.some((id) => typeof id !== "string" || !id);
-    return typeof answer !== "string" || !answer;
-  })) {
-    throw new Error("\u8BF7\u5B8C\u6210\u5168\u90E8\u9009\u62E9\u9898");
-  }
-  const openPrompt = String(payload.openPrompt || "").trim();
-  if (openPrompt.length < 30) throw new Error("\u5F00\u653E\u9898\u63D0\u793A\u8BCD\u81F3\u5C1130\u5B57");
-  if (openPrompt.length > 2e3) throw new Error("\u5F00\u653E\u9898\u63D0\u793A\u8BCD\u4E0D\u80FD\u8D85\u8FC72000\u5B57");
-  const participantName = String(payload.participantName || "").trim().slice(0, 30);
-  const participantRole = String(payload.participantRole || "").trim().slice(0, 30);
-  if (!participantName) throw new Error("\u8BF7\u586B\u5199\u59D3\u540D");
-  if (!participantRole) throw new Error("\u8BF7\u9009\u62E9\u5C97\u4F4D");
-  const idempotencyKey = String(payload.idempotencyKey || "").trim();
-  if (idempotencyKey.length < 3 || idempotencyKey.length > 100) throw new Error("\u63D0\u4EA4\u6807\u8BC6\u65E0\u6548");
-  const sessionCode = String(payload.sessionCode || "").trim().toUpperCase();
-  if (!/^[A-Z0-9]{6}$/.test(sessionCode)) throw new Error("\u573A\u6B21\u7801\u65E0\u6548");
-  return { sessionCode, participantName, participantRole, answers: payload.answers, openPrompt, idempotencyKey };
-}
-var TOKEN_KEY = "ai-assessment:admin-tokens";
-function getTokens() {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(window.localStorage.getItem(TOKEN_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-function saveTokens(tokens) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(TOKEN_KEY, JSON.stringify(tokens));
-}
-function createToken() {
-  const token = generateId() + generateId();
-  const tokens = getTokens();
-  tokens.push({ token, createdAt: Date.now(), expiresAt: Date.now() + 8 * 3600 * 1e3 });
-  saveTokens(tokens);
-  return token;
-}
-function verifyToken(token) {
-  if (!token) return false;
-  const tokens = getTokens();
-  const found = tokens.find((t) => t.token === token);
-  if (!found) return false;
-  if (Date.now() > found.expiresAt) {
-    saveTokens(tokens.filter((t) => t.token !== token));
-    return false;
-  }
-  return true;
-}
-async function runAnalysis(submission) {
-  const questionList = getQuestionsForRole(submission.roleKey || "teacher");
-  let analysisResult = null;
-  let engine = "heuristic";
-  if (typeof window !== "undefined") {
-    try {
-      const ds = await analyzePromptRemotely({
-        promptText: submission.openPrompt,
-        clientId: getOrCreateAnalysisClientId(window.localStorage)
-      });
-      if (ds.status === "complete") {
-        analysisResult = ds.analysis;
-        engine = "deepseek";
-        submission.aiAttempts = ds.attempts;
-      } else {
-        submission.aiError = ds.error;
-      }
-    } catch (error2) {
-      submission.aiError = error2 instanceof Error ? error2.message : String(error2);
-    }
-  }
-  if (!analysisResult) {
-    try {
-      analysisResult = analyzePrompt(submission.openPrompt, submission.roleKey || "teacher");
-      engine = "heuristic";
-    } catch (error2) {
-      submission.aiStatus = "failed";
-      submission.aiError = error2 instanceof Error ? error2.message : String(error2);
-      saveSubmission(submission);
-      throw new Error("\u7B54\u5377\u5DF2\u4FDD\u5B58\uFF0CAI \u70B9\u8BC4\u6682\u65F6\u5931\u8D25\uFF0C\u6559\u5E08\u53EF\u4EE5\u7A0D\u540E\u91CD\u8BD5");
-    }
-  }
-  const scores = scoreAssessment(submission.answers, analysisResult.scores, questionList);
-  submission.aiStatus = "complete";
-  submission.aiEngine = engine;
-  submission.analysis = analysisResult;
-  submission.choiceScore = scores.choiceScore;
-  submission.openScore = scores.openScore;
-  submission.rawTotalScore = scores.rawTotalScore;
-  submission.projectBonus = scores.projectBonus;
-  submission.projectUpgrade = scores.projectUpgrade;
-  submission.sectionScores = scores.sectionScores;
-  submission.totalScore = scores.totalScore;
-  submission.levelCode = scores.level.code;
-  submission.levelName = scores.level.name;
-  submission.dimensionScores = scores.dimensions;
-  saveSubmission(submission);
-  return submission;
-}
-function ok(body, status = 200) {
-  return { ok: true, status, body };
-}
-function error(message, status = 400) {
-  return { ok: false, status, body: { error: message } };
-}
-async function handleLocalApi(method, path, body = {}, headers = {}) {
-  if (method === "GET" && path === "/health") {
-    return ok({
-      ok: true,
-      version: ASSESSMENT_VERSION,
-      aiEngine: "deepseek",
-      aiConfigured: true,
-      fallbackEngine: "heuristic"
-    });
-  }
-  if (method === "GET" && path.startsWith("/session/")) {
-    const code = decodeURIComponent(path.slice("/session/".length)).toUpperCase();
-    const session = getSessionByCode(code);
-    if (!session) return error("\u6CA1\u6709\u627E\u5230\u8FD9\u4E2A\u6D4B\u8BC4\u573A\u6B21", 404);
-    if (session.status !== "open") return error("\u672C\u573A\u6D4B\u8BC4\u5DF2\u7ECF\u5173\u95ED", 409);
-    return ok({ session: sessionJson(session) });
-  }
-  if (method === "POST" && path === "/submit") {
-    let payload;
-    try {
-      payload = assertSubmission(body);
-      const role = String(body?.participantRoleKey || "teacher");
-      const questionList2 = getQuestionsForRole(role);
-      validateAnswerValues(payload.answers, questionList2);
-    } catch (err) {
-      return error(err instanceof Error ? err.message : "\u7B54\u5377\u65E0\u6548", 400);
-    }
-    const session = getSessionByCode(payload.sessionCode);
-    if (!session) return error("\u6CA1\u6709\u627E\u5230\u8FD9\u4E2A\u6D4B\u8BC4\u573A\u6B21", 404);
-    if (session.status !== "open") return error("\u672C\u573A\u6D4B\u8BC4\u5DF2\u7ECF\u5173\u95ED\uFF0C\u4E0D\u80FD\u7EE7\u7EED\u63D0\u4EA4", 409);
-    const existing = findSubmissionByIdempotency(session.id, payload.idempotencyKey);
-    if (existing) {
-      return ok({ reportToken: existing.reportToken, aiStatus: existing.aiStatus }, 200);
-    }
-    const roleKey = String(body?.participantRoleKey || "teacher");
-    const questionList = getQuestionsForRole(roleKey);
-    const style = scoreStyle(payload.answers, questionList);
-    const submission = {
-      id: generateId(),
-      sessionId: session.id,
-      reportToken: generateReportToken(),
-      participantName: payload.participantName,
-      participantRole: payload.participantRole,
-      roleKey,
-      answers: payload.answers,
-      openPrompt: payload.openPrompt,
-      idempotencyKey: payload.idempotencyKey,
-      styleCode: style.code,
-      styleName: style.name,
-      styleData: style,
-      aiStatus: "pending",
-      aiEngine: "pending",
-      aiAttempts: 0,
-      submittedAt: (/* @__PURE__ */ new Date()).toISOString()
-    };
-    saveSubmission(submission);
-    return ok({ reportToken: submission.reportToken, aiStatus: "pending" }, 201);
-  }
-  if (method === "GET" && path.startsWith("/report/") && !path.endsWith("/analyze")) {
-    const token = decodeURIComponent(path.slice("/report/".length));
-    const submission = getSubmissionByToken(token);
-    if (!submission) return error("\u62A5\u544A\u94FE\u63A5\u65E0\u6548\u6216\u5DF2\u88AB\u5220\u9664", 404);
-    const session = getSessionById(submission.sessionId);
-    if (!session) return error("\u573A\u6B21\u4E0D\u5B58\u5728", 404);
-    return ok({ report: publicReport(submission, session) });
-  }
-  if (method === "POST" && path.startsWith("/report/") && path.endsWith("/analyze")) {
-    const token = decodeURIComponent(path.slice("/report/".length, -"/analyze".length));
-    const submission = getSubmissionByToken(token);
-    if (!submission) return error("\u62A5\u544A\u94FE\u63A5\u65E0\u6548\u6216\u5DF2\u88AB\u5220\u9664", 404);
-    if (submission.aiStatus === "complete") {
-      return ok({ aiStatus: "complete" });
-    }
-    try {
-      await runAnalysis(submission);
-      return ok({ aiStatus: "complete" });
-    } catch (err) {
-      return ok({ aiStatus: "failed" }, 200);
-    }
-  }
-  if (method === "POST" && path === "/admin/login") {
-    const ipHash = "local-" + (typeof window !== "undefined" ? window.location.hostname : "local");
-    const attempt = getLoginAttempt(ipHash);
-    if (attempt?.blockedUntil && new Date(attempt.blockedUntil) > /* @__PURE__ */ new Date()) {
-      return error("\u5C1D\u8BD5\u6B21\u6570\u8FC7\u591A\uFF0C\u8BF7\u7A0D\u540E\u518D\u8BD5", 429);
-    }
-    const accessCode = String(body?.accessCode || "");
-    const expectedCode = getAdminCode();
-    if (accessCode !== expectedCode) {
-      const currentAttempts = (attempt?.attempts || 0) + 1;
-      const shouldBlock = currentAttempts >= 5;
-      saveLoginAttempt({
-        ipHash,
-        windowStartedAt: attempt?.windowStartedAt || (/* @__PURE__ */ new Date()).toISOString(),
-        attempts: currentAttempts,
-        blockedUntil: shouldBlock ? new Date(Date.now() + 15 * 60 * 1e3).toISOString() : null
-      });
-      return error(
-        shouldBlock ? "\u5C1D\u8BD5\u6B21\u6570\u8FC7\u591A\uFF0C\u8BF715\u5206\u949F\u540E\u518D\u8BD5" : "\u6559\u5E08\u53E3\u4EE4\u4E0D\u6B63\u786E",
-        shouldBlock ? 429 : 401
-      );
-    }
-    clearLoginAttempt(ipHash);
-    const token = createToken();
-    return ok({ token });
-  }
-  const authHeader = String(headers?.authorization || "").replace(/^Bearer\s+/i, "");
-  const isAdmin = verifyToken(authHeader);
-  if (path.startsWith("/admin") && !isAdmin) {
-    return error("\u6559\u5E08\u767B\u5F55\u5DF2\u5931\u6548\uFF0C\u8BF7\u91CD\u65B0\u767B\u5F55", 401);
-  }
-  if (method === "GET" && path === "/admin/sessions") {
-    const sessions = getSessions().map(sessionJson);
-    return ok({ sessions });
-  }
-  if (method === "POST" && path === "/admin/sessions") {
-    const title = String(body?.title || "").trim().slice(0, 60);
-    const cohort = String(body?.cohort || "").trim().slice(0, 60);
-    if (!title) return error("\u8BF7\u586B\u5199\u573A\u6B21\u540D\u79F0", 400);
-    const session = {
-      id: generateId(),
-      code: generateSessionCode(),
-      title,
-      cohort,
-      status: "open",
-      assessmentVersion: ASSESSMENT_VERSION,
-      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
-      closedAt: null
-    };
-    saveSession(session);
-    return ok({ session: sessionJson(session) }, 201);
-  }
-  if (method === "PATCH" && path.startsWith("/admin/sessions/") && !path.includes("/dashboard") && !path.includes("/export")) {
-    const id = decodeURIComponent(path.slice("/admin/sessions/".length));
-    const status = body?.status;
-    if (!["open", "closed"].includes(status)) return error("\u573A\u6B21\u72B6\u6001\u65E0\u6548", 400);
-    const session = getSessionById(id);
-    if (!session) return error("\u573A\u6B21\u4E0D\u5B58\u5728", 404);
-    session.status = status;
-    session.closedAt = status === "closed" ? (/* @__PURE__ */ new Date()).toISOString() : null;
-    saveSession(session);
-    return ok({ session: sessionJson(session) });
-  }
-  if (method === "DELETE" && path.startsWith("/admin/sessions/") && !path.includes("/dashboard") && !path.includes("/export")) {
-    const id = decodeURIComponent(path.slice("/admin/sessions/".length));
-    const session = getSessionById(id);
-    if (!session) return error("\u573A\u6B21\u4E0D\u5B58\u5728", 404);
-    deleteSessionById(id);
-    return ok({}, 204);
-  }
-  if (method === "GET" && path.startsWith("/admin/sessions/") && path.endsWith("/dashboard")) {
-    const id = decodeURIComponent(path.slice("/admin/sessions/".length, -"/dashboard".length));
-    const session = getSessionById(id);
-    if (!session) return error("\u573A\u6B21\u4E0D\u5B58\u5728", 404);
-    const rows = getSubmissionsBySession(id);
-    const mappedRows = rows.map((r) => ({
-      participant_name: r.participantName,
-      participant_role: r.participantRole,
-      total_score: r.totalScore,
-      level_code: r.levelCode,
-      level_name: r.levelName,
-      style_code: r.styleCode,
-      style_name: r.styleName,
-      ai_status: r.aiStatus,
-      submitted_at: r.submittedAt,
-      report_token: r.reportToken,
-      id: r.id,
-      dimension_scores: r.dimensionScores,
-      open_prompt: r.openPrompt
-    }));
-    const summary = summarizeDashboard(mappedRows);
-    const ordered = dimensions.map((item) => ({ label: item.label, score: summary.dimensionAverages[item.id] || 0 })).sort((a, b) => b.score - a.score);
-    summary.commonStrengths = ordered.slice(0, 2);
-    summary.commonGaps = [...ordered].reverse().slice(0, 2);
-    return ok({
-      dashboard: {
-        session: sessionJson(session),
-        summary,
-        submissions: rows.map((r) => ({
-          id: r.id,
-          participantName: r.participantName,
-          participantRole: r.participantRole,
-          roleKey: r.roleKey,
-          levelCode: r.levelCode,
-          levelName: r.levelName,
-          styleCode: r.styleCode,
-          styleName: r.styleName,
-          aiStatus: r.aiStatus,
-          aiEngine: r.aiEngine,
-          submittedAt: r.submittedAt,
-          reportToken: r.reportToken
-        }))
-      }
-    });
-  }
-  if (method === "POST" && path.startsWith("/admin/submissions/") && path.endsWith("/retry")) {
-    const id = decodeURIComponent(path.slice("/admin/submissions/".length, -"/retry".length));
-    const submission = getSubmissionById(id);
-    if (!submission) return error("\u7B54\u5377\u4E0D\u5B58\u5728", 404);
-    submission.aiStatus = "pending";
-    saveSubmission(submission);
-    try {
-      await runAnalysis(submission);
-      return ok({ aiStatus: "complete" });
-    } catch (err) {
-      return ok({ aiStatus: "failed" });
-    }
-  }
-  if (method === "GET" && path.startsWith("/admin/sessions/") && path.endsWith("/export")) {
-    const id = decodeURIComponent(path.slice("/admin/sessions/".length, -"/export".length));
-    const rows = getSubmissionsBySession(id);
-    const mappedRows = rows.map((r) => ({
-      participant_name: r.participantName,
-      participant_role: r.participantRole,
-      total_score: r.totalScore,
-      level_name: r.levelName,
-      style_code: r.styleCode,
-      style_name: r.styleName,
-      ai_status: r.aiStatus,
-      ai_engine: r.aiEngine,
-      open_prompt: r.openPrompt,
-      submitted_at: r.submittedAt
-    }));
-    return ok({ csv: buildCsv(mappedRows), isCsv: true });
-  }
-  return error("\u63A5\u53E3\u4E0D\u5B58\u5728", 404);
-}
-
 // lib/api.mjs
+var API_ENDPOINT = "https://eyzcleghbczxxptdwlkq.supabase.co/functions/v1/ai-assessment-api";
 async function apiRequest(path, options = {}) {
   const method = (options.method || "GET").toUpperCase();
-  let body = {};
-  if (options.body) {
-    try {
-      body = typeof options.body === "string" ? JSON.parse(options.body) : options.body;
-    } catch {
-      body = {};
-    }
-  }
-  const headers = { ...options.headers || {} };
+  const headers = { "content-type": "application/json", ...options.headers || {} };
   const admin = adminHeaders();
   for (const key of Object.keys(admin)) {
     if (!headers[key]) headers[key] = admin[key];
   }
-  const result = await handleLocalApi(method, path, body, headers);
-  if (!result.ok) {
-    throw new Error(result.body?.error || `\u8BF7\u6C42\u5931\u8D25\uFF08${result.status}\uFF09`);
+  const response = await fetch(`${API_ENDPOINT}${path}`, {
+    method,
+    headers,
+    body: method === "GET" || method === "HEAD" ? void 0 : options.body
+  });
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("text/csv")) {
+    const csv = await response.text();
+    if (!response.ok) throw new Error(`\u5BFC\u51FA\u5931\u8D25\uFF08${response.status}\uFF09`);
+    return { csv };
   }
-  if (result.body?.isCsv) {
-    return { csv: result.body.csv };
-  }
-  return result.body || {};
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload?.error || `\u8BF7\u6C42\u5931\u8D25\uFF08${response.status}\uFF09`);
+  return payload;
 }
 function adminHeaders() {
   if (typeof window === "undefined") return {};
@@ -2215,16 +1124,16 @@ function TeacherDashboard({ onExit }) {
       const data = await adminRequest("/admin/sessions");
       setSessions(data.sessions || []);
       if (!selectedId && data.sessions?.[0]) setSelectedId(data.sessions[0].id);
-    } catch (error2) {
-      setMessage(error2 instanceof Error ? error2.message : "\u540E\u53F0\u8BFB\u53D6\u5931\u8D25");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "\u540E\u53F0\u8BFB\u53D6\u5931\u8D25");
     }
   }
   async function loadDashboard(id, quiet = false) {
     try {
       const data = await adminRequest(`/admin/sessions/${id}/dashboard`);
       setDashboard(data.dashboard);
-    } catch (error2) {
-      if (!quiet) setMessage(error2 instanceof Error ? error2.message : "\u770B\u677F\u8BFB\u53D6\u5931\u8D25");
+    } catch (error) {
+      if (!quiet) setMessage(error instanceof Error ? error.message : "\u770B\u677F\u8BFB\u53D6\u5931\u8D25");
     }
   }
   async function login(event) {
@@ -2235,8 +1144,8 @@ function TeacherDashboard({ onExit }) {
       sessionStorage.setItem("ai-assessment-admin-token", data.token);
       setToken(data.token);
       setAccessCode("");
-    } catch (error2) {
-      setMessage(error2 instanceof Error ? error2.message : "\u767B\u5F55\u5931\u8D25");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "\u767B\u5F55\u5931\u8D25");
     }
   }
   async function createSession(event) {
@@ -2246,8 +1155,8 @@ function TeacherDashboard({ onExit }) {
       setCohort("");
       await loadSessions();
       setSelectedId(data.session.id);
-    } catch (error2) {
-      setMessage(error2 instanceof Error ? error2.message : "\u521B\u5EFA\u5931\u8D25");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "\u521B\u5EFA\u5931\u8D25");
     }
   }
   async function updateSession(status) {
@@ -2266,8 +1175,8 @@ function TeacherDashboard({ onExit }) {
     try {
       await adminRequest(`/admin/submissions/${id}/retry`, { method: "POST" });
       await loadDashboard(selectedId);
-    } catch (error2) {
-      setMessage(error2 instanceof Error ? error2.message : "AI\u70B9\u8BC4\u91CD\u8BD5\u5931\u8D25");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "AI\u70B9\u8BC4\u91CD\u8BD5\u5931\u8D25");
       await loadDashboard(selectedId, true);
     }
   }
@@ -2596,8 +1505,8 @@ function AssessmentApp() {
         setIdempotencyKey(draft.idempotencyKey || makeIdempotencyKey());
       }
       setMode("profile");
-    } catch (error2) {
-      setMessage(error2 instanceof Error ? error2.message : "\u573A\u6B21\u8BFB\u53D6\u5931\u8D25");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "\u573A\u6B21\u8BFB\u53D6\u5931\u8D25");
       setMode("landing");
     } finally {
       setLoading(false);
@@ -2613,13 +1522,13 @@ function AssessmentApp() {
           await apiRequest(`/report/${encodeURIComponent(token)}/analyze`, { method: "POST" });
           const refreshed = await apiRequest(`/report/${encodeURIComponent(token)}`);
           setReport(refreshed.report);
-        } catch (error2) {
-          setMessage(error2 instanceof Error ? error2.message : "AI\u70B9\u8BC4\u6682\u672A\u751F\u6210");
+        } catch (error) {
+          setMessage(error instanceof Error ? error.message : "AI\u70B9\u8BC4\u6682\u672A\u751F\u6210");
         }
       }
       setMode("report");
-    } catch (error2) {
-      setMessage(error2 instanceof Error ? error2.message : "\u62A5\u544A\u8BFB\u53D6\u5931\u8D25");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "\u62A5\u544A\u8BFB\u53D6\u5931\u8D25");
       setMode("landing");
     }
   }
@@ -2675,8 +1584,8 @@ function AssessmentApp() {
       localStorage.removeItem(`ai-assessment-draft:${session.code}`);
       history.replaceState({}, "", `?report=${encodeURIComponent(response.reportToken)}`);
       await loadReport(response.reportToken);
-    } catch (error2) {
-      setMessage(error2 instanceof Error ? error2.message : "\u63D0\u4EA4\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "\u63D0\u4EA4\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5");
       setMode("assessment");
     }
   }

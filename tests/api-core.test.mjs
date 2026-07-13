@@ -10,7 +10,7 @@ import {
 } from "../supabase/functions/ai-assessment-api/_shared/core.mjs";
 
 test("rejects incomplete submissions before any database write", () => {
-  assert.throws(() => assertSubmission({ sessionCode: "ABC123" }), /16道选择题/);
+  assert.throws(() => assertSubmission({ sessionCode: "ABC123" }), /选择题/);
   assert.throws(
     () => assertSubmission({ sessionCode: "ABC123", participantName: "张三", participantRole: "教师", answers: Array(16).fill("x"), openPrompt: "太短", idempotencyKey: "abc" }),
     /至少30字/,
@@ -22,7 +22,7 @@ test("accepts a complete anonymous-safe submission payload", () => {
     sessionCode: "abc123",
     participantName: " 张三 ",
     participantRole: "教师",
-    answers: Array.from({ length: 16 }, (_, index) => `q${index + 1}-0`),
+    answers: Array.from({ length: 18 }, (_, index) => `q${index + 1}-0`),
     openPrompt: "请根据三类指定资料，为高二艺考家长制作一份四十分钟讲座PPT，并逐页给出重点。",
     idempotencyKey: "submission-1",
   });
@@ -56,4 +56,3 @@ test("exports Chinese-compatible UTF-8 CSV with a BOM", () => {
   assert.match(csv, /姓名,岗位,综合分/);
   assert.match(csv, /"包含,逗号"/);
 });
-

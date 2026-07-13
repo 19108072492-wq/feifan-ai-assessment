@@ -46,8 +46,11 @@ export async function verifyAdminToken(token, secret, nowSeconds = Math.floor(Da
 
 export function assertSubmission(value) {
   const payload = value && typeof value === "object" ? value : {};
-  if (!Array.isArray(payload.answers) || payload.answers.length !== 16 || payload.answers.some((answer) => typeof answer !== "string" || !answer)) {
-    throw new Error("请完成全部16道选择题");
+  if (!Array.isArray(payload.answers) || payload.answers.length === 0 || payload.answers.some((answer) => {
+    if (Array.isArray(answer)) return answer.length === 0 || answer.some((id) => typeof id !== "string" || !id);
+    return typeof answer !== "string" || !answer;
+  })) {
+    throw new Error("请完成全部选择题");
   }
   const openPrompt = String(payload.openPrompt || "").trim();
   if (openPrompt.length < 30) throw new Error("开放题提示词至少30字");
@@ -60,7 +63,11 @@ export function assertSubmission(value) {
   if (idempotencyKey.length < 3 || idempotencyKey.length > 100) throw new Error("提交标识无效");
   const sessionCode = String(payload.sessionCode || "").trim().toUpperCase();
   if (!/^[A-Z0-9]{6}$/.test(sessionCode)) throw new Error("场次码无效");
-  return { sessionCode, participantName, participantRole, answers: payload.answers, openPrompt, idempotencyKey };
+  const participantRoleKey = String(payload.participantRoleKey || "general").trim();
+  if (!["consultant", "coach", "teacher", "general"].includes(participantRoleKey)) {
+    throw new Error("岗位类型无效");
+  }
+  return { sessionCode, participantName, participantRole, participantRoleKey, answers: payload.answers, openPrompt, idempotencyKey };
 }
 
 function countBy(rows, codeKey, nameKey) {
@@ -115,10 +122,15 @@ export function publicReport(row, session) {
     participant: { name: row.participant_name, role: row.participant_role },
     session: { title: session.title, cohort: session.cohort },
     aiStatus: row.ai_status,
+    aiEngine: row.ai_engine || "deepseek",
     analysis: row.ai_analysis,
     scores: {
       choiceScore: row.choice_score,
       openScore: row.open_score,
+      rawTotalScore: row.raw_total_score,
+      projectBonus: row.project_bonus || 0,
+      projectUpgrade: row.project_upgrade || { applied: false, eligible: false, levels: 0 },
+      sectionScores: row.section_scores || {},
       totalScore: row.total_score,
       dimensions: row.dimension_scores,
       level: { code: row.level_code, name: row.level_name },
