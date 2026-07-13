@@ -8,6 +8,7 @@
  */
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
+import { createHash } from "crypto";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import esbuild from "esbuild";
@@ -247,6 +248,7 @@ function __require(name) {
     "})();",
     "",
   ].join("\n");
+  const bundleVersion = createHash("sha256").update(output).digest("hex").slice(0, 12);
 
   writeFileSync(OUTPUT, output, "utf-8");
   console.log(`[build-bundle] ✅ 已写入 ${OUTPUT}（${(output.length / 1024).toFixed(1)} KB）`);
@@ -261,6 +263,8 @@ function __require(name) {
     let html = readFileSync(htmlFile, "utf-8");
     // 替换 <style>...</style> 内容
     html = html.replace(/<style>[\s\S]*?<\/style>/, `<style>\n${cleanedCss}\n</style>`);
+    // GitHub Pages 会缓存脚本；内容哈希确保教师端新标签不再加载旧报告代码。
+    html = html.replace(/app-bundle\.js(?:\?v=[a-f0-9]+)?/g, `app-bundle.js?v=${bundleVersion}`);
     writeFileSync(htmlFile, html, "utf-8");
     console.log(`[build-bundle] ✅ 已同步 CSS 到 standalone.html`);
   }
